@@ -103,14 +103,44 @@ const createChart = async () => {
         legend: {
           display: true,
           position: 'top' as const,
+          labels: {
+            boxWidth: 12,
+            padding: 8,
+            font: {
+              size: 10
+            }
+          }
         },
         title: {
           display: !!props.chart.title,
           text: props.chart.title || '',
+          font: {
+            size: 12
+          },
+          padding: {
+            top: 5,
+            bottom: 10
+          }
         },
+        tooltip: {
+          titleFont: {
+            size: 11
+          },
+          bodyFont: {
+            size: 10
+          }
+        }
       },
       animation: {
         duration: 0 // Disable animations for better performance
+      },
+      layout: {
+        padding: {
+          top: 5,
+          right: 5,
+          bottom: 5,
+          left: 5
+        }
       }
     }
 
@@ -144,7 +174,7 @@ const createChart = async () => {
           data: values,
           backgroundColor: generateColors(labels.length),
           borderColor: props.chart.borderColor || '#ffffff',
-          borderWidth: 2
+          borderWidth: 1
         }]
       }
     } else {
@@ -176,8 +206,8 @@ const createChart = async () => {
             data: validData,
             backgroundColor: props.chart.backgroundColor || '#3b82f6',
             borderColor: props.chart.borderColor || '#1d4ed8',
-            pointRadius: 4,
-            pointHoverRadius: 6
+            pointRadius: 3,
+            pointHoverRadius: 4
           }]
         }
         
@@ -187,13 +217,29 @@ const createChart = async () => {
             position: 'bottom',
             title: {
               display: true,
-              text: props.chart.xAxis
+              text: props.chart.xAxis,
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 9
+              }
             }
           },
           y: {
             title: {
               display: true,
-              text: props.chart.yAxis
+              text: props.chart.yAxis,
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 9
+              }
             }
           }
         }
@@ -220,11 +266,11 @@ const createChart = async () => {
             data: values,
             backgroundColor: props.chart.backgroundColor || '#3b82f6',
             borderColor: props.chart.borderColor || '#1d4ed8',
-            borderWidth: props.chart.type === 'line' ? 3 : 1,
+            borderWidth: props.chart.type === 'line' ? 2 : 1,
             fill: props.chart.type === 'line' ? false : true,
             tension: props.chart.type === 'line' ? 0.4 : 0,
-            pointRadius: props.chart.type === 'line' ? 4 : 0,
-            pointHoverRadius: props.chart.type === 'line' ? 6 : 0
+            pointRadius: props.chart.type === 'line' ? 2 : 0,
+            pointHoverRadius: props.chart.type === 'line' ? 4 : 0
           }]
         }
 
@@ -233,13 +279,31 @@ const createChart = async () => {
             beginAtZero: true,
             title: {
               display: true,
-              text: props.chart.yAxis
+              text: props.chart.yAxis,
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 9
+              }
             }
           },
           x: {
             title: {
               display: true,
-              text: props.chart.xAxis
+              text: props.chart.xAxis,
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 9
+              },
+              maxRotation: 45,
+              minRotation: 0
             }
           }
         }
@@ -321,11 +385,13 @@ onUnmounted(() => {
   position: relative;
   height: 100%;
   width: 100%;
-  min-height: 200px;
+  min-height: 100px;
+  overflow: hidden;
 }
 
 canvas {
   max-width: 100%;
   max-height: 100%;
+  display: block;
 }
 </style>

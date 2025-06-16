@@ -5,10 +5,10 @@
       <span>Chart not found</span>
     </div>
     <div v-else class="h-full flex flex-col">
-      <div v-if="chart.title" class="px-4 py-2 border-b border-gray-100">
-        <h3 class="text-sm font-medium text-gray-900 truncate">{{ chart.title }}</h3>
+      <div v-if="chart.title" class="px-3 py-2 border-b border-gray-100 flex-shrink-0">
+        <h3 class="text-xs font-medium text-gray-900 truncate">{{ chart.title }}</h3>
       </div>
-      <div class="flex-1 p-4">
+      <div class="flex-1 min-h-0 p-2">
         <ChartPreview :chart="chart" class="w-full h-full" />
       </div>
     </div>

@@ -289,7 +289,7 @@ const initializeGridStack = async () => {
 
   try {
     gridStack = GridStack.init({
-      cellHeight: 70,
+      cellHeight: 80,
       verticalMargin: 10,
       horizontalMargin: 10,
       minRow: 1,
@@ -378,8 +378,8 @@ onUnmounted(() => {
 <style scoped>
 .widget-header {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 4px;
+  right: 4px;
   z-index: 10;
 }
 
@@ -393,12 +393,15 @@ onUnmounted(() => {
 
 .widget-content {
   height: 100%;
-  padding: 8px;
+  width: 100%;
+  overflow: hidden;
 }
 
 .grid-stack-item-content {
   position: relative;
   height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* GridStack overrides */
@@ -412,5 +415,16 @@ onUnmounted(() => {
 
 :deep(.grid-stack-item.ui-resizable-resizing) {
   opacity: 0.8;
+}
+
+/* Ensure proper sizing for chart containers */
+:deep(.chart-container) {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+:deep(.chart-container canvas) {
+  height: 100% !important;
+  width: 100% !important;
 }
 </style>
