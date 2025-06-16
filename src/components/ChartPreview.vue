@@ -1,0 +1,331 @@
+<template>
+  <div class="chart-container">
+    <div v-if="error" class="flex items-center justify-center h-full text-red-500 text-sm">
+      <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+      {{ error }}
+    </div>
+    <div v-else-if="!hasValidData" class="flex items-center justify-center h-full text-gray-500 text-sm">
+      <ChartBarIcon class="h-8 w-8 mr-2" />
+      No data available
+    </div>
+    <canvas v-else ref="canvasRef" class="w-full h-full"></canvas>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarController,
+  LineController,
+  PieController,
+  ScatterController,
+  ChartConfiguration,
+  ChartType
+} from 'chart.js'
+import { ExclamationTriangleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { useDataSourceStore } from '../stores/dataSource'
+import type { ChartConfig } from '../stores/chart'
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarController,
+  LineController,
+  PieController,
+  ScatterController
+)
+
+interface Props {
+  chart: Partial<ChartConfig>
+}
+
+const props = defineProps<Props>()
+const dataSourceStore = useDataSourceStore()
+
+const canvasRef = ref<HTMLCanvasElement>()
+const error = ref<string>('')
+let chartInstance: ChartJS | null = null
+
+const hasValidData = computed(() => {
+  if (!props.chart.dataSourceId || !props.chart.type) return false
+  
+  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
+  if (!dataSource || dataSource.rows.length === 0) return false
+  
+  if (props.chart.type === 'pie') {
+    return !!props.chart.category
+  } else {
+    return !!props.chart.xAxis && !!props.chart.yAxis
+  }
+})
+
+const createChart = async () => {
+  error.value = ''
+  
+  if (!canvasRef.value || !hasValidData.value) return
+
+  try {
+    const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)
+    if (!dataSource) {
+      error.value = 'Data source not found'
+      return
+    }
+
+    // Destroy existing chart
+    if (chartInstance) {
+      chartInstance.destroy()
+      chartInstance = null
+    }
+
+    let chartData: any
+    let chartOptions: any = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top' as const,
+        },
+        title: {
+          display: !!props.chart.title,
+          text: props.chart.title || '',
+        },
+      },
+      animation: {
+        duration: 0 // Disable animations for better performance
+      }
+    }
+
+    if (props.chart.type === 'pie') {
+      const categoryColumn = dataSource.columns.find(c => c.name === props.chart.category)
+      if (!categoryColumn) {
+        error.value = 'Category column not found'
+        return
+      }
+
+      // Count occurrences of each category
+      const categoryCounts: { [key: string]: number } = {}
+      categoryColumn.values.forEach(value => {
+        if (value != null && value !== '') {
+          const key = String(value)
+          categoryCounts[key] = (categoryCounts[key] || 0) + 1
+        }
+      })
+
+      const labels = Object.keys(categoryCounts)
+      const values = Object.values(categoryCounts)
+
+      if (labels.length === 0) {
+        error.value = 'No valid data for pie chart'
+        return
+      }
+
+      chartData = {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: generateColors(labels.length),
+          borderColor: props.chart.borderColor || '#ffffff',
+          borderWidth: 2
+        }]
+      }
+    } else {
+      const xColumn = dataSource.columns.find(c => c.name === props.chart.xAxis)
+      const yColumn = dataSource.columns.find(c => c.name === props.chart.yAxis)
+      
+      if (!xColumn || !yColumn) {
+        error.value = 'Required columns not found'
+        return
+      }
+
+      // Filter out null/undefined values and ensure numeric y-values
+      const validData = dataSource.rows
+        .map((row, index) => ({
+          x: row[props.chart.xAxis!],
+          y: Number(row[props.chart.yAxis!])
+        }))
+        .filter(item => item.x != null && item.x !== '' && !isNaN(item.y))
+
+      if (validData.length === 0) {
+        error.value = 'No valid data points found'
+        return
+      }
+
+      if (props.chart.type === 'scatter') {
+        chartData = {
+          datasets: [{
+            label: `${props.chart.yAxis} vs ${props.chart.xAxis}`,
+            data: validData,
+            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            borderColor: props.chart.borderColor || '#1d4ed8',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        }
+        
+        chartOptions.scales = {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            title: {
+              display: true,
+              text: props.chart.xAxis
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: props.chart.yAxis
+            }
+          }
+        }
+      } else {
+        // For bar and line charts, group by x-axis and sum y-values
+        const groupedData: { [key: string]: number } = {}
+        validData.forEach(item => {
+          const key = String(item.x)
+          groupedData[key] = (groupedData[key] || 0) + item.y
+        })
+
+        const labels = Object.keys(groupedData)
+        const values = Object.values(groupedData)
+
+        if (labels.length === 0) {
+          error.value = 'No valid data for chart'
+          return
+        }
+
+        chartData = {
+          labels,
+          datasets: [{
+            label: props.chart.yAxis,
+            data: values,
+            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            borderColor: props.chart.borderColor || '#1d4ed8',
+            borderWidth: props.chart.type === 'line' ? 3 : 1,
+            fill: props.chart.type === 'line' ? false : true,
+            tension: props.chart.type === 'line' ? 0.4 : 0,
+            pointRadius: props.chart.type === 'line' ? 4 : 0,
+            pointHoverRadius: props.chart.type === 'line' ? 6 : 0
+          }]
+        }
+
+        chartOptions.scales = {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: props.chart.yAxis
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: props.chart.xAxis
+            }
+          }
+        }
+      }
+    }
+
+    const config: ChartConfiguration = {
+      type: props.chart.type as ChartType,
+      data: chartData,
+      options: chartOptions
+    }
+
+    // Wait for next tick to ensure canvas is ready
+    await nextTick()
+    
+    if (canvasRef.value) {
+      chartInstance = new ChartJS(canvasRef.value, config)
+    }
+  } catch (err) {
+    console.error('Chart creation error:', err)
+    error.value = `Failed to create chart: ${err instanceof Error ? err.message : 'Unknown error'}`
+  }
+}
+
+const generateColors = (count: number) => {
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
+    '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
+  ]
+  
+  const result = []
+  for (let i = 0; i < count; i++) {
+    result.push(colors[i % colors.length])
+  }
+  return result
+}
+
+// Watch for changes and recreate chart
+watch(
+  () => [
+    props.chart.dataSourceId, 
+    props.chart.type, 
+    props.chart.xAxis, 
+    props.chart.yAxis, 
+    props.chart.category, 
+    props.chart.backgroundColor, 
+    props.chart.borderColor, 
+    props.chart.title
+  ],
+  () => {
+    if (hasValidData.value) {
+      nextTick(() => {
+        createChart()
+      })
+    }
+  },
+  { deep: true }
+)
+
+onMounted(() => {
+  if (hasValidData.value) {
+    nextTick(() => {
+      createChart()
+    })
+  }
+})
+
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+})
+</script>
+
+<style scoped>
+.chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  min-height: 200px;
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+</style>
