@@ -214,13 +214,15 @@
             </div>
 
             <button
-              @click="addChart"
+              @click="addOrUpdateChart"
               :disabled="!isChartConfigValid"
               class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              <PlusIcon class="h-4 w-4 mr-2" />
-              Add to Dashboard
+              <PlusIcon v-if="!editingChartId" class="h-4 w-4 mr-2" />
+              <span v-if="editingChartId">Update Chart</span>
+              <span v-else>Add to Dashboard</span>
             </button>
+            <button v-if="editingChartId" @click="cancelEdit" class="w-full mt-2 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
           </div>
         </div>
       </div>
@@ -259,14 +261,19 @@
                 :gs-h="chart.layout.h"
               >
                 <div class="grid-stack-item-content">
-                  <div class="chart-header">
-                    <button
-                      @click="removeChart(chart.id)"
-                      class="chart-remove-btn"
-                      title="Remove chart"
-                    >
-                      <XMarkIcon class="h-4 w-4" />
-                    </button>
+                  <div class="chart-header flex justify-end items-center gap-2">
+                    <!-- 3-dot menu -->
+                    <div class="relative">
+                      <button @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+                      </button>
+                      <div v-if="openChartMenuId === chart.id" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
+                        <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
+                        <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
+                        <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
+                        <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
+                      </div>
+                    </div>
                   </div>
                   <div class="chart-content">
                     <ChartPreview :chart="chart.config" class="w-full h-full" />
@@ -395,6 +402,67 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
   } catch (error) {
     console.error('Failed to parse dropped field data:', error)
   }
+}
+
+const openChartMenuId = ref<string | null>(null)
+const editingChartId = ref<string | null>(null)
+const chartTypeColRef = ref<HTMLElement>()
+
+const toggleChartMenu = (id: string) => {
+  openChartMenuId.value = openChartMenuId.value === id ? null : id
+}
+
+const editChart = (chart: ChartItem) => {
+  openChartMenuId.value = null
+  editingChartId.value = chart.id
+  selectedChartType.value = chart.config.type || ''
+  chartConfig.title = chart.config.title || ''
+  chartConfig.xAxis = chart.config.xAxis || ''
+  chartConfig.yAxis = chart.config.yAxis || ''
+  chartConfig.category = chart.config.category || ''
+  chartConfig.backgroundColor = chart.config.backgroundColor || '#3b82f6'
+  chartConfig.borderColor = chart.config.borderColor || '#1d4ed8'
+  selectedDataSourceId.value = chart.config.dataSourceId || ''
+}
+
+const exportChart = (chart: ChartItem, type: 'pdf' | 'png') => {
+  openChartMenuId.value = null
+  alert(`Exporting chart '${chart.config.title || chart.config.name}' as ${type.toUpperCase()} (stub)`)
+}
+
+const addOrUpdateChart = () => {
+  if (!isChartConfigValid.value || !selectedDataSource.value) return
+  if (editingChartId.value) {
+    // Update existing chart
+    const idx = charts.value.findIndex(c => c.id === editingChartId.value)
+    if (idx !== -1) {
+      charts.value[idx].config = {
+        ...charts.value[idx].config,
+        id: charts.value[idx].id,
+        name: chartConfig.title || `Chart ${idx + 1}`,
+        type: selectedChartType.value as ChartConfig['type'],
+        dataSourceId: selectedDataSourceId.value,
+        xAxis: chartConfig.xAxis || undefined,
+        yAxis: chartConfig.yAxis || undefined,
+        category: chartConfig.category || undefined,
+        title: chartConfig.title,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        createdAt: charts.value[idx].config.createdAt || new Date()
+      }
+    }
+    editingChartId.value = null
+    resetChartConfig()
+    nextTick(() => initializeGridStack())
+    return
+  }
+  // Add new chart (existing logic)
+  addChart()
+}
+
+const cancelEdit = () => {
+  editingChartId.value = null
+  resetChartConfig()
 }
 
 const addChart = () => {
@@ -588,6 +656,15 @@ onUnmounted(() => {
   top: 8px;
   right: 8px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.chart-menu-btn {
+  color: #6b7280;
+}
+.chart-menu-btn:hover {
+  color: #374151;
 }
 
 .chart-remove-btn {
