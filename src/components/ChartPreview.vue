@@ -77,6 +77,39 @@ const hasValidData = computed(() => {
   }
 })
 
+// Add color palettes
+const colorPalettes: Record<string, string[]> = {
+  default: [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
+    '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
+  ],
+  pastel: [
+    '#a5b4fc', '#fbcfe8', '#bbf7d0', '#fde68a', '#ddd6fe',
+    '#bae6fd', '#fed7aa', '#d9f99d', '#f9a8d4', '#c7d2fe',
+    '#99f6e4', '#fecdd3', '#e9d5ff', '#bbf7d0', '#fef08a'
+  ],
+  vivid: [
+    '#e11d48', '#2563eb', '#059669', '#f59e42', '#a21caf',
+    '#0ea5e9', '#f43f5e', '#22d3ee', '#facc15', '#7c3aed',
+    '#f472b6', '#16a34a', '#fbbf24', '#f87171', '#38bdf8'
+  ],
+  earth: [
+    '#a16207', '#713f12', '#166534', '#155e75', '#7c2d12',
+    '#be185d', '#4d7c0f', '#b91c1c', '#0e7490', '#a21caf',
+    '#ca8a04', '#ea580c', '#15803d', '#1e293b', '#f59e42'
+  ]
+}
+
+function getPalette(scheme: string, count: number): string[] {
+  const palette = colorPalettes[scheme] || colorPalettes['default']
+  const result = []
+  for (let i = 0; i < count; i++) {
+    result.push(palette[i % palette.length])
+  }
+  return result
+}
+
 const createChart = async () => {
   error.value = ''
   if (!canvasRef.value || !hasValidData.value) return
@@ -207,12 +240,14 @@ const createChart = async () => {
           error.value = 'No valid data for chart'
           return
         }
+        // Use color scheme for bar colors
+        const barColors = getPalette(props.chart.colorScheme || 'default', labels.length)
         chartData = {
           labels,
           datasets: [{
             label: yAxis,
             data: values,
-            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            backgroundColor: barColors,
             borderColor: props.chart.borderColor || '#1d4ed8',
             borderWidth: 1
           }]

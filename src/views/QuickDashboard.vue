@@ -172,12 +172,12 @@
                 @dragover.prevent
                 @dragenter.prevent
                 class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
-                :class="{ 'border-primary-400 bg-primary-50': chartConfig.xAxis.length > 0 }"
+                :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 }"
               >
-                <template v-if="chartConfig.xAxis.length > 0">
+                <template v-if="Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0">
                   <span v-for="(field, idx) in chartConfig.xAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
                     {{ field }}
-                    <button @click.stop="chartConfig.xAxis.splice(idx, 1)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+                    <button @click.stop="Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.splice(idx, 1)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
                   </span>
                 </template>
                 <span v-else>Drop X-axis fields here (dimensions)</span>
@@ -228,6 +228,18 @@
             <div v-if="selectedChartType === 'bar'" class="flex items-center gap-2 mt-2">
               <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
               <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
+            </div>
+
+            <div v-if="selectedChartType === 'bar'" class="mt-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
+              <select v-model="chartConfig.colorScheme" class="w-full rounded border-gray-300 text-sm">
+                <option v-for="scheme in colorSchemes" :key="scheme.value" :value="scheme.value">{{ scheme.label }}</option>
+              </select>
+              <!-- Color scheme preview -->
+              <div class="flex items-center gap-1 mt-2">
+                <span v-for="(color, idx) in colorPalettes[chartConfig.colorScheme] && colorPalettes[chartConfig.colorScheme].slice(0, 8)" :key="color + idx"
+                  class="w-5 h-5 rounded-full border border-gray-200" :style="{ background: color }"></span>
+              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
@@ -368,14 +380,59 @@ interface ChartItem {
 
 const charts = ref<ChartItem[]>([])
 
-const chartConfig = reactive({
+// Add color scheme options
+const colorSchemes = [
+  { value: 'default', label: 'Default' },
+  { value: 'pastel', label: 'Pastel' },
+  { value: 'vivid', label: 'Vivid' },
+  { value: 'earth', label: 'Earth' }
+]
+
+// Add color palettes for preview
+const colorPalettes: Record<string, string[]> = {
+  default: [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
+    '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
+  ],
+  pastel: [
+    '#a5b4fc', '#fbcfe8', '#bbf7d0', '#fde68a', '#ddd6fe',
+    '#bae6fd', '#fed7aa', '#d9f99d', '#f9a8d4', '#c7d2fe',
+    '#99f6e4', '#fecdd3', '#e9d5ff', '#bbf7d0', '#fef08a'
+  ],
+  vivid: [
+    '#e11d48', '#2563eb', '#059669', '#f59e42', '#a21caf',
+    '#0ea5e9', '#f43f5e', '#22d3ee', '#facc15', '#7c3aed',
+    '#f472b6', '#16a34a', '#fbbf24', '#f87171', '#38bdf8'
+  ],
+  earth: [
+    '#a16207', '#713f12', '#166534', '#155e75', '#7c2d12',
+    '#be185d', '#4d7c0f', '#b91c1c', '#0e7490', '#a21caf',
+    '#ca8a04', '#ea580c', '#15803d', '#1e293b', '#f59e42'
+  ]
+}
+
+// Extend ChartConfigLike
+interface ChartConfigLike {
+  title: string
+  xAxis: string[] | string
+  yAxis: string
+  category: string
+  backgroundColor: string
+  borderColor: string
+  horizontal: boolean
+  colorScheme: string
+}
+
+const chartConfig = reactive<ChartConfigLike>({
   title: '',
   xAxis: [],
   yAxis: '',
   category: '',
   backgroundColor: '#3b82f6',
   borderColor: '#1d4ed8',
-  horizontal: false
+  horizontal: false,
+  colorScheme: 'default'
 })
 
 const chartTypes = [
@@ -435,7 +492,7 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
     }
     if (target === 'xAxis' && selectedChartType.value === 'bar') {
       // Add to array, no duplicates
-      if (!chartConfig.xAxis.includes(fieldData.name)) {
+      if (Array.isArray(chartConfig.xAxis) && !chartConfig.xAxis.includes(fieldData.name)) {
         chartConfig.xAxis.push(fieldData.name)
       }
     } else {
@@ -460,9 +517,15 @@ const editChart = (chart: ChartItem) => {
   selectedChartType.value = chart.config.type || ''
   chartConfig.title = chart.config.title || ''
   if (chart.config.type === 'bar') {
-    chartConfig.xAxis = Array.isArray(chart.config.xAxis) ? [...chart.config.xAxis] : (chart.config.xAxis ? [chart.config.xAxis] : [])
+    if (Array.isArray(chart.config.xAxis)) {
+      chartConfig.xAxis = [...chart.config.xAxis]
+    } else if (typeof chart.config.xAxis === 'string' && chart.config.xAxis) {
+      chartConfig.xAxis = [chart.config.xAxis]
+    } else {
+      chartConfig.xAxis = []
+    }
   } else {
-    chartConfig.xAxis = chart.config.xAxis || ''
+    chartConfig.xAxis = typeof chart.config.xAxis === 'string' ? chart.config.xAxis : ''
   }
   chartConfig.yAxis = chart.config.yAxis || ''
   chartConfig.category = chart.config.category || ''
@@ -496,6 +559,7 @@ const addOrUpdateChart = () => {
         backgroundColor: chartConfig.backgroundColor,
         borderColor: chartConfig.borderColor,
         horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
+        colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
         createdAt: charts.value[idx].config.createdAt || new Date()
       }
     }
@@ -530,6 +594,7 @@ const addChart = () => {
       backgroundColor: chartConfig.backgroundColor,
       borderColor: chartConfig.borderColor,
       horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
+      colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
       createdAt: new Date()
     },
     layout: {

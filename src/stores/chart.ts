@@ -14,6 +14,7 @@ export interface ChartConfig {
   borderColor: string
   createdAt: Date
   horizontal?: boolean // for bar chart orientation
+  colorScheme?: string // for bar chart color scheme
 }
 
 export const useChartStore = defineStore('chart', () => {
