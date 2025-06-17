@@ -25,6 +25,14 @@
               <DocumentCheckIcon class="h-4 w-4 mr-2" />
               Save Dashboard
             </button>
+            <button
+              @click="previewMode = true"
+              :disabled="charts.length === 0"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
+              Preview
+            </button>
           </div>
         </div>
       </div>
@@ -33,6 +41,7 @@
     <div class="flex h-[calc(100vh-4rem)]">
       <!-- Left Sidebar -->
       <div
+        v-if="!previewMode"
         class="bg-white border-r border-gray-200 flex flex-col"
         :style="{ width: leftSidebarWidth + 'px', minWidth: '180px', maxWidth: '400px' }"
       >
@@ -105,6 +114,7 @@
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
+        v-if="!previewMode"
         class="resizer"
         @mousedown="startResizing('left')"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
@@ -112,6 +122,7 @@
 
       <!-- Chart Type & Properties Column -->
       <div
+        v-if="!previewMode"
         class="bg-white border-r border-gray-200 flex flex-col"
         :style="{ width: chartTypeColWidth + 'px', minWidth: '200px', maxWidth: '400px' }"
       >
@@ -277,13 +288,14 @@
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
       <div
+        v-if="!previewMode"
         class="resizer"
         @mousedown="startResizing('chartType')"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
       ></div>
 
       <!-- Main Dashboard Area -->
-      <div class="flex-1 p-6">
+      <div :class="['flex-1 p-6', previewMode ? 'bg-gray-900' : '']" style="position:relative;">
         <div class="bg-white rounded-lg shadow-sm h-full">
           <div class="p-6 h-full">
             <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
@@ -312,10 +324,10 @@
                   <div class="chart-header flex justify-end items-center gap-2">
                     <!-- 3-dot menu -->
                     <div class="relative">
-                      <button @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                      <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                       </button>
-                      <div v-if="openChartMenuId === chart.id" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
+                      <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
                         <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
                         <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
                         <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
@@ -329,6 +341,8 @@
                 </div>
               </div>
             </div>
+            <!-- Exit Preview Button -->
+            <button v-if="previewMode" @click="previewMode = false" class="absolute top-4 right-4 z-50 px-4 py-2 bg-white text-primary-700 border border-gray-300 rounded shadow hover:bg-gray-50">Exit Preview</button>
           </div>
         </div>
       </div>
@@ -746,6 +760,8 @@ const stopResizing = () => {
   document.removeEventListener('mousemove', onResizing)
   document.removeEventListener('mouseup', stopResizing)
 }
+
+const previewMode = ref(false)
 
 onMounted(() => {
   // Initialize with empty state
