@@ -6,13 +6,14 @@ export interface ChartConfig {
   name: string
   type: 'bar' | 'line' | 'pie' | 'scatter'
   dataSourceId: string
-  xAxis?: string
+  xAxis?: string | string[]
   yAxis?: string
   category?: string
   title: string
   backgroundColor: string
   borderColor: string
   createdAt: Date
+  horizontal?: boolean // for bar chart orientation
 }
 
 export const useChartStore = defineStore('chart', () => {

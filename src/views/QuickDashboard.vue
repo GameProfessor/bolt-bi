@@ -165,6 +165,37 @@
               </div>
             </div>
 
+            <div v-else-if="selectedChartType === 'bar'">
+              <label class="block text-xs font-medium text-gray-600 mb-1">X-Axis (Dimensions)</label>
+              <div
+                @drop="onFieldDrop($event, 'xAxis')"
+                @dragover.prevent
+                @dragenter.prevent
+                class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+                :class="{ 'border-primary-400 bg-primary-50': chartConfig.xAxis.length > 0 }"
+              >
+                <template v-if="chartConfig.xAxis.length > 0">
+                  <span v-for="(field, idx) in chartConfig.xAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                    {{ field }}
+                    <button @click.stop="chartConfig.xAxis.splice(idx, 1)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+                  </span>
+                </template>
+                <span v-else>Drop X-axis fields here (dimensions)</span>
+              </div>
+              <div class="mt-2">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Y-Axis (Values)</label>
+                <div
+                  @drop="onFieldDrop($event, 'yAxis')"
+                  @dragover.prevent
+                  @dragenter.prevent
+                  class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                  :class="{ 'border-primary-400 bg-primary-50': chartConfig.yAxis }"
+                >
+                  {{ chartConfig.yAxis || 'Drop Y-axis field here (numbers only)' }}
+                </div>
+              </div>
+            </div>
+
             <div v-else>
               <div class="space-y-2">
                 <div>
@@ -192,6 +223,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div v-if="selectedChartType === 'bar'" class="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
+              <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
@@ -334,11 +370,12 @@ const charts = ref<ChartItem[]>([])
 
 const chartConfig = reactive({
   title: '',
-  xAxis: '',
+  xAxis: [],
   yAxis: '',
   category: '',
   backgroundColor: '#3b82f6',
-  borderColor: '#1d4ed8'
+  borderColor: '#1d4ed8',
+  horizontal: false
 })
 
 const chartTypes = [
@@ -355,9 +392,10 @@ const selectedDataSource = computed(() => {
 
 const isChartConfigValid = computed(() => {
   if (!selectedChartType.value || !selectedDataSourceId.value) return false
-  
   if (selectedChartType.value === 'pie') {
     return !!chartConfig.category
+  } else if (selectedChartType.value === 'bar') {
+    return Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 && !!chartConfig.yAxis
   } else {
     return !!chartConfig.xAxis && !!chartConfig.yAxis
   }
@@ -369,9 +407,10 @@ const onDataSourceChange = () => {
 
 const resetChartConfig = () => {
   chartConfig.title = ''
-  chartConfig.xAxis = ''
+  chartConfig.xAxis = []
   chartConfig.yAxis = ''
   chartConfig.category = ''
+  chartConfig.horizontal = false
   selectedChartType.value = ''
 }
 
@@ -386,19 +425,22 @@ const onFieldDragStart = (event: DragEvent, column: DataSourceColumn) => {
 
 const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') => {
   event.preventDefault()
-  
   if (!event.dataTransfer) return
-  
   try {
     const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
-    
     // Validate field type for Y-axis (should be numeric)
     if (target === 'yAxis' && fieldData.type !== 'number') {
       alert('Y-axis requires a numeric field')
       return
     }
-    
-    chartConfig[target] = fieldData.name
+    if (target === 'xAxis' && selectedChartType.value === 'bar') {
+      // Add to array, no duplicates
+      if (!chartConfig.xAxis.includes(fieldData.name)) {
+        chartConfig.xAxis.push(fieldData.name)
+      }
+    } else {
+      chartConfig[target] = fieldData.name
+    }
   } catch (error) {
     console.error('Failed to parse dropped field data:', error)
   }
@@ -417,11 +459,16 @@ const editChart = (chart: ChartItem) => {
   editingChartId.value = chart.id
   selectedChartType.value = chart.config.type || ''
   chartConfig.title = chart.config.title || ''
-  chartConfig.xAxis = chart.config.xAxis || ''
+  if (chart.config.type === 'bar') {
+    chartConfig.xAxis = Array.isArray(chart.config.xAxis) ? [...chart.config.xAxis] : (chart.config.xAxis ? [chart.config.xAxis] : [])
+  } else {
+    chartConfig.xAxis = chart.config.xAxis || ''
+  }
   chartConfig.yAxis = chart.config.yAxis || ''
   chartConfig.category = chart.config.category || ''
   chartConfig.backgroundColor = chart.config.backgroundColor || '#3b82f6'
   chartConfig.borderColor = chart.config.borderColor || '#1d4ed8'
+  chartConfig.horizontal = chart.config.horizontal || false
   selectedDataSourceId.value = chart.config.dataSourceId || ''
 }
 
@@ -442,12 +489,13 @@ const addOrUpdateChart = () => {
         name: chartConfig.title || `Chart ${idx + 1}`,
         type: selectedChartType.value as ChartConfig['type'],
         dataSourceId: selectedDataSourceId.value,
-        xAxis: chartConfig.xAxis || undefined,
+        xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
         yAxis: chartConfig.yAxis || undefined,
         category: chartConfig.category || undefined,
         title: chartConfig.title,
         backgroundColor: chartConfig.backgroundColor,
         borderColor: chartConfig.borderColor,
+        horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
         createdAt: charts.value[idx].config.createdAt || new Date()
       }
     }
@@ -467,7 +515,6 @@ const cancelEdit = () => {
 
 const addChart = () => {
   if (!isChartConfigValid.value || !selectedDataSource.value) return
-
   const chartId = Date.now().toString()
   const newChart: ChartItem = {
     id: chartId,
@@ -476,12 +523,13 @@ const addChart = () => {
       name: chartConfig.title || `Chart ${charts.value.length + 1}`,
       type: selectedChartType.value as ChartConfig['type'],
       dataSourceId: selectedDataSourceId.value,
-      xAxis: chartConfig.xAxis || undefined,
+      xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
       yAxis: chartConfig.yAxis || undefined,
       category: chartConfig.category || undefined,
       title: chartConfig.title,
       backgroundColor: chartConfig.backgroundColor,
       borderColor: chartConfig.borderColor,
+      horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
       createdAt: new Date()
     },
     layout: {
@@ -491,10 +539,8 @@ const addChart = () => {
       h: 4
     }
   }
-
   charts.value.push(newChart)
   resetChartConfig()
-
   // Reinitialize GridStack
   nextTick(() => {
     initializeGridStack()

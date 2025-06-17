@@ -66,12 +66,12 @@ let chartInstance: ChartJS | null = null
 
 const hasValidData = computed(() => {
   if (!props.chart.dataSourceId || !props.chart.type) return false
-  
   const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
   if (!dataSource || dataSource.rows.length === 0) return false
-  
   if (props.chart.type === 'pie') {
     return !!props.chart.category
+  } else if (props.chart.type === 'bar') {
+    return Array.isArray(props.chart.xAxis) ? props.chart.xAxis.length > 0 && !!props.chart.yAxis : !!props.chart.xAxis && !!props.chart.yAxis
   } else {
     return !!props.chart.xAxis && !!props.chart.yAxis
   }
@@ -79,22 +79,18 @@ const hasValidData = computed(() => {
 
 const createChart = async () => {
   error.value = ''
-  
   if (!canvasRef.value || !hasValidData.value) return
-
   try {
     const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)
     if (!dataSource) {
       error.value = 'Data source not found'
       return
     }
-
     // Destroy existing chart
     if (chartInstance) {
       chartInstance.destroy()
       chartInstance = null
     }
-
     let chartData: any
     let chartOptions: any = {
       responsive: true,
@@ -143,7 +139,6 @@ const createChart = async () => {
         }
       }
     }
-
     if (props.chart.type === 'pie') {
       const categoryColumn = dataSource.columns.find(c => c.name === props.chart.category)
       if (!categoryColumn) {
@@ -176,6 +171,75 @@ const createChart = async () => {
           borderColor: props.chart.borderColor || '#ffffff',
           borderWidth: 1
         }]
+      }
+    } else if (props.chart.type === 'bar') {
+      // Multi-dimension grouping for bar chart
+      const xAxes = Array.isArray(props.chart.xAxis) ? props.chart.xAxis : props.chart.xAxis ? [props.chart.xAxis] : [];
+      const yAxis = props.chart.yAxis
+      if (!yAxis || xAxes.length === 0) {
+        error.value = 'X and Y axis required'
+        return
+      }
+      // Group rows by all xAxes fields
+      if (xAxes.every(f => typeof f === 'string')) {
+        const groupKey = (row: any) => {
+          let key = ''
+          for (let i = 0; i < xAxes.length; i++) {
+            if (i > 0) key += ' | '
+            const field: string = xAxes[i] as string
+            key += (row as Record<string, any>)[field]
+          }
+          return key
+        }
+        const grouped: Record<string, number> = {}
+        dataSource.rows.forEach(row => {
+          const key = groupKey(row)
+          if (typeof yAxis === 'string') {
+            const yVal = Number(row[yAxis])
+            if (key && !isNaN(yVal)) {
+              grouped[key] = (grouped[key] || 0) + yVal
+            }
+          }
+        })
+        const labels = Object.keys(grouped)
+        const values = Object.values(grouped)
+        if (labels.length === 0) {
+          error.value = 'No valid data for chart'
+          return
+        }
+        chartData = {
+          labels,
+          datasets: [{
+            label: yAxis,
+            data: values,
+            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            borderColor: props.chart.borderColor || '#1d4ed8',
+            borderWidth: 1
+          }]
+        }
+        chartOptions.scales = {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: !props.chart.horizontal,
+              text: props.chart.yAxis,
+              font: { size: 10 }
+            },
+            ticks: { font: { size: 9 } }
+          },
+          x: {
+            title: {
+              display: props.chart.horizontal,
+              text: xAxes.join(', '),
+              font: { size: 10 }
+            },
+            ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }
+          }
+        }
+        chartOptions.indexAxis = props.chart.horizontal ? 'y' : 'x'
+      } else {
+        error.value = 'Invalid X-axis fields'
+        return
       }
     } else {
       const xColumn = dataSource.columns.find(c => c.name === props.chart.xAxis)
