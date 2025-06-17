@@ -48,6 +48,16 @@
                 <Squares2X2Icon class="w-4 h-4 mr-2" />
                 Dashboards
               </router-link>
+              <router-link
+                to="/quick-dashboard"
+                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+                :class="$route.name === 'QuickDashboard' 
+                  ? 'border-primary-500 text-primary-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+              >
+                <BoltIcon class="w-4 h-4 mr-2" />
+                Quick Dashboard
+              </router-link>
             </div>
           </div>
         </div>
@@ -65,6 +75,7 @@ import {
   ChartBarIcon, 
   TableCellsIcon, 
   PresentationChartLineIcon, 
-  Squares2X2Icon 
+  Squares2X2Icon,
+  BoltIcon
 } from '@heroicons/vue/24/outline'
 </script>

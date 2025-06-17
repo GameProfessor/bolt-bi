@@ -4,6 +4,7 @@ import DataSources from '../views/DataSources.vue'
 import Charts from '../views/Charts.vue'
 import Dashboards from '../views/Dashboards.vue'
 import DashboardEditor from '../views/DashboardEditor.vue'
+import QuickDashboard from '../views/QuickDashboard.vue'
 
 const routes = [
   {
@@ -31,6 +32,11 @@ const routes = [
     name: 'DashboardEditor',
     component: DashboardEditor,
     props: true
+  },
+  {
+    path: '/quick-dashboard',
+    name: 'QuickDashboard',
+    component: QuickDashboard
   }
 ]
 
