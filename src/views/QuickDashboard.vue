@@ -32,7 +32,10 @@
 
     <div class="flex h-[calc(100vh-4rem)]">
       <!-- Left Sidebar -->
-      <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div
+        class="bg-white border-r border-gray-200 flex flex-col"
+        :style="{ width: leftSidebarWidth + 'px', minWidth: '180px', maxWidth: '400px' }"
+      >
         <!-- Dashboard Name -->
         <div class="p-4 border-b border-gray-200">
           <label for="dashboardName" class="block text-sm font-medium text-gray-700 mb-2">
@@ -98,9 +101,22 @@
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- Draggable Divider (between left sidebar and chart type col) -->
+      <div
+        class="resizer"
+        @mousedown="startResizing('left')"
+        :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
+      ></div>
+
+      <!-- Chart Type & Properties Column -->
+      <div
+        class="bg-white border-r border-gray-200 flex flex-col"
+        :style="{ width: chartTypeColWidth + 'px', minWidth: '200px', maxWidth: '400px' }"
+      >
         <!-- Chart Type Selection -->
-        <div v-if="selectedDataSource" class="p-4 border-t border-gray-200">
+        <div v-if="selectedDataSource" class="p-4 border-b border-gray-200">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Chart Type
           </label>
@@ -123,7 +139,7 @@
         </div>
 
         <!-- Chart Properties -->
-        <div v-if="selectedChartType" class="p-4 border-t border-gray-200">
+        <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 overflow-y-auto">
           <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
           <div class="space-y-3">
             <div>
@@ -208,6 +224,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Draggable Divider (between chart type col and main dashboard) -->
+      <div
+        class="resizer"
+        @mousedown="startResizing('chartType')"
+        :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
+      ></div>
 
       <!-- Main Dashboard Area -->
       <div class="flex-1 p-6">
@@ -510,6 +533,41 @@ const goBack = () => {
   }
 }
 
+// Resizable sidebar logic
+const leftSidebarWidth = ref(240)
+const chartTypeColWidth = ref(260)
+const resizing = ref<'left' | 'chartType' | null>(null)
+const startX = ref(0)
+const startWidth = ref(0)
+
+const startResizing = (which: 'left' | 'chartType') => {
+  resizing.value = which
+  startX.value = window.event instanceof MouseEvent ? window.event.clientX : 0
+  startWidth.value = which === 'left' ? leftSidebarWidth.value : chartTypeColWidth.value
+  document.addEventListener('mousemove', onResizing)
+  document.addEventListener('mouseup', stopResizing)
+}
+
+const onResizing = (e: MouseEvent) => {
+  if (!resizing.value) return
+  const dx = e.clientX - startX.value
+  if (resizing.value === 'left') {
+    let newWidth = startWidth.value + dx
+    newWidth = Math.max(180, Math.min(400, newWidth))
+    leftSidebarWidth.value = newWidth
+  } else if (resizing.value === 'chartType') {
+    let newWidth = startWidth.value + dx
+    newWidth = Math.max(200, Math.min(400, newWidth))
+    chartTypeColWidth.value = newWidth
+  }
+}
+
+const stopResizing = () => {
+  resizing.value = null
+  document.removeEventListener('mousemove', onResizing)
+  document.removeEventListener('mouseup', stopResizing)
+}
+
 onMounted(() => {
   // Initialize with empty state
 })
@@ -519,6 +577,8 @@ onUnmounted(() => {
     gridStack.destroy(false)
     gridStack = null
   }
+  document.removeEventListener('mousemove', onResizing)
+  document.removeEventListener('mouseup', stopResizing)
 })
 </script>
 
@@ -532,10 +592,6 @@ onUnmounted(() => {
 
 .chart-remove-btn {
   @apply bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 transition-opacity duration-200;
-}
-
-.grid-stack-item:hover .chart-remove-btn {
-  @apply opacity-100;
 }
 
 .chart-content {
@@ -561,5 +617,12 @@ onUnmounted(() => {
 /* Drag and drop styling */
 .border-dashed:hover {
   @apply border-primary-400;
+}
+
+.resizer {
+  transition: background 0.2s;
+}
+.resizer:hover {
+  background: #d1d5db;
 }
 </style>
