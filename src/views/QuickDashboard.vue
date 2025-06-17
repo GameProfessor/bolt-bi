@@ -31,7 +31,7 @@
     </div>
 
     <div class="flex h-[calc(100vh-4rem)]">
-      <!-- Left Sidebar -->
+      <!-- Left Sidebar - Data Source & Fields -->
       <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
         <!-- Dashboard Name -->
         <div class="p-4 border-b border-gray-200">
@@ -99,9 +99,20 @@
           </div>
         </div>
 
+        <!-- No Data Source Message -->
+        <div v-else class="flex-1 flex items-center justify-center p-4">
+          <div class="text-center text-gray-500">
+            <TableCellsIcon class="mx-auto h-8 w-8 mb-2" />
+            <p class="text-sm">Select a data source to see fields</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Sidebar - Chart Type & Properties -->
+      <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
         <!-- Chart Type Selection -->
-        <div v-if="selectedDataSource" class="p-4 border-t border-gray-200">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+        <div v-if="selectedDataSource" class="p-4 border-b border-gray-200">
+          <label class="block text-sm font-medium text-gray-700 mb-3">
             Chart Type
           </label>
           <div class="grid grid-cols-2 gap-2">
@@ -123,80 +134,104 @@
         </div>
 
         <!-- Chart Properties -->
-        <div v-if="selectedChartType" class="p-4 border-t border-gray-200">
-          <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
-              <input
-                v-model="chartConfig.title"
-                type="text"
-                placeholder="Enter chart title"
-                class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              />
-            </div>
-
-            <div v-if="selectedChartType === 'pie'">
-              <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
-              <div
-                @drop="onFieldDrop($event, 'category')"
-                @dragover.prevent
-                @dragenter.prevent
-                class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-                :class="{ 'border-primary-400 bg-primary-50': chartConfig.category }"
-              >
-                {{ chartConfig.category || 'Drop category field here' }}
+        <div v-if="selectedChartType" class="flex-1 overflow-hidden flex flex-col">
+          <div class="p-4 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-700">Chart Properties</h3>
+            <p class="text-xs text-gray-500 mt-1">Configure your chart settings</p>
+          </div>
+          
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
+                <input
+                  v-model="chartConfig.title"
+                  type="text"
+                  placeholder="Enter chart title"
+                  class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                />
               </div>
-            </div>
 
-            <div v-else>
-              <div class="space-y-2">
-                <div>
-                  <label class="block text-xs font-medium text-gray-600 mb-1">X-Axis</label>
-                  <div
-                    @drop="onFieldDrop($event, 'xAxis')"
-                    @dragover.prevent
-                    @dragenter.prevent
-                    class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-                    :class="{ 'border-primary-400 bg-primary-50': chartConfig.xAxis }"
-                  >
-                    {{ chartConfig.xAxis || 'Drop X-axis field here' }}
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-gray-600 mb-1">Y-Axis</label>
-                  <div
-                    @drop="onFieldDrop($event, 'yAxis')"
-                    @dragover.prevent
-                    @dragenter.prevent
-                    class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-                    :class="{ 'border-primary-400 bg-primary-50': chartConfig.yAxis }"
-                  >
-                    {{ chartConfig.yAxis || 'Drop Y-axis field here (numbers only)' }}
+              <div v-if="selectedChartType === 'pie'">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Category Field</label>
+                <div
+                  @drop="onFieldDrop($event, 'category')"
+                  @dragover.prevent
+                  @dragenter.prevent
+                  class="min-h-[3rem] p-3 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                  :class="{ 'border-primary-400 bg-primary-50 text-primary-700': chartConfig.category }"
+                >
+                  <div class="text-center">
+                    <component :is="chartConfig.category ? CheckIcon : PlusIcon" class="h-4 w-4 mx-auto mb-1" />
+                    <div class="text-xs">
+                      {{ chartConfig.category || 'Drop category field here' }}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Background</label>
-                <input
-                  v-model="chartConfig.backgroundColor"
-                  type="color"
-                  class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                />
+              <div v-else>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">X-Axis Field</label>
+                    <div
+                      @drop="onFieldDrop($event, 'xAxis')"
+                      @dragover.prevent
+                      @dragenter.prevent
+                      class="min-h-[3rem] p-3 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                      :class="{ 'border-primary-400 bg-primary-50 text-primary-700': chartConfig.xAxis }"
+                    >
+                      <div class="text-center">
+                        <component :is="chartConfig.xAxis ? CheckIcon : PlusIcon" class="h-4 w-4 mx-auto mb-1" />
+                        <div class="text-xs">
+                          {{ chartConfig.xAxis || 'Drop X-axis field here' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Y-Axis Field (Numbers Only)</label>
+                    <div
+                      @drop="onFieldDrop($event, 'yAxis')"
+                      @dragover.prevent
+                      @dragenter.prevent
+                      class="min-h-[3rem] p-3 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                      :class="{ 'border-primary-400 bg-primary-50 text-primary-700': chartConfig.yAxis }"
+                    >
+                      <div class="text-center">
+                        <component :is="chartConfig.yAxis ? CheckIcon : PlusIcon" class="h-4 w-4 mx-auto mb-1" />
+                        <div class="text-xs">
+                          {{ chartConfig.yAxis || 'Drop Y-axis field here' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Border</label>
-                <input
-                  v-model="chartConfig.borderColor"
-                  type="color"
-                  class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                />
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Background Color</label>
+                  <input
+                    v-model="chartConfig.backgroundColor"
+                    type="color"
+                    class="w-full h-10 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Border Color</label>
+                  <input
+                    v-model="chartConfig.borderColor"
+                    type="color"
+                    class="w-full h-10 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  />
+                </div>
               </div>
             </div>
+          </div>
 
+          <!-- Add Chart Button -->
+          <div class="p-4 border-t border-gray-200">
             <button
               @click="addChart"
               :disabled="!isChartConfigValid"
@@ -205,6 +240,22 @@
               <PlusIcon class="h-4 w-4 mr-2" />
               Add to Dashboard
             </button>
+          </div>
+        </div>
+
+        <!-- No Chart Type Message -->
+        <div v-else-if="selectedDataSource" class="flex-1 flex items-center justify-center p-4">
+          <div class="text-center text-gray-500">
+            <ChartBarIcon class="mx-auto h-8 w-8 mb-2" />
+            <p class="text-sm">Select a chart type to configure properties</p>
+          </div>
+        </div>
+
+        <!-- No Data Source Message -->
+        <div v-else class="flex-1 flex items-center justify-center p-4">
+          <div class="text-center text-gray-500">
+            <PresentationChartLineIcon class="mx-auto h-8 w-8 mb-2" />
+            <p class="text-sm">Select a data source first</p>
           </div>
         </div>
       </div>
@@ -217,9 +268,27 @@
               <div class="text-center">
                 <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
-                <p class="text-sm text-gray-500">
-                  Select a data source, choose a chart type, and drag fields to create your first chart.
+                <p class="text-sm text-gray-500 mb-4">
+                  Follow these steps to create your first chart:
                 </p>
+                <div class="text-left max-w-md mx-auto space-y-2 text-sm text-gray-600">
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xs font-medium mr-3">1</div>
+                    <span>Select a data source</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xs font-medium mr-3">2</div>
+                    <span>Choose a chart type</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xs font-medium mr-3">3</div>
+                    <span>Drag fields to chart properties</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-xs font-medium mr-3">4</div>
+                    <span>Click "Add to Dashboard"</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -270,7 +339,9 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  TableCellsIcon,
+  CheckIcon
 } from '@heroicons/vue/24/outline'
 import { GridStack } from 'gridstack'
 import { useDataSourceStore, type DataSourceColumn } from '../stores/dataSource'
