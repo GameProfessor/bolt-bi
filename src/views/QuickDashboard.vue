@@ -87,9 +87,19 @@
                   :key="column.name"
                   :draggable="true"
                   @dragstart="onFieldDragStart($event, column, ds.id)"
-                  class="flex items-center justify-between p-2 bg-white rounded cursor-move hover:bg-gray-50 transition-colors duration-200"
+                  class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200"
+                  :class="{
+                    'bg-primary-50': isFieldInUse(column.name, ds.id),
+                    'bg-white hover:bg-gray-50': !isFieldInUse(column.name, ds.id)
+                  }"
                 >
-                  <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                  <div class="flex items-center">
+                    <CheckIcon
+                      v-if="isFieldInUse(column.name, ds.id)"
+                      class="h-4 w-4 text-primary-600 mr-2"
+                    />
+                    <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                  </div>
                   <span
                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                     :class="{
@@ -426,7 +436,8 @@ import {
   ChartPieIcon,
   CircleStackIcon,
   Cog6ToothIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CheckIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
@@ -614,6 +625,8 @@ const editChart = (chart: ChartItem) => {
   editingChartId.value = chart.id
   selectedChartType.value = chart.config.type || ''
   chartConfig.title = chart.config.title || ''
+  chartConfig.dataSourceId = chart.config.dataSourceId || ''
+  
   if (chart.config.type === 'bar') {
     if (Array.isArray(chart.config.xAxis)) {
       chartConfig.xAxis = [...chart.config.xAxis]
@@ -630,7 +643,7 @@ const editChart = (chart: ChartItem) => {
   chartConfig.backgroundColor = chart.config.backgroundColor || '#3b82f6'
   chartConfig.borderColor = chart.config.borderColor || '#1d4ed8'
   chartConfig.horizontal = chart.config.horizontal || false
-  selectedDataSourceId.value = chart.config.dataSourceId || ''
+  chartConfig.colorScheme = chart.config.colorScheme || 'default'
 }
 
 const exportChart = (chart: ChartItem, type: 'pdf' | 'png') => {
@@ -858,6 +871,26 @@ const toggleDataSource = (id: string) => {
     expandedDataSources.value.push(id)
   } else {
     expandedDataSources.value.splice(index, 1)
+  }
+}
+
+// Add function to check if a field is in use
+const isFieldInUse = (fieldName: string, dataSourceId: string) => {
+  if (!selectedChartType.value || !chartConfig.dataSourceId) return false
+  
+  // Check if the field is from the same data source as the current chart
+  if (chartConfig.dataSourceId !== dataSourceId) return false
+
+  // Check if the field is used in any of the chart properties
+  if (selectedChartType.value === 'pie') {
+    return chartConfig.category === fieldName
+  } else if (selectedChartType.value === 'bar') {
+    return (
+      (Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.includes(fieldName)) ||
+      chartConfig.yAxis === fieldName
+    )
+  } else {
+    return chartConfig.xAxis === fieldName || chartConfig.yAxis === fieldName
   }
 }
 
