@@ -11,24 +11,12 @@
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
-            <div class="flex items-center">
-              <input
-                v-model="dashboardName"
-                type="text"
-                placeholder="Enter dashboard name"
-                class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-              />
-              <!-- <p class="text-sm text-gray-500 ml-4">Create charts directly on your dashboard</p> -->
+            <div>
+              <h1 class="text-xl font-semibold text-gray-900">Quick Dashboard</h1>
+              <p class="text-sm text-gray-500">Create charts directly on your dashboard</p>
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <!-- <button
-              @click="showDataSourceManager = true"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <Cog6ToothIcon class="h-4 w-4 mr-2" />
-              Manage Data Sources
-            </button> -->
             <button
               @click="saveDashboard"
               :disabled="!dashboardName || charts.length === 0"
@@ -57,119 +45,72 @@
         class="bg-white border-r border-gray-200 flex flex-col"
         :style="{ width: leftSidebarWidth + 'px', minWidth: '180px', maxWidth: '400px' }"
       >
-        <!-- Data Sources List -->
-        <div class="flex-1 overflow-y-auto">
-          <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-sm font-medium text-gray-700">Data Sources</h3>
-            <button
-              @click="showDataSourceManager = true"
-              class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        <!-- Dashboard Name -->
+        <div class="p-4 border-b border-gray-200">
+          <label for="dashboardName" class="block text-sm font-medium text-gray-700 mb-2">
+            Dashboard Name
+          </label>
+          <input
+            id="dashboardName"
+            v-model="dashboardName"
+            type="text"
+            placeholder="Enter dashboard name"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+          />
+        </div>
+
+        <!-- Data Source Selection -->
+        <div class="p-4 border-b border-gray-200">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Select Data Source
+          </label>
+          <select
+            v-model="selectedDataSourceId"
+            @change="onDataSourceChange"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+          >
+            <option value="">Choose a data source</option>
+            <option
+              v-for="ds in dataSourceStore.dataSources"
+              :key="ds.id"
+              :value="ds.id"
             >
-              <Cog6ToothIcon class="h-4 w-4 mr-1" />
-              Manage
-            </button>
+              {{ ds.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Data Fields -->
+        <div v-if="selectedDataSource" class="flex-1 overflow-hidden flex flex-col">
+          <div class="p-4 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-700">Data Fields</h3>
+            <p class="text-xs text-gray-500 mt-1">Drag fields to chart properties</p>
           </div>
-          <div class="p-4 space-y-2">
-            <div v-for="ds in selectedDataSources" :key="ds.id" class="border rounded-lg overflow-hidden">
-              <button
-                @click="toggleDataSource(ds.id)"
-                class="w-full px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-2">
+              <div
+                v-for="column in selectedDataSource.columns"
+                :key="column.name"
+                :draggable="true"
+                @dragstart="onFieldDragStart($event, column)"
+                class="flex items-center justify-between p-2 bg-gray-50 rounded cursor-move hover:bg-gray-100 transition-colors duration-200"
               >
-                <span class="text-sm font-medium text-gray-900">{{ ds.name }}</span>
-                <ChevronDownIcon
-                  class="h-5 w-5 text-gray-500 transform transition-transform"
-                  :class="{ 'rotate-180': expandedDataSources.includes(ds.id) }"
-                />
-              </button>
-              <div v-if="expandedDataSources.includes(ds.id)" class="p-2 space-y-1">
-                <div
-                  v-for="column in ds.columns"
-                  :key="column.name"
-                  :draggable="true"
-                  @dragstart="onFieldDragStart($event, column, ds.id)"
-                  class="flex items-center justify-between p-2 bg-white rounded cursor-move hover:bg-gray-50 transition-colors duration-200"
+                <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-blue-100 text-blue-800': column.type === 'number',
+                    'bg-green-100 text-green-800': column.type === 'date',
+                    'bg-gray-100 text-gray-800': column.type === 'string'
+                  }"
                 >
-                  <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
-                  <span
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    :class="{
-                      'bg-blue-100 text-blue-800': column.type === 'number',
-                      'bg-green-100 text-green-800': column.type === 'date',
-                      'bg-gray-100 text-gray-800': column.type === 'string'
-                    }"
-                  >
-                    {{ column.type }}
-                  </span>
-                </div>
+                  {{ column.type }}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Data Source Manager Modal -->
-      <TransitionRoot appear :show="showDataSourceManager" as="template">
-        <Dialog as="div" @close="showDataSourceManager = false" class="relative z-50">
-          <TransitionChild
-            as="template"
-            enter="duration-300 ease-out"
-            enter-from="opacity-0"
-            enter-to="opacity-100"
-            leave="duration-200 ease-in"
-            leave-from="opacity-100"
-            leave-to="opacity-0"
-          >
-            <div class="fixed inset-0 bg-black bg-opacity-25" />
-          </TransitionChild>
-
-          <div class="fixed inset-0 overflow-y-auto">
-            <div class="flex min-h-full items-center justify-center p-4 text-center">
-              <TransitionChild
-                as="template"
-                enter="duration-300 ease-out"
-                enter-from="opacity-0 scale-95"
-                enter-to="opacity-100 scale-100"
-                leave="duration-200 ease-in"
-                leave-from="opacity-100 scale-100"
-                leave-to="opacity-0 scale-95"
-              >
-                <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                    Manage Data Sources
-                  </DialogTitle>
-                  <div class="mt-4">
-                    <div class="space-y-4">
-                      <div v-for="ds in dataSourceStore.dataSources" :key="ds.id" class="flex items-center justify-between">
-                        <div class="flex items-center">
-                          <input
-                            type="checkbox"
-                            :id="'ds-' + ds.id"
-                            v-model="selectedDataSources"
-                            :value="ds"
-                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                          />
-                          <label :for="'ds-' + ds.id" class="ml-2 block text-sm text-gray-900">
-                            {{ ds.name }}
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mt-6 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      class="inline-flex justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-sm font-medium text-primary-900 hover:bg-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                      @click="showDataSourceManager = false"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
-            </div>
-          </div>
-        </Dialog>
-      </TransitionRoot>
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
@@ -186,7 +127,7 @@
         :style="{ width: chartTypeColWidth + 'px', minWidth: '200px', maxWidth: '400px' }"
       >
         <!-- Chart Type Selection -->
-        <div class="p-4 border-b border-gray-200">
+        <div v-if="selectedDataSource" class="p-4 border-b border-gray-200">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Chart Type
           </label>
@@ -211,10 +152,7 @@
         <!-- Chart Properties -->
         <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 overflow-y-auto">
           <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
-          <div v-if="selectedDataSources.length === 0" class="text-sm text-gray-500 text-center py-4">
-            Please select at least one data source to configure chart properties
-          </div>
-          <div v-else class="space-y-3">
+          <div class="space-y-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
               <input
@@ -424,11 +362,8 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
-  CircleStackIcon,
-  Cog6ToothIcon,
-  ChevronDownIcon
+  CircleStackIcon
 } from '@heroicons/vue/24/outline'
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
 import { useDataSourceStore, type DataSourceColumn } from '../stores/dataSource'
 import { useDashboardStore } from '../stores/dashboard'
@@ -501,7 +436,6 @@ interface ChartConfigLike {
   borderColor: string
   horizontal: boolean
   colorScheme: string
-  dataSourceId: string
 }
 
 const chartConfig = reactive<ChartConfigLike>({
@@ -512,8 +446,7 @@ const chartConfig = reactive<ChartConfigLike>({
   backgroundColor: '#3b82f6',
   borderColor: '#1d4ed8',
   horizontal: false,
-  colorScheme: 'default',
-  dataSourceId: ''
+  colorScheme: 'default'
 })
 
 const chartTypes = [
@@ -529,7 +462,7 @@ const selectedDataSource = computed(() => {
 })
 
 const isChartConfigValid = computed(() => {
-  if (!selectedChartType.value) return false
+  if (!selectedChartType.value || !selectedDataSourceId.value) return false
   if (selectedChartType.value === 'pie') {
     return !!chartConfig.category
   } else if (selectedChartType.value === 'bar') {
@@ -549,16 +482,14 @@ const resetChartConfig = () => {
   chartConfig.yAxis = ''
   chartConfig.category = ''
   chartConfig.horizontal = false
-  chartConfig.dataSourceId = ''
   selectedChartType.value = ''
 }
 
-const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSourceId: string) => {
+const onFieldDragStart = (event: DragEvent, column: DataSourceColumn) => {
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', JSON.stringify({
       name: column.name,
-      type: column.type,
-      dataSourceId
+      type: column.type
     }))
   }
 }
@@ -568,24 +499,11 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
   if (!event.dataTransfer) return
   try {
     const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
-    
     // Validate field type for Y-axis (should be numeric)
     if (target === 'yAxis' && fieldData.type !== 'number') {
       alert('Y-axis requires a numeric field')
       return
     }
-
-    // Check if we already have fields from a different data source
-    // Only check if we have multiple fields (for bar chart) or if we're not replacing a single field
-    if (chartConfig.dataSourceId && chartConfig.dataSourceId !== fieldData.dataSourceId) {
-      if (selectedChartType.value === 'bar' && Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0) {
-        alert('Cannot mix fields from different data sources in the same chart')
-        return
-      }
-      // For non-bar charts or when replacing a single field, allow the change
-      // This will effectively replace the existing field and data source
-    }
-
     if (target === 'xAxis' && selectedChartType.value === 'bar') {
       // Add to array, no duplicates
       if (Array.isArray(chartConfig.xAxis) && !chartConfig.xAxis.includes(fieldData.name)) {
@@ -594,8 +512,6 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
     } else {
       chartConfig[target] = fieldData.name
     }
-    // Store the data source ID for the chart
-    chartConfig.dataSourceId = fieldData.dataSourceId
   } catch (error) {
     console.error('Failed to parse dropped field data:', error)
   }
@@ -639,7 +555,7 @@ const exportChart = (chart: ChartItem, type: 'pdf' | 'png') => {
 }
 
 const addOrUpdateChart = () => {
-  if (!isChartConfigValid.value || !chartConfig.dataSourceId) return
+  if (!isChartConfigValid.value || !selectedDataSource.value) return
   if (editingChartId.value) {
     // Update existing chart
     const idx = charts.value.findIndex(c => c.id === editingChartId.value)
@@ -649,7 +565,7 @@ const addOrUpdateChart = () => {
         id: charts.value[idx].id,
         name: chartConfig.title || `Chart ${idx + 1}`,
         type: selectedChartType.value as ChartConfig['type'],
-        dataSourceId: chartConfig.dataSourceId,
+        dataSourceId: selectedDataSourceId.value,
         xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
         yAxis: chartConfig.yAxis || undefined,
         category: chartConfig.category || undefined,
@@ -666,7 +582,7 @@ const addOrUpdateChart = () => {
     nextTick(() => initializeGridStack())
     return
   }
-  // Add new chart
+  // Add new chart (existing logic)
   addChart()
 }
 
@@ -676,7 +592,7 @@ const cancelEdit = () => {
 }
 
 const addChart = () => {
-  if (!isChartConfigValid.value || !chartConfig.dataSourceId) return
+  if (!isChartConfigValid.value || !selectedDataSource.value) return
   const chartId = Date.now().toString()
   const newChart: ChartItem = {
     id: chartId,
@@ -684,7 +600,7 @@ const addChart = () => {
       id: chartId,
       name: chartConfig.title || `Chart ${charts.value.length + 1}`,
       type: selectedChartType.value as ChartConfig['type'],
-      dataSourceId: chartConfig.dataSourceId,
+      dataSourceId: selectedDataSourceId.value,
       xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
       yAxis: chartConfig.yAxis || undefined,
       category: chartConfig.category || undefined,
@@ -704,6 +620,7 @@ const addChart = () => {
   }
   charts.value.push(newChart)
   resetChartConfig()
+  // Reinitialize GridStack
   nextTick(() => {
     initializeGridStack()
   })
@@ -845,21 +762,6 @@ const stopResizing = () => {
 }
 
 const previewMode = ref(false)
-
-// Add new refs for data source management
-const showDataSourceManager = ref(false)
-const selectedDataSources = ref<Array<{ id: string; name: string; columns: DataSourceColumn[] }>>([])
-const expandedDataSources = ref<string[]>([])
-
-// Add toggle function for data source expansion
-const toggleDataSource = (id: string) => {
-  const index = expandedDataSources.value.indexOf(id)
-  if (index === -1) {
-    expandedDataSources.value.push(id)
-  } else {
-    expandedDataSources.value.splice(index, 1)
-  }
-}
 
 onMounted(() => {
   // Initialize with empty state
