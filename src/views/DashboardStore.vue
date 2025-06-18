@@ -23,84 +23,48 @@
 
       <!-- Dashboard Templates Section -->
       <div class="mt-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-medium text-gray-900">Dashboard Templates</h2>
-          <div class="flex items-center space-x-4">
-            <!-- Template Search -->
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                v-model="templateSearchQuery"
-                type="text"
-                placeholder="Search templates..."
-                class="block w-48 pl-9 pr-3 py-1.5 border border-gray-300 rounded-md text-sm leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-              />
-            </div>
-            <!-- Expand/Collapse Button -->
-            <button
-              @click="templatesExpanded = !templatesExpanded"
-              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-            >
-              <span v-if="templatesExpanded">Show Less</span>
-              <span v-else>Show More</span>
-              <ChevronDownIcon 
-                class="ml-2 h-4 w-4 transform transition-transform duration-200"
-                :class="{ 'rotate-180': templatesExpanded }"
-              />
-            </button>
-          </div>
-        </div>
-
-        <!-- Templates Grid -->
-        <div class="overflow-hidden">
-          <div 
-            class="grid gap-4 transition-all duration-300 ease-in-out"
-            :class="templatesExpanded ? 'sm:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4 lg:grid-cols-8'"
-            :style="templatesExpanded ? {} : { maxHeight: '200px' }"
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Dashboard Templates</h2>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- Blank Dashboard Template -->
+          <div
+            @click="createBlankDashboard"
+            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
           >
-            <!-- Blank Dashboard Template -->
-            <div
-              @click="createBlankDashboard"
-              class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
-            >
-              <div class="p-4">
-                <div class="flex items-center justify-center h-20 bg-gray-50 rounded">
-                  <div class="text-center">
-                    <PlusIcon class="mx-auto h-6 w-6 text-gray-400" />
-                    <p class="mt-1 text-xs font-medium text-gray-900">Blank</p>
-                  </div>
-                </div>
-                <div class="mt-3">
-                  <h3 class="text-xs font-medium text-gray-900 truncate">Create New</h3>
-                  <p class="text-xs text-gray-500 truncate">Start from scratch</p>
+            <div class="p-6">
+              <div class="flex items-center justify-center h-32 bg-gray-50 rounded">
+                <div class="text-center">
+                  <PlusIcon class="mx-auto h-8 w-8 text-gray-400" />
+                  <p class="mt-2 text-sm font-medium text-gray-900">Blank Dashboard</p>
+                  <p class="text-xs text-gray-500">Start from scratch</p>
                 </div>
               </div>
+              <div class="mt-4">
+                <h3 class="text-sm font-medium text-gray-900">Create New Dashboard</h3>
+                <p class="text-xs text-gray-500 mt-1">Build your own custom dashboard</p>
+              </div>
             </div>
+          </div>
 
-            <!-- Template Dashboards -->
-            <div
-              v-for="template in filteredTemplates"
-              :key="template.id"
-              @click="createFromTemplate(template)"
-              class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
-              :class="{ 'hidden': !templatesExpanded && filteredTemplates.indexOf(template) >= (templatesExpanded ? 12 : 7) }"
-            >
-              <div class="p-4">
-                <div class="h-20 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
-                  <div class="h-full flex items-center justify-center">
-                    <component :is="template.icon" class="h-8 w-8 text-white opacity-80" />
-                  </div>
+          <!-- Template Dashboards -->
+          <div
+            v-for="template in dashboardTemplates"
+            :key="template.id"
+            @click="createFromTemplate(template)"
+            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
+          >
+            <div class="p-6">
+              <div class="h-32 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
+                <div class="h-full flex items-center justify-center">
+                  <component :is="template.icon" class="h-12 w-12 text-white opacity-80" />
                 </div>
-                <div class="mt-3">
-                  <h3 class="text-xs font-medium text-gray-900 truncate">{{ template.name }}</h3>
-                  <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
-                  <div class="mt-2">
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                      {{ template.category }}
-                    </span>
-                  </div>
+              </div>
+              <div class="mt-4">
+                <h3 class="text-sm font-medium text-gray-900">{{ template.name }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ template.description }}</p>
+                <div class="mt-2 flex items-center">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    {{ template.category }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -368,8 +332,7 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   TruckIcon,
-  BuildingOfficeIcon,
-  ChevronDownIcon
+  BuildingOfficeIcon
 } from '@heroicons/vue/24/outline'
 import { useDashboardStore, type Dashboard } from '../stores/dashboard'
 
@@ -377,9 +340,7 @@ const router = useRouter()
 const dashboardStore = useDashboardStore()
 
 const searchQuery = ref('')
-const templateSearchQuery = ref('')
 const selectedFilter = ref('all')
-const templatesExpanded = ref(false)
 const showShareModal = ref(false)
 const selectedDashboard = ref<Dashboard | null>(null)
 
@@ -432,38 +393,6 @@ const dashboardTemplates = [
     category: 'Executive',
     icon: BuildingOfficeIcon,
     gradient: 'from-gray-600 to-gray-700'
-  },
-  {
-    id: 'customer-analytics',
-    name: 'Customer Analytics',
-    description: 'Customer behavior and satisfaction metrics',
-    category: 'Customer',
-    icon: UserGroupIcon,
-    gradient: 'from-pink-500 to-pink-600'
-  },
-  {
-    id: 'inventory-management',
-    name: 'Inventory Management',
-    description: 'Stock levels and inventory optimization',
-    category: 'Inventory',
-    icon: TableCellsIcon,
-    gradient: 'from-indigo-500 to-indigo-600'
-  },
-  {
-    id: 'project-tracking',
-    name: 'Project Tracking',
-    description: 'Project progress and milestone tracking',
-    category: 'Project',
-    icon: ChartPieIcon,
-    gradient: 'from-teal-500 to-teal-600'
-  },
-  {
-    id: 'quality-metrics',
-    name: 'Quality Metrics',
-    description: 'Quality control and improvement metrics',
-    category: 'Quality',
-    icon: ChartBarIcon,
-    gradient: 'from-yellow-500 to-yellow-600'
   }
 ]
 
@@ -493,19 +422,6 @@ const filteredDashboards = computed(() => {
   }
 
   return filtered
-})
-
-const filteredTemplates = computed(() => {
-  if (!templateSearchQuery.value) {
-    return dashboardTemplates
-  }
-  
-  const query = templateSearchQuery.value.toLowerCase()
-  return dashboardTemplates.filter(template =>
-    template.name.toLowerCase().includes(query) ||
-    template.description.toLowerCase().includes(query) ||
-    template.category.toLowerCase().includes(query)
-  )
 })
 
 const shareLink = computed(() => {
