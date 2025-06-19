@@ -16,6 +16,7 @@ export interface Dashboard {
   description?: string
   widgets: DashboardWidget[]
   createdAt: Date
+  dataSourceIds?: string[]
 }
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -33,7 +34,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
         const parsed = JSON.parse(stored)
         dashboards.value = parsed.map((dashboard: any) => ({
           ...dashboard,
-          createdAt: new Date(dashboard.createdAt)
+          createdAt: new Date(dashboard.createdAt),
+          dataSourceIds: dashboard.dataSourceIds || []
         }))
       } catch (e) {
         console.error('Failed to load dashboards from storage:', e)
@@ -45,13 +47,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
     localStorage.setItem('bi-dashboards', JSON.stringify(dashboards.value))
   }
 
-  const createDashboard = (name: string, description?: string) => {
+  const createDashboard = (name: string, description?: string, dataSourceIds?: string[]) => {
     const dashboard: Dashboard = {
       id: Date.now().toString(),
       name,
       description,
       widgets: [],
-      createdAt: new Date()
+      createdAt: new Date(),
+      dataSourceIds: dataSourceIds || []
     }
     dashboards.value.push(dashboard)
     saveToStorage()

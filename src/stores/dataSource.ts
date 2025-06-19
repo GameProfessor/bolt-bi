@@ -6,6 +6,8 @@ export interface DataSourceColumn {
   name: string
   type: 'string' | 'number' | 'date'
   values: any[]
+  isCustom?: boolean
+  expression?: string
 }
 
 export interface DataSource {
@@ -129,6 +131,47 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     }
   }
 
+  // Add helpers for custom fields
+  function evaluateCustomFieldExpression(expression: string, row: any): any {
+    // Use Function constructor for safe evaluation (fields as variables)
+    try {
+      const fieldNames = Object.keys(row)
+      const fieldValues = fieldNames.map(k => row[k])
+      // eslint-disable-next-line no-new-func
+      const fn = new Function(...fieldNames, `return (${expression})`)
+      return fn(...fieldValues)
+    } catch (e) {
+      return null
+    }
+  }
+
+  function addCustomField(dataSource: DataSource, name: string, expression: string, type: 'string' | 'number' | 'date' = 'number') {
+    // Evaluate values for each row
+    const values = dataSource.rows.map(row => evaluateCustomFieldExpression(expression, row))
+    const column: DataSourceColumn = {
+      name,
+      type,
+      values,
+      isCustom: true,
+      expression
+    }
+    dataSource.columns.push(column)
+  }
+
+  function editCustomField(dataSource: DataSource, oldName: string, newName: string, newExpression: string, type: 'string' | 'number' | 'date' = 'number') {
+    const col = dataSource.columns.find(c => c.name === oldName && c.isCustom)
+    if (col) {
+      col.name = newName
+      col.expression = newExpression
+      col.type = type
+      col.values = dataSource.rows.map(row => evaluateCustomFieldExpression(newExpression, row))
+    }
+  }
+
+  function removeCustomField(dataSource: DataSource, name: string) {
+    dataSource.columns = dataSource.columns.filter(c => !(c.name === name && c.isCustom))
+  }
+
   // Initialize from storage
   loadFromStorage()
 
@@ -139,6 +182,9 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     getDataSourceById,
     parseCSV,
     deleteDataSource,
-    updateDataSourceName
+    updateDataSourceName,
+    addCustomField,
+    editCustomField,
+    removeCustomField
   }
 })
