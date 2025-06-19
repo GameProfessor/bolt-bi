@@ -6,8 +6,6 @@ export interface DataSourceColumn {
   name: string
   type: 'string' | 'number' | 'date'
   values: any[]
-  isCustom?: boolean
-  expression?: string
 }
 
 export interface DataSource {
@@ -58,163 +56,6 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     return 'string'
   }
 
-  const evaluateExpression = (expression: string, row: any, columns: DataSourceColumn[]): any => {
-    try {
-      // Create a safe evaluation context with only the row data and basic math functions
-      const context = { ...row }
-      
-      // Add basic math functions
-      const mathFunctions = {
-        abs: Math.abs,
-        ceil: Math.ceil,
-        floor: Math.floor,
-        round: Math.round,
-        max: Math.max,
-        min: Math.min,
-        sqrt: Math.sqrt,
-        pow: Math.pow,
-        sin: Math.sin,
-        cos: Math.cos,
-        tan: Math.tan,
-        log: Math.log,
-        exp: Math.exp
-      }
-      
-      // Replace field names with their values and add math functions
-      let processedExpression = expression
-      
-      // Replace column names with context values
-      columns.forEach(col => {
-        if (!col.isCustom) {
-          const regex = new RegExp(`\\b${col.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g')
-          processedExpression = processedExpression.replace(regex, `context["${col.name}"]`)
-        }
-      })
-      
-      // Add math functions to context
-      Object.assign(context, mathFunctions)
-      
-      // Create a function that evaluates the expression
-      const func = new Function('context', `
-        with(context) {
-          return ${processedExpression}
-        }
-      `)
-      
-      const result = func(context)
-      return result
-    } catch (error) {
-      console.error('Error evaluating expression:', error)
-      return null
-    }
-  }
-
-  const addCustomField = (dataSourceId: string, fieldName: string, expression: string) => {
-    const dataSource = dataSources.value.find(ds => ds.id === dataSourceId)
-    if (!dataSource) return false
-
-    // Check if field name already exists
-    if (dataSource.columns.some(col => col.name === fieldName)) {
-      throw new Error('Field name already exists')
-    }
-
-    try {
-      // Calculate values for all rows
-      const values = dataSource.rows.map(row => 
-        evaluateExpression(expression, row, dataSource.columns)
-      )
-
-      // Detect the type of the calculated values
-      const type = detectColumnType(values)
-
-      // Add the custom column
-      const customColumn: DataSourceColumn = {
-        name: fieldName,
-        type,
-        values,
-        isCustom: true,
-        expression
-      }
-
-      dataSource.columns.push(customColumn)
-
-      // Update rows with the new calculated values
-      dataSource.rows.forEach((row, index) => {
-        row[fieldName] = values[index]
-      })
-
-      saveToStorage()
-      return true
-    } catch (error) {
-      console.error('Failed to add custom field:', error)
-      throw error
-    }
-  }
-
-  const updateCustomField = (dataSourceId: string, oldFieldName: string, newFieldName: string, expression: string) => {
-    const dataSource = dataSources.value.find(ds => ds.id === dataSourceId)
-    if (!dataSource) return false
-
-    const columnIndex = dataSource.columns.findIndex(col => col.name === oldFieldName && col.isCustom)
-    if (columnIndex === -1) return false
-
-    // Check if new field name already exists (and it's not the same field)
-    if (newFieldName !== oldFieldName && dataSource.columns.some(col => col.name === newFieldName)) {
-      throw new Error('Field name already exists')
-    }
-
-    try {
-      // Calculate new values
-      const values = dataSource.rows.map(row => 
-        evaluateExpression(expression, row, dataSource.columns.filter(col => !col.isCustom || col.name !== oldFieldName))
-      )
-
-      const type = detectColumnType(values)
-
-      // Update the column
-      dataSource.columns[columnIndex] = {
-        name: newFieldName,
-        type,
-        values,
-        isCustom: true,
-        expression
-      }
-
-      // Update rows - remove old field and add new one
-      dataSource.rows.forEach((row, index) => {
-        if (oldFieldName !== newFieldName) {
-          delete row[oldFieldName]
-        }
-        row[newFieldName] = values[index]
-      })
-
-      saveToStorage()
-      return true
-    } catch (error) {
-      console.error('Failed to update custom field:', error)
-      throw error
-    }
-  }
-
-  const removeCustomField = (dataSourceId: string, fieldName: string) => {
-    const dataSource = dataSources.value.find(ds => ds.id === dataSourceId)
-    if (!dataSource) return false
-
-    const columnIndex = dataSource.columns.findIndex(col => col.name === fieldName && col.isCustom)
-    if (columnIndex === -1) return false
-
-    // Remove the column
-    dataSource.columns.splice(columnIndex, 1)
-
-    // Remove the field from all rows
-    dataSource.rows.forEach(row => {
-      delete row[fieldName]
-    })
-
-    saveToStorage()
-    return true
-  }
-
   const parseCSV = async (file: File, name: string): Promise<void> => {
     loading.value = true
     error.value = null
@@ -245,8 +86,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
             return {
               name,
               type: detectColumnType(values),
-              values,
-              isCustom: false
+              values
             }
           })
 
@@ -299,9 +139,6 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     getDataSourceById,
     parseCSV,
     deleteDataSource,
-    updateDataSourceName,
-    addCustomField,
-    updateCustomField,
-    removeCustomField
+    updateDataSourceName
   }
 })
