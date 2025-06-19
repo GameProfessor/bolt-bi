@@ -18,7 +18,14 @@
                 placeholder="Enter dashboard name"
                 class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
               />
-              <!-- <p class="text-sm text-gray-500 ml-4">Create charts directly on your dashboard</p> -->
+              <div class="flex items-center mt-2">
+                <input
+                  v-model="dashboardDescription"
+                  type="text"
+                  placeholder="Enter dashboard description (optional)"
+                  class="text-sm text-gray-700 bg-transparent border border-gray-200 rounded px-2 py-1 w-64 focus:border-primary-500 focus:ring-0"
+                />
+              </div>
             </div>
           </div>
           <div class="flex items-center space-x-3">
@@ -452,6 +459,7 @@ const dashboardStore = useDashboardStore()
 const chartStore = useChartStore()
 
 const dashboardName = ref('')
+const dashboardDescription = ref('')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
@@ -780,8 +788,8 @@ const initializeGridStack = async () => {
 const saveDashboard = () => {
   if (!dashboardName.value || charts.value.length === 0) return
 
-  // Create dashboard
-  const dashboard = dashboardStore.createDashboard(dashboardName.value)
+  // Create dashboard with description
+  const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value)
 
   // Create and save charts, then add widgets
   charts.value.forEach(chartItem => {

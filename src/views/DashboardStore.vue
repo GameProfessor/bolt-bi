@@ -23,46 +23,72 @@
 
       <!-- Dashboard Templates Section -->
       <div class="mt-8">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Dashboard Templates</h2>
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-medium text-gray-900">Dashboard Templates</h2>
+          <div class="flex items-center space-x-4">
+            <!-- Template Search -->
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                v-model="templateSearchQuery"
+                type="text"
+                placeholder="Search templates..."
+                class="block w-48 pl-8 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
+              />
+            </div>
+            <!-- Expand/Collapse Button -->
+            <button
+              @click="showAllTemplates = !showAllTemplates"
+              class="inline-flex items-center px-2 py-1 text-sm text-gray-600 hover:text-gray-900"
+            >
+              {{ showAllTemplates ? 'Show Less' : 'Show More' }}
+              <ChevronDownIcon
+                class="ml-1 h-4 w-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': showAllTemplates }"
+              />
+            </button>
+          </div>
+        </div>
+        <div
+          class="grid gap-4 transition-all duration-300"
+          :class="showAllTemplates ? '' : ''"
+          style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));"
+        >
           <!-- Blank Dashboard Template -->
           <div
             @click="createBlankDashboard"
             class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
           >
-            <div class="p-6">
-              <div class="flex items-center justify-center h-32 bg-gray-50 rounded">
+            <div class="p-3">
+              <div class="flex items-center justify-center h-20 bg-gray-50 rounded">
                 <div class="text-center">
-                  <PlusIcon class="mx-auto h-8 w-8 text-gray-400" />
-                  <p class="mt-2 text-sm font-medium text-gray-900">Blank Dashboard</p>
-                  <p class="text-xs text-gray-500">Start from scratch</p>
+                  <PlusIcon class="mx-auto h-6 w-6 text-gray-400" />
+                  <p class="mt-1 text-xs font-medium text-gray-900">Blank Dashboard</p>
                 </div>
-              </div>
-              <div class="mt-4">
-                <h3 class="text-sm font-medium text-gray-900">Create New Dashboard</h3>
-                <p class="text-xs text-gray-500 mt-1">Build your own custom dashboard</p>
               </div>
             </div>
           </div>
 
           <!-- Template Dashboards -->
           <div
-            v-for="template in dashboardTemplates"
+            v-for="template in filteredTemplates"
             :key="template.id"
             @click="createFromTemplate(template)"
             class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
           >
-            <div class="p-6">
-              <div class="h-32 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
+            <div class="p-3">
+              <div class="h-20 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
                 <div class="h-full flex items-center justify-center">
-                  <component :is="template.icon" class="h-12 w-12 text-white opacity-80" />
+                  <component :is="template.icon" class="h-8 w-8 text-white opacity-80" />
                 </div>
               </div>
-              <div class="mt-4">
-                <h3 class="text-sm font-medium text-gray-900">{{ template.name }}</h3>
-                <p class="text-xs text-gray-500 mt-1">{{ template.description }}</p>
-                <div class="mt-2 flex items-center">
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+              <div class="mt-2">
+                <h3 class="text-xs font-medium text-gray-900 truncate">{{ template.name }}</h3>
+                <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
+                <div class="mt-1">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                     {{ template.category }}
                   </span>
                 </div>
@@ -117,6 +143,9 @@
                   Name
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created Date
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -151,6 +180,9 @@
                       <div class="text-sm text-gray-500">{{ dashboard.widgets.length }} widgets</div>
                     </div>
                   </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
+                  {{ dashboard.description || '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(dashboard.createdAt) }}
@@ -332,7 +364,8 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   TruckIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 import { useDashboardStore, type Dashboard } from '../stores/dashboard'
 
@@ -396,12 +429,31 @@ const dashboardTemplates = [
   }
 ]
 
+// Add new refs for template management
+const showAllTemplates = ref(false)
+const templateSearchQuery = ref('')
+
+// Filter templates based on search query
+const filteredTemplates = computed(() => {
+  if (!templateSearchQuery.value) {
+    return showAllTemplates.value ? dashboardTemplates : dashboardTemplates.slice(0, 7)
+  }
+  
+  const query = templateSearchQuery.value.toLowerCase()
+  return dashboardTemplates.filter(template => 
+    template.name.toLowerCase().includes(query) ||
+    template.description.toLowerCase().includes(query) ||
+    template.category.toLowerCase().includes(query)
+  )
+})
+
 // Enhanced dashboard data with additional properties
 const enhancedDashboards = computed(() => {
   return dashboardStore.dashboards.map(dashboard => ({
     ...dashboard,
     type: 'my' as 'my' | 'shared',
-    owner: 'me'
+    owner: 'me',
+    description: dashboard.description || ''
   }))
 })
 
@@ -430,7 +482,7 @@ const shareLink = computed(() => {
 })
 
 const createBlankDashboard = () => {
-  router.push('/dashboards')
+  router.push('/quick-dashboard')
 }
 
 const createFromTemplate = (template: any) => {
