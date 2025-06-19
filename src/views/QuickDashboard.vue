@@ -13,7 +13,6 @@
             </button>
             <div class="flex items-center">
               <div class="flex flex-col space-y-1">
-                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
                 <input
                   id="dashboardName"
                   v-model="dashboardName"
@@ -21,25 +20,10 @@
                   placeholder="Enter dashboard name"
                   class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
                 />
-                <!-- <label for="dashboardDescription" class="text-xs font-medium text-gray-600 mt-2">Description <span class="text-gray-400 font-normal">(optional)</span></label> -->
-                <!-- <input
-                  id="dashboardDescription"
-                  v-model="dashboardDescription"
-                  type="text"
-                  placeholder="Enter dashboard description"
-                  class="text-sm text-gray-700 bg-transparent border border-gray-200 rounded px-2 py-1 w-64 focus:border-primary-500 focus:ring-0"
-                /> -->
               </div>
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <!-- <button
-              @click="showDataSourceManager = true"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <Cog6ToothIcon class="h-4 w-4 mr-2" />
-              Manage Data Sources
-            </button> -->
             <button
               @click="saveDashboard"
               :disabled="!dashboardName || charts.length === 0"
@@ -93,8 +77,9 @@
                 />
               </button>
               <div v-if="expandedDataSources.includes(ds.id)" class="p-2 space-y-1">
+                <!-- Regular Fields -->
                 <div
-                  v-for="column in ds.columns"
+                  v-for="column in ds.columns.filter(col => !col.isCustom)"
                   :key="column.name"
                   :draggable="true"
                   @dragstart="onFieldDragStart($event, column, ds.id)"
@@ -121,6 +106,76 @@
                   >
                     {{ column.type }}
                   </span>
+                </div>
+
+                <!-- Custom Fields Section -->
+                <div v-if="ds.columns.some(col => col.isCustom)" class="border-t pt-2 mt-2">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-gray-600">Custom Fields</span>
+                    <button
+                      @click="openCustomFieldModal(ds.id)"
+                      class="text-xs text-primary-600 hover:text-primary-800"
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  <div
+                    v-for="column in ds.columns.filter(col => col.isCustom)"
+                    :key="column.name"
+                    :draggable="true"
+                    @dragstart="onFieldDragStart($event, column, ds.id)"
+                    class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200 group"
+                    :class="{
+                      'bg-primary-50': isFieldInUse(column.name, ds.id),
+                      'bg-purple-50 hover:bg-purple-100': !isFieldInUse(column.name, ds.id)
+                    }"
+                  >
+                    <div class="flex items-center">
+                      <CheckIcon
+                        v-if="isFieldInUse(column.name, ds.id)"
+                        class="h-4 w-4 text-primary-600 mr-2"
+                      />
+                      <FunctionIcon class="h-4 w-4 text-purple-600 mr-2" />
+                      <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                        :class="{
+                          'bg-blue-100 text-blue-800': column.type === 'number',
+                          'bg-green-100 text-green-800': column.type === 'date',
+                          'bg-gray-100 text-gray-800': column.type === 'string'
+                        }"
+                      >
+                        {{ column.type }}
+                      </span>
+                      <button
+                        @click.stop="editCustomField(ds.id, column)"
+                        class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity"
+                        title="Edit"
+                      >
+                        <PencilIcon class="h-3 w-3" />
+                      </button>
+                      <button
+                        @click.stop="removeCustomField(ds.id, column.name)"
+                        class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                        title="Remove"
+                      >
+                        <TrashIcon class="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Custom Field Button -->
+                <div v-else class="border-t pt-2 mt-2">
+                  <button
+                    @click="openCustomFieldModal(ds.id)"
+                    class="w-full flex items-center justify-center p-2 border border-dashed border-gray-300 rounded text-xs text-gray-500 hover:border-primary-400 hover:text-primary-600 transition-colors"
+                  >
+                    <PlusIcon class="h-4 w-4 mr-1" />
+                    Add Custom Field
+                  </button>
                 </div>
               </div>
             </div>
@@ -183,6 +238,114 @@
                       @click="showDataSourceManager = false"
                     >
                       Done
+                    </button>
+                  </div>
+                </DialogPanel>
+              </TransitionChild>
+            </div>
+          </div>
+        </Dialog>
+      </TransitionRoot>
+
+      <!-- Custom Field Modal -->
+      <TransitionRoot appear :show="showCustomFieldModal" as="template">
+        <Dialog as="div" @close="closeCustomFieldModal" class="relative z-50">
+          <TransitionChild
+            as="template"
+            enter="duration-300 ease-out"
+            enter-from="opacity-0"
+            enter-to="opacity-100"
+            leave="duration-200 ease-in"
+            leave-from="opacity-100"
+            leave-to="opacity-0"
+          >
+            <div class="fixed inset-0 bg-black bg-opacity-25" />
+          </TransitionChild>
+
+          <div class="fixed inset-0 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+              <TransitionChild
+                as="template"
+                enter="duration-300 ease-out"
+                enter-from="opacity-0 scale-95"
+                enter-to="opacity-100 scale-100"
+                leave="duration-200 ease-in"
+                leave-from="opacity-100 scale-100"
+                leave-to="opacity-0 scale-95"
+              >
+                <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 mb-4">
+                    {{ customFieldForm.isEditing ? 'Edit Custom Field' : 'Create Custom Field' }}
+                  </DialogTitle>
+                  
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Field Name</label>
+                      <input
+                        v-model="customFieldForm.name"
+                        type="text"
+                        placeholder="Enter field name"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Expression</label>
+                      <textarea
+                        v-model="customFieldForm.expression"
+                        rows="4"
+                        placeholder="Enter calculation expression (e.g., Price * Quantity, Revenue - Cost)"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      ></textarea>
+                      <p class="text-xs text-gray-500 mt-1">
+                        Use field names and basic math operators (+, -, *, /, %, ^). Available functions: abs, ceil, floor, round, max, min, sqrt, pow, sin, cos, tan, log, exp
+                      </p>
+                    </div>
+
+                    <div v-if="selectedCustomFieldDataSource">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Available Fields</label>
+                      <div class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                        <button
+                          v-for="column in selectedCustomFieldDataSource.columns.filter(col => !col.isCustom)"
+                          :key="column.name"
+                          @click="insertFieldName(column.name)"
+                          class="text-left px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                          {{ column.name }} ({{ column.type }})
+                        </button>
+                      </div>
+                    </div>
+
+                    <div v-if="customFieldForm.expression && customFieldForm.name">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Preview (First 5 rows)</label>
+                      <div class="bg-gray-50 rounded p-3 max-h-32 overflow-y-auto">
+                        <div v-if="customFieldPreview.error" class="text-red-600 text-sm">
+                          Error: {{ customFieldPreview.error }}
+                        </div>
+                        <div v-else class="space-y-1">
+                          <div v-for="(value, index) in customFieldPreview.values.slice(0, 5)" :key="index" class="text-sm">
+                            Row {{ index + 1 }}: {{ value }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      @click="closeCustomFieldModal"
+                      class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      @click="saveCustomField"
+                      :disabled="!customFieldForm.name || !customFieldForm.expression || customFieldPreview.error"
+                      class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {{ customFieldForm.isEditing ? 'Update' : 'Create' }}
                     </button>
                   </div>
                 </DialogPanel>
@@ -434,7 +597,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   ArrowLeftIcon,
@@ -448,7 +611,10 @@ import {
   CircleStackIcon,
   Cog6ToothIcon,
   ChevronDownIcon,
-  CheckIcon
+  CheckIcon,
+  FunctionIcon,
+  PencilIcon,
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
@@ -904,6 +1070,154 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
     )
   } else {
     return chartConfig.xAxis === fieldName || chartConfig.yAxis === fieldName
+  }
+}
+
+// Custom field management
+const showCustomFieldModal = ref(false)
+const customFieldForm = reactive({
+  dataSourceId: '',
+  name: '',
+  expression: '',
+  isEditing: false,
+  originalName: ''
+})
+
+const selectedCustomFieldDataSource = computed(() => {
+  return dataSourceStore.getDataSourceById(customFieldForm.dataSourceId)
+})
+
+const customFieldPreview = computed(() => {
+  if (!customFieldForm.expression || !selectedCustomFieldDataSource.value) {
+    return { values: [], error: null }
+  }
+
+  try {
+    const values = selectedCustomFieldDataSource.value.rows.map(row => {
+      try {
+        // Create a safe evaluation context with only the row data and basic math functions
+        const context = { ...row }
+        
+        // Add basic math functions
+        const mathFunctions = {
+          abs: Math.abs,
+          ceil: Math.ceil,
+          floor: Math.floor,
+          round: Math.round,
+          max: Math.max,
+          min: Math.min,
+          sqrt: Math.sqrt,
+          pow: Math.pow,
+          sin: Math.sin,
+          cos: Math.cos,
+          tan: Math.tan,
+          log: Math.log,
+          exp: Math.exp
+        }
+        
+        // Replace field names with their values and add math functions
+        let processedExpression = customFieldForm.expression
+        
+        // Replace column names with context values
+        selectedCustomFieldDataSource.value!.columns.forEach(col => {
+          if (!col.isCustom) {
+            const regex = new RegExp(`\\b${col.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g')
+            processedExpression = processedExpression.replace(regex, `context["${col.name}"]`)
+          }
+        })
+        
+        // Add math functions to context
+        Object.assign(context, mathFunctions)
+        
+        // Create a function that evaluates the expression
+        const func = new Function('context', `
+          with(context) {
+            return ${processedExpression}
+          }
+        `)
+        
+        return func(context)
+      } catch (error) {
+        return null
+      }
+    })
+
+    return { values, error: null }
+  } catch (error) {
+    return { values: [], error: error instanceof Error ? error.message : 'Invalid expression' }
+  }
+})
+
+const openCustomFieldModal = (dataSourceId: string) => {
+  customFieldForm.dataSourceId = dataSourceId
+  customFieldForm.name = ''
+  customFieldForm.expression = ''
+  customFieldForm.isEditing = false
+  customFieldForm.originalName = ''
+  showCustomFieldModal.value = true
+}
+
+const editCustomField = (dataSourceId: string, column: DataSourceColumn) => {
+  customFieldForm.dataSourceId = dataSourceId
+  customFieldForm.name = column.name
+  customFieldForm.expression = column.expression || ''
+  customFieldForm.isEditing = true
+  customFieldForm.originalName = column.name
+  showCustomFieldModal.value = true
+}
+
+const closeCustomFieldModal = () => {
+  showCustomFieldModal.value = false
+  customFieldForm.dataSourceId = ''
+  customFieldForm.name = ''
+  customFieldForm.expression = ''
+  customFieldForm.isEditing = false
+  customFieldForm.originalName = ''
+}
+
+const insertFieldName = (fieldName: string) => {
+  const textarea = document.querySelector('textarea') as HTMLTextAreaElement
+  if (textarea) {
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const text = customFieldForm.expression
+    customFieldForm.expression = text.substring(0, start) + fieldName + text.substring(end)
+    
+    // Set cursor position after inserted text
+    nextTick(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + fieldName.length, start + fieldName.length)
+    })
+  }
+}
+
+const saveCustomField = async () => {
+  if (!customFieldForm.name || !customFieldForm.expression || customFieldPreview.value.error) return
+
+  try {
+    if (customFieldForm.isEditing) {
+      await dataSourceStore.updateCustomField(
+        customFieldForm.dataSourceId,
+        customFieldForm.originalName,
+        customFieldForm.name,
+        customFieldForm.expression
+      )
+    } else {
+      await dataSourceStore.addCustomField(
+        customFieldForm.dataSourceId,
+        customFieldForm.name,
+        customFieldForm.expression
+      )
+    }
+    closeCustomFieldModal()
+  } catch (error) {
+    alert(error instanceof Error ? error.message : 'Failed to save custom field')
+  }
+}
+
+const removeCustomField = (dataSourceId: string, fieldName: string) => {
+  if (confirm(`Are you sure you want to remove the custom field "${fieldName}"?`)) {
+    dataSourceStore.removeCustomField(dataSourceId, fieldName)
   }
 }
 
