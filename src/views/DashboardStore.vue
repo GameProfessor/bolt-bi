@@ -52,8 +52,51 @@
           </div>
         </div>
         <div
+          v-if="!showAllTemplates"
+          class="flex gap-4 flex-nowrap overflow-hidden pb-2 justify-between"
+        >
+          <!-- Blank Dashboard Template -->
+          <div
+            @click="createBlankDashboard"
+            class="flex-1 basis-0 bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
+          >
+            <div class="p-3">
+              <div class="flex items-center justify-center h-20 bg-gray-50 rounded">
+                <div class="text-center">
+                  <PlusIcon class="mx-auto h-6 w-6 text-gray-400" />
+                  <p class="mt-1 text-xs font-medium text-gray-900">Blank Dashboard</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Template Dashboards -->
+          <div
+            v-for="template in visibleTemplates"
+            :key="template.id"
+            @click="createFromTemplate(template)"
+            class="flex-1 basis-0 bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
+          >
+            <div class="p-3">
+              <div class="h-20 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
+                <div class="h-full flex items-center justify-center">
+                  <component :is="template.icon" class="h-8 w-8 text-white opacity-80" />
+                </div>
+              </div>
+              <div class="mt-2">
+                <h3 class="text-xs font-medium text-gray-900 truncate">{{ template.name }}</h3>
+                <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
+                <div class="mt-1">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    {{ template.category }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          v-else
           class="grid gap-4 transition-all duration-300"
-          :class="showAllTemplates ? '' : ''"
           style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));"
         >
           <!-- Blank Dashboard Template -->
@@ -70,7 +113,6 @@
               </div>
             </div>
           </div>
-
           <!-- Template Dashboards -->
           <div
             v-for="template in filteredTemplates"
@@ -338,7 +380,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Dialog,
@@ -426,6 +468,87 @@ const dashboardTemplates = [
     category: 'Executive',
     icon: BuildingOfficeIcon,
     gradient: 'from-gray-600 to-gray-700'
+  },
+  // --- Additional Templates ---
+  {
+    id: 'customer-insights',
+    name: 'Customer Insights',
+    description: 'Understand customer behavior and segmentation',
+    category: 'Customer',
+    icon: UserGroupIcon,
+    gradient: 'from-pink-500 to-pink-600'
+  },
+  {
+    id: 'project-tracking',
+    name: 'Project Tracking',
+    description: 'Monitor project progress and milestones',
+    category: 'Project',
+    icon: ChartBarIcon,
+    gradient: 'from-yellow-500 to-yellow-600'
+  },
+  {
+    id: 'website-analytics',
+    name: 'Website Analytics',
+    description: 'Track website traffic and user engagement',
+    category: 'Web',
+    icon: ChartPieIcon,
+    gradient: 'from-indigo-500 to-indigo-600'
+  },
+  {
+    id: 'supply-chain',
+    name: 'Supply Chain',
+    description: 'Visualize supply chain and inventory metrics',
+    category: 'Supply Chain',
+    icon: TruckIcon,
+    gradient: 'from-teal-500 to-teal-600'
+  },
+  {
+    id: 'it-monitoring',
+    name: 'IT Monitoring',
+    description: 'Monitor IT systems and uptime',
+    category: 'IT',
+    icon: PresentationChartLineIcon,
+    gradient: 'from-cyan-500 to-cyan-600'
+  },
+  {
+    id: 'product-performance',
+    name: 'Product Performance',
+    description: 'Analyze product sales and feedback',
+    category: 'Product',
+    icon: ChartBarIcon,
+    gradient: 'from-lime-500 to-lime-600'
+  },
+  {
+    id: 'employee-engagement',
+    name: 'Employee Engagement',
+    description: 'Track employee satisfaction and engagement',
+    category: 'HR',
+    icon: UserGroupIcon,
+    gradient: 'from-orange-400 to-orange-500'
+  },
+  {
+    id: 'budget-vs-actual',
+    name: 'Budget vs Actual',
+    description: 'Compare budgeted vs actual spend',
+    category: 'Finance',
+    icon: CurrencyDollarIcon,
+    gradient: 'from-green-400 to-green-500'
+  },
+  {
+    id: 'social-media',
+    name: 'Social Media',
+    description: 'Monitor social media reach and engagement',
+    category: 'Marketing',
+    icon: ChartPieIcon,
+    gradient: 'from-blue-400 to-blue-500'
+  },
+  {
+    id: 'retail-performance',
+    name: 'Retail Performance',
+    description: 'Track retail sales and store metrics',
+    category: 'Retail',
+    icon: ChartBarIcon,
+    gradient: 'from-fuchsia-500 to-fuchsia-600'
   }
 ]
 
@@ -433,14 +556,48 @@ const dashboardTemplates = [
 const showAllTemplates = ref(false)
 const templateSearchQuery = ref('')
 
-// Filter templates based on search query
+// Track number of columns for responsive grid and row
+const templateRowCount = ref(4)
+
+function updateTemplateRowCount() {
+  const width = window.innerWidth
+  if (width >= 1280) {
+    templateRowCount.value = 6
+  } else if (width >= 1024) {
+    templateRowCount.value = 5
+  } else if (width >= 640) {
+    templateRowCount.value = 4
+  } else {
+    templateRowCount.value = 2
+  }
+}
+
+onMounted(() => {
+  updateTemplateRowCount()
+  window.addEventListener('resize', updateTemplateRowCount)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTemplateRowCount)
+})
+
+const visibleTemplates = computed(() => {
+  if (!templateSearchQuery.value) {
+    return dashboardTemplates.slice(0, templateRowCount.value - 1) // -1 for blank template
+  }
+  const query = templateSearchQuery.value.toLowerCase()
+  return dashboardTemplates.filter(template =>
+    template.name.toLowerCase().includes(query) ||
+    template.description.toLowerCase().includes(query) ||
+    template.category.toLowerCase().includes(query)
+  ).slice(0, templateRowCount.value - 1)
+})
+
 const filteredTemplates = computed(() => {
   if (!templateSearchQuery.value) {
-    return showAllTemplates.value ? dashboardTemplates : dashboardTemplates.slice(0, 7)
+    return dashboardTemplates
   }
-  
   const query = templateSearchQuery.value.toLowerCase()
-  return dashboardTemplates.filter(template => 
+  return dashboardTemplates.filter(template =>
     template.name.toLowerCase().includes(query) ||
     template.description.toLowerCase().includes(query) ||
     template.category.toLowerCase().includes(query)
@@ -496,7 +653,7 @@ const viewDashboard = (id: string) => {
 }
 
 const editDashboard = (id: string) => {
-  router.push(`/dashboard/${id}`)
+  router.push(`/quick-dashboard?id=${id}`)
 }
 
 const cloneDashboard = (dashboard: Dashboard) => {

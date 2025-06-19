@@ -12,19 +12,23 @@
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
             <div class="flex items-center">
-              <input
-                v-model="dashboardName"
-                type="text"
-                placeholder="Enter dashboard name"
-                class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-              />
-              <div class="flex items-center mt-2">
+              <div class="flex flex-col space-y-1">
+                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
                 <input
+                  id="dashboardName"
+                  v-model="dashboardName"
+                  type="text"
+                  placeholder="Enter dashboard name"
+                  class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
+                />
+                <!-- <label for="dashboardDescription" class="text-xs font-medium text-gray-600 mt-2">Description <span class="text-gray-400 font-normal">(optional)</span></label> -->
+                <!-- <input
+                  id="dashboardDescription"
                   v-model="dashboardDescription"
                   type="text"
-                  placeholder="Enter dashboard description (optional)"
+                  placeholder="Enter dashboard description"
                   class="text-sm text-gray-700 bg-transparent border border-gray-200 rounded px-2 py-1 w-64 focus:border-primary-500 focus:ring-0"
-                />
+                /> -->
               </div>
             </div>
           </div>
@@ -431,7 +435,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -454,6 +458,7 @@ import { useChartStore, type ChartConfig } from '../stores/chart'
 import ChartPreview from '../components/ChartPreview.vue'
 
 const router = useRouter()
+const route = useRoute()
 const dataSourceStore = useDataSourceStore()
 const dashboardStore = useDashboardStore()
 const chartStore = useChartStore()
@@ -902,8 +907,34 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
   }
 }
 
-onMounted(() => {
-  // Initialize with empty state
+onMounted(async () => {
+  const dashboardId = route.query.id as string | undefined
+  if (dashboardId) {
+    // Load dashboard for editing
+    const dashboard = dashboardStore.dashboards.find(d => d.id === dashboardId)
+    if (dashboard) {
+      dashboardName.value = dashboard.name
+      dashboardDescription.value = dashboard.description || ''
+      // Load charts for this dashboard
+      charts.value = dashboard.widgets.map(widget => {
+        const chart = chartStore.charts.find(c => c.id === widget.chartId)
+        return chart
+          ? {
+              id: chart.id,
+              config: { ...chart },
+              layout: {
+                x: widget.x,
+                y: widget.y,
+                w: widget.w,
+                h: widget.h
+              }
+            }
+          : null
+      }).filter(Boolean) as ChartItem[]
+      await nextTick()
+      initializeGridStack()
+    }
+  }
 })
 
 onUnmounted(() => {
