@@ -13,7 +13,6 @@
             </button>
             <div class="flex items-center">
               <div class="flex flex-col space-y-1">
-                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
                 <input
                   id="dashboardName"
                   v-model="dashboardName"
@@ -21,28 +20,13 @@
                   placeholder="Enter dashboard name"
                   class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
                 />
-                <!-- <label for="dashboardDescription" class="text-xs font-medium text-gray-600 mt-2">Description <span class="text-gray-400 font-normal">(optional)</span></label> -->
-                <!-- <input
-                  id="dashboardDescription"
-                  v-model="dashboardDescription"
-                  type="text"
-                  placeholder="Enter dashboard description"
-                  class="text-sm text-gray-700 bg-transparent border border-gray-200 rounded px-2 py-1 w-64 focus:border-primary-500 focus:ring-0"
-                /> -->
               </div>
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <!-- <button
-              @click="showDataSourceManager = true"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <Cog6ToothIcon class="h-4 w-4 mr-2" />
-              Manage Data Sources
-            </button> -->
             <button
               @click="saveDashboard"
-              :disabled="!dashboardName || charts.length === 0"
+              :disabled="!dashboardName || getAllCharts().length === 0"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <DocumentCheckIcon class="h-4 w-4 mr-2" />
@@ -50,7 +34,7 @@
             </button>
             <button
               @click="previewMode = true"
-              :disabled="charts.length === 0"
+              :disabled="getAllCharts().length === 0"
               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
@@ -271,7 +255,41 @@
               />
             </div>
 
-            <div v-if="selectedChartType === 'pie'">
+            <div v-if="selectedChartType === 'kpi'">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Key Metric</label>
+              <div
+                @drop="onFieldDrop($event, 'keyMetric')"
+                @dragover.prevent
+                @dragenter.prevent
+                class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                :class="{ 'border-primary-400 bg-primary-50': chartConfig.keyMetric }"
+              >
+                {{ chartConfig.keyMetric || 'Drop key metric field here (numbers only)' }}
+              </div>
+              
+              <div class="mt-2">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Previous Period Metric (Optional)</label>
+                <div
+                  @drop="onFieldDrop($event, 'previousMetric')"
+                  @dragover.prevent
+                  @dragenter.prevent
+                  class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+                  :class="{ 'border-primary-400 bg-primary-50': chartConfig.previousMetric }"
+                >
+                  {{ chartConfig.previousMetric || 'Drop previous period metric field here' }}
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Difference Display</label>
+                <select v-model="chartConfig.differenceType" class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="value">Absolute Value</option>
+                </select>
+              </div>
+            </div>
+
+            <div v-else-if="selectedChartType === 'pie'">
               <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
               <div
                 @drop="onFieldDrop($event, 'category')"
@@ -361,7 +379,7 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div v-if="selectedChartType !== 'kpi'" class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Background</label>
                 <input
@@ -405,8 +423,62 @@
       <!-- Main Dashboard Area -->
       <div :class="['flex-1 p-6', previewMode ? 'bg-gray-900' : '']" style="position:relative;">
         <div class="bg-white rounded-lg shadow-sm h-full">
+          <!-- Tab Bar -->
+          <div v-if="tabs.length > 1 || !hideTabBar" class="border-b border-gray-200 px-6 pt-4">
+            <div class="flex items-center justify-between">
+              <div class="flex space-x-1">
+                <button
+                  v-for="tab in tabs"
+                  :key="tab.id"
+                  @click="activeTabId = tab.id"
+                  :class="[
+                    'px-3 py-2 text-sm font-medium rounded-t-lg transition-colors duration-200',
+                    activeTabId === tab.id
+                      ? 'bg-white text-primary-600 border-b-2 border-primary-600'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ]"
+                >
+                  <input
+                    v-if="tab.editing"
+                    v-model="tab.name"
+                    @blur="tab.editing = false"
+                    @keyup.enter="tab.editing = false"
+                    @click.stop
+                    class="bg-transparent border-none focus:ring-0 w-20 text-sm"
+                    ref="tabNameInput"
+                  />
+                  <span v-else @dblclick="editTabName(tab)" class="cursor-pointer">{{ tab.name }}</span>
+                  <button
+                    v-if="tabs.length > 1"
+                    @click.stop="removeTab(tab.id)"
+                    class="ml-2 text-gray-400 hover:text-red-500"
+                  >
+                    <XMarkIcon class="h-4 w-4" />
+                  </button>
+                </button>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  v-if="!previewMode"
+                  @click="addTab"
+                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100"
+                >
+                  <PlusIcon class="h-4 w-4 mr-1" />
+                  Add Tab
+                </button>
+                <button
+                  v-if="tabs.length === 1 && !previewMode"
+                  @click="hideTabBar = !hideTabBar"
+                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100"
+                >
+                  {{ hideTabBar ? 'Show' : 'Hide' }} Tab Bar
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="p-6 h-full">
-            <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
+            <div v-if="currentTabCharts.length === 0" class="flex items-center justify-center h-full text-gray-500">
               <div class="text-center">
                 <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
@@ -419,7 +491,7 @@
             <!-- GridStack Container -->
             <div v-else ref="gridStackContainer" class="grid-stack h-full">
               <div
-                v-for="chart in charts"
+                v-for="chart in currentTabCharts"
                 :key="chart.id"
                 class="grid-stack-item"
                 :gs-id="chart.id"
@@ -444,7 +516,8 @@
                     </div>
                   </div>
                   <div class="chart-content">
-                    <ChartPreview :chart="chart.config" class="w-full h-full" />
+                    <ChartPreview v-if="chart.config.type !== 'kpi'" :chart="chart.config" class="w-full h-full" />
+                    <KPIBox v-else :chart="chart.config" class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -534,7 +607,8 @@ import {
   ChevronDownIcon,
   CheckIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  RectangleGroupIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
@@ -542,6 +616,7 @@ import { useDataSourceStore, type DataSourceColumn } from '../stores/dataSource'
 import { useDashboardStore } from '../stores/dashboard'
 import { useChartStore, type ChartConfig } from '../stores/chart'
 import ChartPreview from '../components/ChartPreview.vue'
+import KPIBox from '../components/KPIBox.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -552,13 +627,27 @@ const chartStore = useChartStore()
 const dashboardName = ref('')
 const dashboardDescription = ref('')
 const selectedDataSourceId = ref('')
-const selectedChartType = ref<ChartConfig['type'] | ''>('')
+const selectedChartType = ref<ChartConfig['type'] | 'kpi' | ''>('')
 const gridStackContainer = ref<HTMLElement>()
 let gridStack: GridStack | null = null
 
+// Tab management
+interface DashboardTab {
+  id: string
+  name: string
+  editing?: boolean
+}
+
+const tabs = ref<DashboardTab[]>([
+  { id: 'tab-1', name: 'Dashboard' }
+])
+const activeTabId = ref('tab-1')
+const hideTabBar = ref(true)
+
 interface ChartItem {
   id: string
-  config: Partial<ChartConfig>
+  tabId: string
+  config: Partial<ChartConfig & { keyMetric?: string; previousMetric?: string; differenceType?: 'percentage' | 'value' }>
   layout: {
     x: number
     y: number
@@ -612,6 +701,9 @@ interface ChartConfigLike {
   horizontal: boolean
   colorScheme: string
   dataSourceId: string
+  keyMetric: string
+  previousMetric: string
+  differenceType: 'percentage' | 'value'
 }
 
 const chartConfig = reactive<ChartConfigLike>({
@@ -623,14 +715,18 @@ const chartConfig = reactive<ChartConfigLike>({
   borderColor: '#1d4ed8',
   horizontal: false,
   colorScheme: 'default',
-  dataSourceId: ''
+  dataSourceId: '',
+  keyMetric: '',
+  previousMetric: '',
+  differenceType: 'percentage'
 })
 
 const chartTypes = [
   { value: 'bar', label: 'Bar', icon: ChartBarIcon },
   { value: 'line', label: 'Line', icon: PresentationChartLineIcon },
   { value: 'pie', label: 'Pie', icon: ChartPieIcon },
-  { value: 'scatter', label: 'Scatter', icon: CircleStackIcon }
+  { value: 'scatter', label: 'Scatter', icon: CircleStackIcon },
+  { value: 'kpi', label: 'KPI Box', icon: RectangleGroupIcon }
 ] as const
 
 const selectedDataSource = computed(() => {
@@ -638,9 +734,19 @@ const selectedDataSource = computed(() => {
   return dataSourceStore.getDataSourceById(selectedDataSourceId.value)
 })
 
+const currentTabCharts = computed(() => {
+  return charts.value.filter(chart => chart.tabId === activeTabId.value)
+})
+
+const getAllCharts = () => {
+  return charts.value
+}
+
 const isChartConfigValid = computed(() => {
   if (!selectedChartType.value) return false
-  if (selectedChartType.value === 'pie') {
+  if (selectedChartType.value === 'kpi') {
+    return !!chartConfig.keyMetric
+  } else if (selectedChartType.value === 'pie') {
     return !!chartConfig.category
   } else if (selectedChartType.value === 'bar') {
     return Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 && !!chartConfig.yAxis
@@ -660,6 +766,9 @@ const resetChartConfig = () => {
   chartConfig.category = ''
   chartConfig.horizontal = false
   chartConfig.dataSourceId = ''
+  chartConfig.keyMetric = ''
+  chartConfig.previousMetric = ''
+  chartConfig.differenceType = 'percentage'
   selectedChartType.value = ''
 }
 
@@ -673,15 +782,15 @@ const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSource
   }
 }
 
-const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') => {
+const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'keyMetric' | 'previousMetric') => {
   event.preventDefault()
   if (!event.dataTransfer) return
   try {
     const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
     
-    // Validate field type for Y-axis (should be numeric)
-    if (target === 'yAxis' && fieldData.type !== 'number') {
-      alert('Y-axis requires a numeric field')
+    // Validate field type for Y-axis and KPI metrics (should be numeric)
+    if ((target === 'yAxis' || target === 'keyMetric' || target === 'previousMetric') && fieldData.type !== 'number') {
+      alert('This field requires a numeric field')
       return
     }
 
@@ -726,7 +835,11 @@ const editChart = (chart: ChartItem) => {
   chartConfig.title = chart.config.title || ''
   chartConfig.dataSourceId = chart.config.dataSourceId || ''
   
-  if (chart.config.type === 'bar') {
+  if (chart.config.type === 'kpi') {
+    chartConfig.keyMetric = chart.config.keyMetric || ''
+    chartConfig.previousMetric = chart.config.previousMetric || ''
+    chartConfig.differenceType = chart.config.differenceType || 'percentage'
+  } else if (chart.config.type === 'bar') {
     if (Array.isArray(chart.config.xAxis)) {
       chartConfig.xAxis = [...chart.config.xAxis]
     } else if (typeof chart.config.xAxis === 'string' && chart.config.xAxis) {
@@ -756,21 +869,34 @@ const addOrUpdateChart = () => {
     // Update existing chart
     const idx = charts.value.findIndex(c => c.id === editingChartId.value)
     if (idx !== -1) {
-      charts.value[idx].config = {
+      const baseConfig = {
         ...charts.value[idx].config,
         id: charts.value[idx].id,
         name: chartConfig.title || `Chart ${idx + 1}`,
         type: selectedChartType.value as ChartConfig['type'],
         dataSourceId: chartConfig.dataSourceId,
-        xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
-        yAxis: chartConfig.yAxis || undefined,
-        category: chartConfig.category || undefined,
         title: chartConfig.title,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
-        colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
         createdAt: charts.value[idx].config.createdAt || new Date()
+      }
+
+      if (selectedChartType.value === 'kpi') {
+        charts.value[idx].config = {
+          ...baseConfig,
+          keyMetric: chartConfig.keyMetric,
+          previousMetric: chartConfig.previousMetric,
+          differenceType: chartConfig.differenceType
+        }
+      } else {
+        charts.value[idx].config = {
+          ...baseConfig,
+          xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
+          yAxis: chartConfig.yAxis || undefined,
+          category: chartConfig.category || undefined,
+          backgroundColor: chartConfig.backgroundColor,
+          borderColor: chartConfig.borderColor,
+          horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
+          colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined
+        }
       }
     }
     editingChartId.value = null
@@ -790,28 +916,46 @@ const cancelEdit = () => {
 const addChart = () => {
   if (!isChartConfigValid.value || !chartConfig.dataSourceId) return
   const chartId = Date.now().toString()
-  const newChart: ChartItem = {
+  
+  const baseConfig = {
     id: chartId,
-    config: {
-      id: chartId,
-      name: chartConfig.title || `Chart ${charts.value.length + 1}`,
-      type: selectedChartType.value as ChartConfig['type'],
-      dataSourceId: chartConfig.dataSourceId,
+    name: chartConfig.title || `Chart ${charts.value.length + 1}`,
+    type: selectedChartType.value as ChartConfig['type'],
+    dataSourceId: chartConfig.dataSourceId,
+    title: chartConfig.title,
+    createdAt: new Date()
+  }
+
+  let config
+  if (selectedChartType.value === 'kpi') {
+    config = {
+      ...baseConfig,
+      keyMetric: chartConfig.keyMetric,
+      previousMetric: chartConfig.previousMetric,
+      differenceType: chartConfig.differenceType
+    }
+  } else {
+    config = {
+      ...baseConfig,
       xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
       yAxis: chartConfig.yAxis || undefined,
       category: chartConfig.category || undefined,
-      title: chartConfig.title,
       backgroundColor: chartConfig.backgroundColor,
       borderColor: chartConfig.borderColor,
       horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
-      colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-      createdAt: new Date()
-    },
+      colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined
+    }
+  }
+
+  const newChart: ChartItem = {
+    id: chartId,
+    tabId: activeTabId.value,
+    config,
     layout: {
       x: 0,
       y: 0,
-      w: 6,
-      h: 4
+      w: selectedChartType.value === 'kpi' ? 3 : 6,
+      h: selectedChartType.value === 'kpi' ? 2 : 4
     }
   }
   charts.value.push(newChart)
@@ -831,8 +975,55 @@ const removeChart = (chartId: string) => {
   }
 }
 
+// Tab management functions
+const addTab = () => {
+  const newTabId = `tab-${Date.now()}`
+  tabs.value.push({
+    id: newTabId,
+    name: `Tab ${tabs.value.length + 1}`
+  })
+  activeTabId.value = newTabId
+  hideTabBar.value = false
+  nextTick(() => initializeGridStack())
+}
+
+const removeTab = (tabId: string) => {
+  if (tabs.value.length <= 1) return
+  
+  if (confirm('Are you sure you want to remove this tab? All charts in this tab will be deleted.')) {
+    // Remove all charts in this tab
+    charts.value = charts.value.filter(chart => chart.tabId !== tabId)
+    
+    // Remove the tab
+    tabs.value = tabs.value.filter(tab => tab.id !== tabId)
+    
+    // Switch to first tab if current tab was removed
+    if (activeTabId.value === tabId) {
+      activeTabId.value = tabs.value[0].id
+    }
+    
+    // Hide tab bar if only one tab remains
+    if (tabs.value.length === 1) {
+      hideTabBar.value = true
+    }
+    
+    nextTick(() => initializeGridStack())
+  }
+}
+
+const editTabName = (tab: DashboardTab) => {
+  tab.editing = true
+  nextTick(() => {
+    const input = document.querySelector(`input[value="${tab.name}"]`) as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
 const initializeGridStack = async () => {
-  if (!gridStackContainer.value || charts.value.length === 0) return
+  if (!gridStackContainer.value || currentTabCharts.value.length === 0) return
 
   await nextTick()
 
@@ -877,7 +1068,7 @@ const initializeGridStack = async () => {
 }
 
 const saveDashboard = () => {
-  if (!dashboardName.value || charts.value.length === 0) return
+  if (!dashboardName.value || getAllCharts().length === 0) return
 
   // Save selected data source IDs
   const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
@@ -886,7 +1077,7 @@ const saveDashboard = () => {
   const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
 
   // Create and save charts, then add widgets
-  charts.value.forEach(chartItem => {
+  getAllCharts().forEach(chartItem => {
     // Create the chart in the chart store
     const savedChart = chartStore.createChart({
       name: chartItem.config.name!,
@@ -915,7 +1106,7 @@ const saveDashboard = () => {
 }
 
 const goBack = () => {
-  if (charts.value.length > 0) {
+  if (getAllCharts().length > 0) {
     if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
       router.push('/dashboards')
     }
@@ -984,7 +1175,9 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
   if (chartConfig.dataSourceId !== dataSourceId) return false
 
   // Check if the field is used in any of the chart properties
-  if (selectedChartType.value === 'pie') {
+  if (selectedChartType.value === 'kpi') {
+    return chartConfig.keyMetric === fieldName || chartConfig.previousMetric === fieldName
+  } else if (selectedChartType.value === 'pie') {
     return chartConfig.category === fieldName
   } else if (selectedChartType.value === 'bar') {
     return (
@@ -1056,6 +1249,7 @@ onMounted(async () => {
         return chart
           ? {
               id: chart.id,
+              tabId: 'tab-1', // Default to first tab for existing dashboards
               config: { ...chart },
               layout: {
                 x: widget.x,
