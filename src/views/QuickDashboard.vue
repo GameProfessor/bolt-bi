@@ -13,7 +13,6 @@
             </button>
             <div class="flex items-center">
               <div class="flex flex-col space-y-1">
-                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
                 <input
                   id="dashboardName"
                   v-model="dashboardName"
@@ -25,9 +24,21 @@
             </div>
           </div>
           <div class="flex items-center space-x-3">
+            <!-- Tab Bar Toggle (only show when there's exactly one tab) -->
+            <button
+              v-if="tabs.length === 1"
+              @click="showTabBar = !showTabBar"
+              class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              :title="showTabBar ? 'Hide Tab Bar' : 'Show Tab Bar'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {{ showTabBar ? 'Hide Tabs' : 'Show Tabs' }}
+            </button>
             <button
               @click="saveDashboard"
-              :disabled="!dashboardName || charts.length === 0"
+              :disabled="!dashboardName || getAllCharts().length === 0"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <DocumentCheckIcon class="h-4 w-4 mr-2" />
@@ -35,7 +46,7 @@
             </button>
             <button
               @click="previewMode = true"
-              :disabled="charts.length === 0"
+              :disabled="getAllCharts().length === 0"
               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
@@ -159,54 +170,119 @@
       ></div>
 
       <!-- Main Dashboard Area -->
-      <div :class="['flex-1 p-6', previewMode ? 'bg-gray-900' : '']" style="position:relative;">
-        <div class="bg-white rounded-lg shadow-sm h-full">
-          <div class="p-6 h-full">
-            <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
-              <div class="text-center">
-                <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
-                <p class="text-sm text-gray-500">
-                  Select a data source, choose a chart type, and drag fields to create your first chart.
-                </p>
-              </div>
-            </div>
-
-            <!-- GridStack Container -->
-            <div v-else ref="gridStackContainer" class="grid-stack h-full">
-              <div
-                v-for="chart in charts"
-                :key="chart.id"
-                class="grid-stack-item"
-                :gs-id="chart.id"
-                :gs-x="chart.layout.x"
-                :gs-y="chart.layout.y"
-                :gs-w="chart.layout.w"
-                :gs-h="chart.layout.h"
+      <div :class="['flex-1 flex flex-col', previewMode ? 'bg-gray-900' : '']" style="position:relative;">
+        <!-- Tab Bar -->
+        <div 
+          v-if="(tabs.length > 1 || showTabBar) && !previewMode" 
+          class="bg-white border-b border-gray-200 px-6 pt-4"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-1 overflow-x-auto">
+              <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                @click="activeTabId = tab.id"
+                :class="[
+                  'group relative flex items-center px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors duration-200',
+                  activeTabId === tab.id
+                    ? 'text-primary-600 border-primary-500 bg-primary-50'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                ]"
               >
-                <div class="grid-stack-item-content">
-                  <div class="chart-header flex justify-end items-center gap-2">
-                    <!-- 3-dot menu -->
-                    <div class="relative">
-                      <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-                      </button>
-                      <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
-                        <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
-                        <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
-                        <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
-                        <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
+                <input
+                  v-if="tab.isEditing"
+                  v-model="tab.name"
+                  @blur="finishEditingTab(tab)"
+                  @keyup.enter="finishEditingTab(tab)"
+                  @keyup.escape="cancelEditingTab(tab)"
+                  class="bg-transparent border-none focus:ring-0 text-sm font-medium w-20"
+                  @click.stop
+                />
+                <span v-else @dblclick="startEditingTab(tab)">{{ tab.name }}</span>
+                
+                <!-- Tab Actions -->
+                <div v-if="!tab.isEditing" class="ml-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button
+                    @click.stop="startEditingTab(tab)"
+                    class="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+                    title="Rename tab"
+                  >
+                    <PencilIcon class="h-3 w-3" />
+                  </button>
+                  <button
+                    v-if="tabs.length > 1"
+                    @click.stop="removeTab(tab.id)"
+                    class="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-600"
+                    title="Remove tab"
+                  >
+                    <XMarkIcon class="h-3 w-3" />
+                  </button>
+                </div>
+              </button>
+              
+              <!-- Add Tab Button -->
+              <button
+                @click="addTab"
+                class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors duration-200"
+                title="Add new tab"
+              >
+                <PlusIcon class="h-4 w-4 mr-1" />
+                Add Tab
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="flex-1 p-6">
+          <div class="bg-white rounded-lg shadow-sm h-full">
+            <div class="p-6 h-full">
+              <div v-if="currentTabCharts.length === 0" class="flex items-center justify-center h-full text-gray-500">
+                <div class="text-center">
+                  <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
+                  <p class="text-sm text-gray-500">
+                    Select a data source, choose a chart type, and drag fields to create your first chart.
+                  </p>
+                </div>
+              </div>
+
+              <!-- GridStack Container -->
+              <div v-else :ref="el => setGridStackRef(el, activeTabId)" class="grid-stack h-full">
+                <div
+                  v-for="chart in currentTabCharts"
+                  :key="chart.id"
+                  class="grid-stack-item"
+                  :gs-id="chart.id"
+                  :gs-x="chart.layout.x"
+                  :gs-y="chart.layout.y"
+                  :gs-w="chart.layout.w"
+                  :gs-h="chart.layout.h"
+                >
+                  <div class="grid-stack-item-content">
+                    <div class="chart-header flex justify-end items-center gap-2">
+                      <!-- 3-dot menu -->
+                      <div class="relative">
+                        <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+                        </button>
+                        <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
+                          <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
+                          <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
+                          <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
+                          <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="chart-content">
-                    <ChartPreview :chart="chart.config" class="w-full h-full" />
+                    <div class="chart-content">
+                      <ChartPreview :chart="chart.config" class="w-full h-full" />
+                    </div>
                   </div>
                 </div>
               </div>
+              <!-- Exit Preview Button -->
+              <button v-if="previewMode" @click="previewMode = false" class="absolute top-4 right-4 z-50 px-4 py-2 bg-white text-primary-700 border border-gray-300 rounded shadow hover:bg-gray-50">Exit Preview</button>
             </div>
-            <!-- Exit Preview Button -->
-            <button v-if="previewMode" @click="previewMode = false" class="absolute top-4 right-4 z-50 px-4 py-2 bg-white text-primary-700 border border-gray-300 rounded shadow hover:bg-gray-50">Exit Preview</button>
           </div>
         </div>
       </div>
@@ -252,11 +328,28 @@ const dashboardName = ref('')
 const dashboardDescription = ref('')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
-const gridStackContainer = ref<HTMLElement>()
-let gridStack: GridStack | null = null
+
+// Tab management
+interface DashboardTab {
+  id: string
+  name: string
+  isEditing?: boolean
+  originalName?: string
+}
+
+const tabs = ref<DashboardTab[]>([
+  { id: 'tab-1', name: 'Dashboard 1' }
+])
+const activeTabId = ref('tab-1')
+const showTabBar = ref(false)
+
+// GridStack instances for each tab
+const gridStackInstances = ref<Map<string, GridStack>>(new Map())
+const gridStackRefs = ref<Map<string, HTMLElement>>(new Map())
 
 interface ChartItem {
   id: string
+  tabId: string
   config: Partial<ChartConfig>
   layout: {
     x: number
@@ -332,6 +425,15 @@ const chartTypes = [
   { value: 'scatter', label: 'Scatter', icon: CircleStackIcon }
 ] as const
 
+// Computed properties
+const currentTabCharts = computed(() => {
+  return charts.value.filter(chart => chart.tabId === activeTabId.value)
+})
+
+const getAllCharts = () => {
+  return charts.value
+}
+
 const selectedDataSource = computed(() => {
   if (!selectedDataSourceId.value) return null
   return dataSourceStore.getDataSourceById(selectedDataSourceId.value)
@@ -347,6 +449,83 @@ const isChartConfigValid = computed(() => {
     return !!chartConfig.xAxis && !!chartConfig.yAxis
   }
 })
+
+// Tab management functions
+const addTab = () => {
+  const newTabNumber = tabs.value.length + 1
+  const newTab: DashboardTab = {
+    id: `tab-${Date.now()}`,
+    name: `Dashboard ${newTabNumber}`
+  }
+  tabs.value.push(newTab)
+  activeTabId.value = newTab.id
+}
+
+const removeTab = (tabId: string) => {
+  if (tabs.value.length <= 1) return
+  
+  const tabCharts = charts.value.filter(chart => chart.tabId === tabId)
+  if (tabCharts.length > 0) {
+    if (!confirm('This tab contains charts. Are you sure you want to remove it?')) {
+      return
+    }
+  }
+  
+  // Remove charts from this tab
+  charts.value = charts.value.filter(chart => chart.tabId !== tabId)
+  
+  // Remove tab
+  const tabIndex = tabs.value.findIndex(tab => tab.id === tabId)
+  if (tabIndex > -1) {
+    tabs.value.splice(tabIndex, 1)
+    
+    // Switch to another tab if the active tab was removed
+    if (activeTabId.value === tabId) {
+      activeTabId.value = tabs.value[Math.max(0, tabIndex - 1)].id
+    }
+  }
+  
+  // Destroy GridStack instance for removed tab
+  const gridStackInstance = gridStackInstances.value.get(tabId)
+  if (gridStackInstance) {
+    gridStackInstance.destroy(false)
+    gridStackInstances.value.delete(tabId)
+  }
+  gridStackRefs.value.delete(tabId)
+}
+
+const startEditingTab = (tab: DashboardTab) => {
+  tab.originalName = tab.name
+  tab.isEditing = true
+  nextTick(() => {
+    const input = document.querySelector(`input[value="${tab.name}"]`) as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
+const finishEditingTab = (tab: DashboardTab) => {
+  if (tab.name.trim() === '') {
+    tab.name = tab.originalName || 'Untitled'
+  }
+  tab.isEditing = false
+  delete tab.originalName
+}
+
+const cancelEditingTab = (tab: DashboardTab) => {
+  tab.name = tab.originalName || tab.name
+  tab.isEditing = false
+  delete tab.originalName
+}
+
+// GridStack management
+const setGridStackRef = (el: HTMLElement | null, tabId: string) => {
+  if (el) {
+    gridStackRefs.value.set(tabId, el)
+  }
+}
 
 const onDataSourceChange = () => {
   resetChartConfig()
@@ -385,14 +564,11 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
     }
 
     // Check if we already have fields from a different data source
-    // Only check if we have multiple fields (for bar chart) or if we're not replacing a single field
     if (chartConfig.dataSourceId && chartConfig.dataSourceId !== fieldData.dataSourceId) {
       if (selectedChartType.value === 'bar' && Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0) {
         alert('Cannot mix fields from different data sources in the same chart')
         return
       }
-      // For non-bar charts or when replacing a single field, allow the change
-      // This will effectively replace the existing field and data source
     }
 
     if (target === 'xAxis' && selectedChartType.value === 'bar') {
@@ -412,7 +588,6 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') =
 
 const openChartMenuId = ref<string | null>(null)
 const editingChartId = ref<string | null>(null)
-const chartTypeColRef = ref<HTMLElement>()
 
 const toggleChartMenu = (id: string) => {
   openChartMenuId.value = openChartMenuId.value === id ? null : id
@@ -474,7 +649,7 @@ const addOrUpdateChart = () => {
     }
     editingChartId.value = null
     resetChartConfig()
-    nextTick(() => initializeGridStack())
+    nextTick(() => initializeGridStack(activeTabId.value))
     return
   }
   // Add new chart
@@ -491,6 +666,7 @@ const addChart = () => {
   const chartId = Date.now().toString()
   const newChart: ChartItem = {
     id: chartId,
+    tabId: activeTabId.value,
     config: {
       id: chartId,
       name: chartConfig.title || `Chart ${charts.value.length + 1}`,
@@ -516,7 +692,7 @@ const addChart = () => {
   charts.value.push(newChart)
   resetChartConfig()
   nextTick(() => {
-    initializeGridStack()
+    initializeGridStack(activeTabId.value)
   })
 }
 
@@ -525,23 +701,27 @@ const removeChart = (chartId: string) => {
     charts.value = charts.value.filter(chart => chart.id !== chartId)
     
     nextTick(() => {
-      initializeGridStack()
+      initializeGridStack(activeTabId.value)
     })
   }
 }
 
-const initializeGridStack = async () => {
-  if (!gridStackContainer.value || charts.value.length === 0) return
+const initializeGridStack = async (tabId: string) => {
+  const gridStackContainer = gridStackRefs.value.get(tabId)
+  const tabCharts = charts.value.filter(chart => chart.tabId === tabId)
+  
+  if (!gridStackContainer || tabCharts.length === 0) return
 
   await nextTick()
 
   try {
-    if (gridStack) {
-      gridStack.destroy(false)
-      gridStack = null
+    // Destroy existing instance for this tab
+    const existingInstance = gridStackInstances.value.get(tabId)
+    if (existingInstance) {
+      existingInstance.destroy(false)
     }
 
-    gridStack = GridStack.init({
+    const gridStack = GridStack.init({
       cellHeight: 70,
       margin: 10,
       minRow: 1,
@@ -553,12 +733,15 @@ const initializeGridStack = async () => {
         handle: '.grid-stack-item-content',
         scroll: false
       }
-    }, gridStackContainer.value)
+    }, gridStackContainer)
+
+    // Store the instance
+    gridStackInstances.value.set(tabId, gridStack)
 
     // Listen for layout changes
     gridStack.on('change', (event, items) => {
       items.forEach(item => {
-        const chart = charts.value.find(c => c.id === item.id)
+        const chart = charts.value.find(c => c.id === item.id && c.tabId === tabId)
         if (chart && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
           chart.layout = {
             x: item.x,
@@ -575,7 +758,7 @@ const initializeGridStack = async () => {
 }
 
 const saveDashboard = () => {
-  if (!dashboardName.value || charts.value.length === 0) return
+  if (!dashboardName.value || getAllCharts().length === 0) return
 
   // Save selected data source IDs
   const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
@@ -712,6 +895,7 @@ onMounted(async () => {
         return chart
           ? {
               id: chart.id,
+              tabId: activeTabId.value, // All charts go to first tab when loading
               config: { ...chart },
               layout: {
                 x: widget.x,
@@ -723,16 +907,19 @@ onMounted(async () => {
           : null
       }).filter(Boolean) as ChartItem[]
       await nextTick()
-      initializeGridStack()
+      initializeGridStack(activeTabId.value)
     }
   }
 })
 
 onUnmounted(() => {
-  if (gridStack) {
-    gridStack.destroy(false)
-    gridStack = null
-  }
+  // Destroy all GridStack instances
+  gridStackInstances.value.forEach(instance => {
+    instance.destroy(false)
+  })
+  gridStackInstances.value.clear()
+  gridStackRefs.value.clear()
+  
   document.removeEventListener('mousemove', onResizing)
   document.removeEventListener('mouseup', stopResizing)
 })
