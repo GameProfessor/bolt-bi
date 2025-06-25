@@ -126,7 +126,12 @@
                 <!-- Custom fields -->
                 <div class="mt-2 border-t pt-2">
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-semibold text-primary-700">Custom Fields</span>
+                    <button 
+                      @click="openDataFieldsDialog(ds)"
+                      class="text-xs font-semibold text-primary-700 hover:text-primary-800 hover:underline cursor-pointer"
+                    >
+                      Custom Fields
+                    </button>
                     <button @click="openCustomFieldModal(ds)" class="text-xs text-primary-600 hover:underline">+ Add</button>
                   </div>
                   <div v-for="column in ds.columns.filter(c => c.isCustom)" :key="column.name" class="flex items-center justify-between p-2 rounded mt-1">
@@ -456,6 +461,279 @@
       </div>
     </div>
 
+    <!-- Data Fields Management Dialog -->
+    <TransitionRoot appear :show="showDataFieldsDialog" as="template">
+      <Dialog as="div" @close="closeDataFieldsDialog" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white bg-opacity-20 backdrop-blur-sm">
+                          <TableCellsIcon class="h-6 w-6 text-white" />
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <DialogTitle as="h3" class="text-xl font-semibold text-white">
+                          Data Fields Management
+                        </DialogTitle>
+                        <p class="text-sm text-primary-100 mt-1">
+                          {{ selectedDataSourceForFields?.name }}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      @click="closeDataFieldsDialog"
+                      class="rounded-lg p-2 text-white hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+                    >
+                      <XMarkIcon class="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="border-b border-gray-200">
+                  <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <button
+                      @click="activeTab = 'overview'"
+                      :class="[
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
+                        activeTab === 'overview'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ]"
+                    >
+                      <TableCellsIcon class="h-5 w-5 inline mr-2" />
+                      Overview
+                    </button>
+                    <button
+                      @click="activeTab = 'custom'"
+                      :class="[
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
+                        activeTab === 'custom'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ]"
+                    >
+                      <PlusIcon class="h-5 w-5 inline mr-2" />
+                      Custom Fields
+                    </button>
+                  </nav>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="px-6 py-6">
+                  <!-- Overview Tab -->
+                  <div v-if="activeTab === 'overview'" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-lg font-medium text-gray-900">Data Source Fields</h4>
+                      <div class="text-sm text-gray-500">
+                        {{ selectedDataSourceForFields?.rows.length || 0 }} rows, 
+                        {{ selectedDataSourceForFields?.columns.filter(c => !c.isCustom).length || 0 }} fields
+                      </div>
+                    </div>
+                    
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                      <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                          <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              No.
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Field Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Data Type
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Sample Values
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          <tr 
+                            v-for="(column, index) in selectedDataSourceForFields?.columns.filter(c => !c.isCustom)" 
+                            :key="column.name"
+                            class="hover:bg-gray-50"
+                          >
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {{ index + 1 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                              </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                :class="{
+                                  'bg-blue-100 text-blue-800': column.type === 'number',
+                                  'bg-green-100 text-green-800': column.type === 'date',
+                                  'bg-gray-100 text-gray-800': column.type === 'string'
+                                }"
+                              >
+                                {{ column.type }}
+                              </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                              <div class="max-w-xs truncate">
+                                {{ column.values.slice(0, 3).filter(v => v != null && v !== '').join(', ') }}
+                                <span v-if="column.values.filter(v => v != null && v !== '').length > 3">...</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Custom Fields Tab -->
+                  <div v-if="activeTab === 'custom'" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-lg font-medium text-gray-900">Custom Fields</h4>
+                      <button
+                        @click="openCustomFieldModal(selectedDataSourceForFields)"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+                      >
+                        <PlusIcon class="h-4 w-4 mr-2" />
+                        Add Custom Field
+                      </button>
+                    </div>
+
+                    <div v-if="selectedDataSourceForFields?.columns.filter(c => c.isCustom).length === 0" class="text-center py-12">
+                      <PlusIcon class="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 class="mt-2 text-sm font-medium text-gray-900">No custom fields</h3>
+                      <p class="mt-1 text-sm text-gray-500">Get started by creating your first custom field.</p>
+                      <div class="mt-6">
+                        <button
+                          @click="openCustomFieldModal(selectedDataSourceForFields)"
+                          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                          <PlusIcon class="h-4 w-4 mr-2" />
+                          Add Custom Field
+                        </button>
+                      </div>
+                    </div>
+
+                    <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                      <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                          <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              No.
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Expression
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Data Type
+                            </th>
+                            <th scope="col" class="relative px-6 py-3">
+                              <span class="sr-only">Actions</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          <tr 
+                            v-for="(column, index) in selectedDataSourceForFields?.columns.filter(c => c.isCustom)" 
+                            :key="column.name"
+                            class="hover:bg-gray-50"
+                          >
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {{ index + 1 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <div class="flex items-center">
+                                <span class="text-sm font-medium text-yellow-700">{{ column.name }}</span>
+                              </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <code class="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                {{ column.expression }}
+                              </code>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                :class="{
+                                  'bg-blue-100 text-blue-800': column.type === 'number',
+                                  'bg-green-100 text-green-800': column.type === 'date',
+                                  'bg-gray-100 text-gray-800': column.type === 'string'
+                                }"
+                              >
+                                {{ column.type }}
+                              </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div class="flex items-center justify-end space-x-2">
+                                <button
+                                  @click="editCustomFieldModal(selectedDataSourceForFields, column)"
+                                  class="text-primary-600 hover:text-primary-900"
+                                  title="Edit"
+                                >
+                                  <PencilIcon class="h-4 w-4" />
+                                </button>
+                                <button
+                                  @click="removeCustomFieldModal(selectedDataSourceForFields, column)"
+                                  class="text-red-600 hover:text-red-900"
+                                  title="Delete"
+                                >
+                                  <TrashIcon class="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                  <button
+                    @click="closeDataFieldsDialog"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
     <!-- Custom Field Modal -->
     <TransitionRoot appear :show="showCustomFieldModal" as="template">
       <Dialog as="div" @close="closeCustomFieldModal" class="relative z-50">
@@ -534,7 +812,8 @@ import {
   ChevronDownIcon,
   CheckIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  TableCellsIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
@@ -1036,6 +1315,22 @@ function saveCustomField() {
 }
 function removeCustomFieldModal(ds: any, column: any) {
   storeRemoveCustomField(ds, column.name)
+}
+
+// Data Fields Dialog
+const showDataFieldsDialog = ref(false)
+const selectedDataSourceForFields = ref<any>(null)
+const activeTab = ref<'overview' | 'custom'>('overview')
+
+function openDataFieldsDialog(ds: any) {
+  selectedDataSourceForFields.value = ds
+  showDataFieldsDialog.value = true
+  activeTab.value = 'overview'
+}
+
+function closeDataFieldsDialog() {
+  showDataFieldsDialog.value = false
+  selectedDataSourceForFields.value = null
 }
 
 onMounted(async () => {
