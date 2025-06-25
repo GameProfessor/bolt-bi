@@ -4,7 +4,7 @@ import { ref, computed } from 'vue'
 export interface ChartConfig {
   id: string
   name: string
-  type: 'bar' | 'line' | 'pie' | 'scatter'
+  type: 'bar' | 'line' | 'pie' | 'scatter' | 'card'
   dataSourceId: string
   xAxis?: string | string[]
   yAxis?: string
@@ -15,6 +15,9 @@ export interface ChartConfig {
   createdAt: Date
   horizontal?: boolean // for bar chart orientation
   colorScheme?: string // for bar chart color scheme
+  keyMetric?: string // for card chart
+  previousMetric?: string // for card chart
+  differenceType?: 'percentage' | 'value' // for card chart
 }
 
 export const useChartStore = defineStore('chart', () => {

@@ -8,6 +8,7 @@
       <ChartBarIcon class="h-8 w-8 mr-2" />
       No data available
     </div>
+    <KPICard v-else-if="chart.type === 'card'" :chart="chart" class="w-full h-full" />
     <canvas v-else ref="canvasRef" class="w-full h-full"></canvas>
   </div>
 </template>
@@ -35,6 +36,7 @@ import {
 import { ExclamationTriangleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '../stores/dataSource'
 import type { ChartConfig } from '../stores/chart'
+import KPICard from './KPICard.vue'
 
 // Register Chart.js components
 ChartJS.register(
@@ -68,7 +70,10 @@ const hasValidData = computed(() => {
   if (!props.chart.dataSourceId || !props.chart.type) return false
   const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
   if (!dataSource || dataSource.rows.length === 0) return false
-  if (props.chart.type === 'pie') {
+  
+  if (props.chart.type === 'card') {
+    return !!props.chart.keyMetric
+  } else if (props.chart.type === 'pie') {
     return !!props.chart.category
   } else if (props.chart.type === 'bar') {
     return Array.isArray(props.chart.xAxis) ? props.chart.xAxis.length > 0 && !!props.chart.yAxis : !!props.chart.xAxis && !!props.chart.yAxis
@@ -112,7 +117,7 @@ function getPalette(scheme: string, count: number): string[] {
 
 const createChart = async () => {
   error.value = ''
-  if (!canvasRef.value || !hasValidData.value) return
+  if (!canvasRef.value || !hasValidData.value || props.chart.type === 'card') return
   try {
     const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)
     if (!dataSource) {
@@ -451,10 +456,13 @@ watch(
     props.chart.category, 
     props.chart.backgroundColor, 
     props.chart.borderColor, 
-    props.chart.title
+    props.chart.title,
+    props.chart.keyMetric,
+    props.chart.previousMetric,
+    props.chart.differenceType
   ],
   () => {
-    if (hasValidData.value) {
+    if (hasValidData.value && props.chart.type !== 'card') {
       nextTick(() => {
         createChart()
       })
@@ -464,7 +472,7 @@ watch(
 )
 
 onMounted(() => {
-  if (hasValidData.value) {
+  if (hasValidData.value && props.chart.type !== 'card') {
     nextTick(() => {
       createChart()
     })
