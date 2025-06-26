@@ -15,7 +15,7 @@
           ]"
           :title="tab.name"
         >
-          <component :is="tab.icon" class="h-5 w-5" />
+          <component :is="tab.icon" class="h-5 w-5 icon-crisp" />
           <!--<span class="text-xs font-medium">{{ tab.name }}</span>-->
         </button>
       </nav>
@@ -621,3 +621,14 @@ defineExpose({
   openDataSourceManager
 })
 </script>
+
+<style scoped>
+.icon-crisp {
+  shape-rendering: geometricPrecision;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
