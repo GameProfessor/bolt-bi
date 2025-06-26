@@ -47,80 +47,199 @@
         </div>
       </div>
 
-      <!-- Data Sources List -->
-      <div class="mt-8">
-        <div v-if="dataSourceStore.dataSources.length === 0 && !dataSourceStore.loading" class="text-center">
-          <TableCellsIcon class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No data sources</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by uploading your first CSV file.</p>
-          <div class="mt-6">
-            <button
-              type="button"
-              @click="showUploadModal = true"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-            >
-              <PlusIcon class="w-4 h-4 mr-2" />
-              Upload CSV
-            </button>
+      <!-- Search and Filter Controls -->
+      <div class="mt-8 bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex-1 max-w-lg">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search data sources by name..."
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                />
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-sm text-gray-700">
+                {{ filteredDataSources.length }} of {{ dataSourceStore.dataSources.length }} data sources
+              </span>
+            </div>
           </div>
         </div>
 
-        <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="dataSource in dataSourceStore.dataSources"
-            :key="dataSource.id"
-            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200"
-          >
-            <div class="p-6">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium text-gray-900 truncate">{{ dataSource.name }}</h3>
-                <div class="ml-2 flex-shrink-0 flex">
-                  <button
-                    @click="selectedDataSource = dataSource"
-                    class="text-primary-600 hover:text-primary-900 mr-2"
-                    title="View Details"
-                  >
-                    <EyeIcon class="h-5 w-5" />
-                  </button>
-                  <button
-                    @click="deleteDataSource(dataSource.id)"
-                    class="text-red-600 hover:text-red-900"
-                    title="Delete"
-                  >
-                    <TrashIcon class="h-5 w-5" />
-                  </button>
-                </div>
+        <!-- Data Sources Table -->
+        <div class="overflow-hidden">
+          <div v-if="filteredDataSources.length === 0 && !dataSourceStore.loading" class="text-center py-12">
+            <TableCellsIcon class="mx-auto h-12 w-12 text-gray-400" />
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              {{ searchQuery ? 'No data sources found' : 'No data sources' }}
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ searchQuery ? 'Try adjusting your search terms.' : 'Get started by uploading your first CSV file.' }}
+            </p>
+            <div v-if="!searchQuery" class="mt-6">
+              <button
+                type="button"
+                @click="showUploadModal = true"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              >
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Upload CSV
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rows
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Columns
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created Date
+                  </th>
+                  <th scope="col" class="relative px-6 py-3">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr
+                  v-for="dataSource in paginatedDataSources"
+                  :key="dataSource.id"
+                  class="hover:bg-gray-50 transition-colors duration-150"
+                >
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                          <TableCellsIcon class="h-6 w-6 text-primary-600" />
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ dataSource.name }}</div>
+                        <div class="text-sm text-gray-500">{{ dataSource.id }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900 max-w-xs">
+                      <p class="truncate">{{ dataSource.description || '-' }}</p>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ dataSource.rows.length.toLocaleString() }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ dataSource.columns.length }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ formatDate(dataSource.createdAt) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end space-x-2">
+                      <button
+                        @click="selectedDataSource = dataSource"
+                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+                        title="View Details"
+                      >
+                        <EyeIcon class="h-4 w-4 mr-1" />
+                        View
+                      </button>
+                      <button
+                        @click="deleteDataSource(dataSource.id)"
+                        class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
+                        title="Delete"
+                      >
+                        <TrashIcon class="h-4 w-4 mr-1" />
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button
+                @click="prevPage"
+                :disabled="currentPage === 1"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                @click="nextPage"
+                :disabled="currentPage === totalPages"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  Showing
+                  <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span>
+                  to
+                  <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredDataSources.length) }}</span>
+                  of
+                  <span class="font-medium">{{ filteredDataSources.length }}</span>
+                  results
+                </p>
               </div>
-              <div class="mt-4">
-                <div class="text-sm text-gray-600">
-                  <p>{{ dataSource.rows.length }} rows</p>
-                  <p>{{ dataSource.columns.length }} columns</p>
-                  <p class="text-xs text-gray-500 mt-1">
-                    Created {{ formatDate(dataSource.createdAt) }}
-                  </p>
-                </div>
-              </div>
-              <div class="mt-4">
-                <div class="flex flex-wrap gap-1">
-                  <span
-                    v-for="column in dataSource.columns.slice(0, 4)"
-                    :key="column.name"
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    :class="{
-                      'bg-blue-100 text-blue-800': column.type === 'number',
-                      'bg-green-100 text-green-800': column.type === 'date',
-                      'bg-gray-100 text-gray-800': column.type === 'string'
-                    }"
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    @click="prevPage"
+                    :disabled="currentPage === 1"
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ column.name }}
-                  </span>
-                  <span
-                    v-if="dataSource.columns.length > 4"
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                    <span class="sr-only">Previous</span>
+                    <ChevronLeftIcon class="h-5 w-5" />
+                  </button>
+                  
+                  <button
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="goToPage(page)"
+                    :class="[
+                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
+                      page === currentPage
+                        ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    ]"
                   >
-                    +{{ dataSource.columns.length - 4 }} more
-                  </span>
-                </div>
+                    {{ page }}
+                  </button>
+                  
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span class="sr-only">Next</span>
+                    <ChevronRightIcon class="h-5 w-5" />
+                  </button>
+                </nav>
               </div>
             </div>
           </div>
@@ -203,6 +322,21 @@
                           <span class="text-gray-400 text-sm">{{ uploadForm.name.length }}/50</span>
                         </div>
                       </div>
+                    </div>
+
+                    <!-- Data Source Description -->
+                    <div>
+                      <label for="dataSourceDescription" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Description
+                        <span class="text-gray-500 font-normal">(optional)</span>
+                      </label>
+                      <textarea
+                        id="dataSourceDescription"
+                        v-model="uploadForm.description"
+                        rows="3"
+                        class="block w-full rounded-xl border-0 py-3 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm transition-all duration-200"
+                        placeholder="Describe what this data source contains..."
+                      />
                     </div>
 
                     <!-- File Upload Area -->
@@ -343,6 +477,9 @@
                       <p class="text-sm text-gray-500">
                         {{ selectedDataSource.rows.length }} rows, {{ selectedDataSource.columns.length }} columns
                       </p>
+                      <p v-if="selectedDataSource.description" class="text-sm text-gray-600 mt-1">
+                        {{ selectedDataSource.description }}
+                      </p>
                     </div>
                     <button
                       @click="selectedDataSource = null"
@@ -419,7 +556,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import {
   Dialog,
   DialogPanel,
@@ -437,7 +574,10 @@ import {
   EyeIcon,
   TrashIcon,
   XMarkIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore, type DataSource } from '../stores/dataSource'
 
@@ -448,9 +588,111 @@ const selectedDataSource = ref<DataSource | null>(null)
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
 
+// Search and pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
 const uploadForm = reactive({
   name: '',
+  description: '',
   file: null as File | null
+})
+
+// Computed properties for filtering and pagination
+const filteredDataSources = computed(() => {
+  if (!searchQuery.value) {
+    return dataSourceStore.dataSources
+  }
+  
+  const query = searchQuery.value.toLowerCase()
+  return dataSourceStore.dataSources.filter(ds =>
+    ds.name.toLowerCase().includes(query) ||
+    (ds.description && ds.description.toLowerCase().includes(query))
+  )
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredDataSources.value.length / itemsPerPage.value)
+})
+
+const paginatedDataSources = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredDataSources.value.slice(start, end)
+})
+
+const visiblePages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    if (current <= 4) {
+      for (let i = 1; i <= 5; i++) {
+        pages.push(i)
+      }
+      pages.push('...')
+      pages.push(total)
+    } else if (current >= total - 3) {
+      pages.push(1)
+      pages.push('...')
+      for (let i = total - 4; i <= total; i++) {
+        pages.push(i)
+      }
+    } else {
+      pages.push(1)
+      pages.push('...')
+      for (let i = current - 1; i <= current + 1; i++) {
+        pages.push(i)
+      }
+      pages.push('...')
+      pages.push(total)
+    }
+  }
+  
+  return pages
+})
+
+// Pagination methods
+const goToPage = (page: number | string) => {
+  if (typeof page === 'number' && page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+// Reset to first page when search changes
+const resetPagination = () => {
+  currentPage.value = 1
+}
+
+// Watch search query to reset pagination
+const unwatchSearch = computed(() => searchQuery.value)
+unwatchSearch.value // Access to trigger reactivity
+const searchWatcher = () => {
+  resetPagination()
+}
+// Use a watcher effect
+const stopWatcher = computed(() => {
+  searchQuery.value // Access to trigger reactivity
+  resetPagination()
+  return null
 })
 
 const handleFileSelect = (event: Event) => {
@@ -489,10 +731,11 @@ const formatFileSize = (bytes: number) => {
 
 const handleUpload = async () => {
   if (uploadForm.file && uploadForm.name) {
-    await dataSourceStore.parseCSV(uploadForm.file, uploadForm.name)
+    await dataSourceStore.parseCSV(uploadForm.file, uploadForm.name, uploadForm.description)
     if (!dataSourceStore.error) {
       showUploadModal.value = false
       uploadForm.name = ''
+      uploadForm.description = ''
       uploadForm.file = null
       if (fileInput.value) {
         fileInput.value.value = ''
@@ -511,9 +754,7 @@ const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: 'numeric'
   }).format(date)
 }
 </script>
