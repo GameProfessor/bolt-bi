@@ -25,16 +25,55 @@
     <div class="flex-1 overflow-y-auto">
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="p-4">
-        <div class="text-center py-8">
-          <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0018 16.5h-2.25m-2.25 0h2.25m-2.25 0h2.25m0 0v-1.5m0 1.5h-1.5m1.5 0v-1.5m0 1.5H9.75m0 0H7.5m2.25 0v-1.5m0 1.5H9.75" />
-            </svg>
+        <div class="space-y-6">
+          <!-- Category Section -->
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Category
+            </label>
+            <select
+              v-model="dashboardCategory"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            >
+              <option value="">Select category</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+              <option value="HR">HR</option>
+              <option value="Customer">Customer</option>
+              <option value="Product">Product</option>
+              <option value="Analytics">Analytics</option>
+              <option value="Executive">Executive</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
-          <h3 class="text-sm font-medium text-gray-900 mb-2">Dashboard Overview</h3>
-          <p class="text-xs text-gray-500">
-            Overview content will be available here
-          </p>
+
+          <!-- Description Section -->
+          <div>
+            <label class="block text-sm font-medium text-gray-900 mb-2">
+              Description
+            </label>
+            <textarea
+              v-model="dashboardDescription"
+              rows="4"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              placeholder="Dashboard description"
+            />
+          </div>
+
+          <!-- Save as Template Section -->
+          <div class="flex items-center">
+            <input
+              id="save-as-template"
+              v-model="saveAsTemplate"
+              type="checkbox"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label for="save-as-template" class="ml-2 block text-sm text-gray-900">
+              Save as template
+            </label>
+          </div>
         </div>
       </div>
 
@@ -416,6 +455,7 @@ const emit = defineEmits<{
   'toggle-expand': [id: string]
   'field-drag': [event: DragEvent, column: DataSourceColumn, dataSourceId: string]
   'update-selected-data-sources': [dataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>]
+  'update-dashboard-info': [info: { category: string; description: string; saveAsTemplate: boolean }]
 }>()
 
 const dataSourceStore = useDataSourceStore()
@@ -429,6 +469,26 @@ const tabs = [
   { id: 'data-sources', name: 'Data', icon: CircleStackIcon },
   { id: 'tools', name: 'Tools', icon: WrenchScrewdriverIcon }
 ]
+
+// Overview tab state
+const dashboardCategory = ref('')
+const dashboardDescription = ref('')
+const saveAsTemplate = ref(false)
+
+// Watch for changes and emit to parent
+const emitDashboardInfo = () => {
+  emit('update-dashboard-info', {
+    category: dashboardCategory.value,
+    description: dashboardDescription.value,
+    saveAsTemplate: saveAsTemplate.value
+  })
+}
+
+// Watch for changes
+computed(() => {
+  emitDashboardInfo()
+  return null
+})
 
 // Data source manager modal state
 const showDataSourceManager = ref(false)
