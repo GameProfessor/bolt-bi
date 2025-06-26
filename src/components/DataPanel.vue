@@ -2,20 +2,21 @@
   <div class="bg-white border-r border-gray-200 flex flex-col" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
     <!-- Tab Navigation -->
     <div class="border-b border-gray-200">
-      <nav class="flex space-x-8 px-4" aria-label="Tabs">
+      <nav class="flex" aria-label="Tabs">
         <button
           v-for="tab in tabs"
           :key="tab.id"
           @click="activeTab = tab.id"
           :class="[
-            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center justify-center',
+            'flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2',
             activeTab === tab.id
-              ? 'border-primary-500 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-primary-500 text-primary-600 bg-primary-50'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
           ]"
           :title="tab.name"
         >
-          <component :is="tab.icon" class="h-5 w-5" />
+          <component :is="tab.icon" class="h-4 w-4" />
+          <span class="text-xs font-medium">{{ tab.name }}</span>
         </button>
       </nav>
     </div>
@@ -38,8 +39,8 @@
       </div>
 
       <!-- Data Sources Tab -->
-      <div v-if="activeTab === 'data-sources'">
-        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div v-if="activeTab === 'data-sources'" class="flex-1">
+        <div class="p-4 flex items-center justify-between">
           <h3 class="text-sm font-medium text-gray-700">Data Sources</h3>
           <button
             @click="$emit('open-manager')"
@@ -49,7 +50,7 @@
             Manage
           </button>
         </div>
-        <div class="p-4 space-y-2">
+        <div class="px-4 pb-4 space-y-2">
           <div v-for="ds in selectedDataSources" :key="ds.id" class="border rounded-lg overflow-hidden">
             <button
               @click="$emit('toggle-expand', ds.id)"
@@ -118,6 +119,21 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Tools Tab -->
+      <div v-if="activeTab === 'tools'" class="p-4">
+        <div class="text-center py-8">
+          <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium text-gray-900 mb-2">Dashboard Tools</h3>
+          <p class="text-xs text-gray-500">
+            Tools and utilities will be available here
+          </p>
         </div>
       </div>
     </div>
@@ -192,7 +208,8 @@ import {
   PencilIcon, 
   TrashIcon,
   CircleStackIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useDataSourceStore, type DataSourceColumn } from '../stores/dataSource'
@@ -210,7 +227,8 @@ const { addCustomField, editCustomField, removeCustomField } = useDataSourceStor
 const activeTab = ref('overview')
 const tabs = [
   { id: 'overview', name: 'Overview', icon: InformationCircleIcon },
-  { id: 'data-sources', name: 'Data Sources', icon: CircleStackIcon }
+  { id: 'data-sources', name: 'Data', icon: CircleStackIcon },
+  { id: 'tools', name: 'Tools', icon: WrenchScrewdriverIcon }
 ]
 
 // Custom field modal state
