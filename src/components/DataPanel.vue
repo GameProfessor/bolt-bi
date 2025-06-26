@@ -1,81 +1,119 @@
 <template>
   <div class="bg-white border-r border-gray-200 flex flex-col" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
-    <!-- Data Sources List -->
-    <div class="flex-1 overflow-y-auto">
-      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 class="text-sm font-medium text-gray-700">Data Sources</h3>
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200">
+      <nav class="flex space-x-8 px-4" aria-label="Tabs">
         <button
-          @click="$emit('open-manager')"
-          class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="activeTab = tab.id"
+          :class="[
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
+            activeTab === tab.id
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          ]"
         >
-          <Cog6ToothIcon class="h-4 w-4 mr-1" />
-          Manage
+          <component :is="tab.icon" class="h-4 w-4 mr-2 inline" />
+          {{ tab.name }}
         </button>
+      </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="flex-1 overflow-y-auto">
+      <!-- Overview Tab -->
+      <div v-if="activeTab === 'overview'" class="p-4">
+        <div class="text-center py-8">
+          <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0018 16.5h-2.25m-2.25 0h2.25m-2.25 0h2.25m0 0v-1.5m0 1.5h-1.5m1.5 0v-1.5m0 1.5H9.75m0 0H7.5m2.25 0v-1.5m0 1.5H9.75" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium text-gray-900 mb-2">Dashboard Overview</h3>
+          <p class="text-xs text-gray-500">
+            Overview content will be available here
+          </p>
+        </div>
       </div>
-      <div class="p-4 space-y-2">
-        <div v-for="ds in selectedDataSources" :key="ds.id" class="border rounded-lg overflow-hidden">
+
+      <!-- Data Sources Tab -->
+      <div v-if="activeTab === 'data-sources'">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-sm font-medium text-gray-700">Data Sources</h3>
           <button
-            @click="$emit('toggle-expand', ds.id)"
-            class="w-full px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
+            @click="$emit('open-manager')"
+            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
-            <span class="text-sm font-medium text-gray-900">{{ ds.name }}</span>
-            <ChevronDownIcon
-              class="h-5 w-5 text-gray-500 transform transition-transform"
-              :class="{ 'rotate-180': expandedDataSources.includes(ds.id) }"
-            />
+            <Cog6ToothIcon class="h-4 w-4 mr-1" />
+            Manage
           </button>
-          <div v-if="expandedDataSources.includes(ds.id)" class="p-2 space-y-1">
-            <!-- Normal fields -->
-            <div
-              v-for="column in ds.columns.filter(c => !c.isCustom)"
-              :key="column.name"
-              :draggable="true"
-              @dragstart="$emit('field-drag', $event, column, ds.id)"
-              class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200"
-              :class="{
-                'bg-primary-50': isFieldInUse(column.name, ds.id),
-                'bg-white hover:bg-gray-50': !isFieldInUse(column.name, ds.id)
-              }"
+        </div>
+        <div class="p-4 space-y-2">
+          <div v-for="ds in selectedDataSources" :key="ds.id" class="border rounded-lg overflow-hidden">
+            <button
+              @click="$emit('toggle-expand', ds.id)"
+              class="w-full px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
             >
-              <div class="flex items-center">
-                <CheckIcon
-                  v-if="isFieldInUse(column.name, ds.id)"
-                  class="h-4 w-4 text-primary-600 mr-2"
-                />
-                <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
-              </div>
-              <span
-                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+              <span class="text-sm font-medium text-gray-900">{{ ds.name }}</span>
+              <ChevronDownIcon
+                class="h-5 w-5 text-gray-500 transform transition-transform"
+                :class="{ 'rotate-180': expandedDataSources.includes(ds.id) }"
+              />
+            </button>
+            <div v-if="expandedDataSources.includes(ds.id)" class="p-2 space-y-1">
+              <!-- Normal fields -->
+              <div
+                v-for="column in ds.columns.filter(c => !c.isCustom)"
+                :key="column.name"
+                :draggable="true"
+                @dragstart="$emit('field-drag', $event, column, ds.id)"
+                class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200"
                 :class="{
-                  'bg-blue-100 text-blue-800': column.type === 'number',
-                  'bg-green-100 text-green-800': column.type === 'date',
-                  'bg-gray-100 text-gray-800': column.type === 'string'
+                  'bg-primary-50': isFieldInUse(column.name, ds.id),
+                  'bg-white hover:bg-gray-50': !isFieldInUse(column.name, ds.id)
                 }"
               >
-                {{ column.type }}
-              </span>
-            </div>
-            <!-- Custom fields -->
-            <div class="mt-2 border-t pt-2">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-semibold text-primary-700">Custom Fields</span>
-                <button @click="openCustomFieldModal(ds)" class="text-xs text-primary-600 hover:underline">+ Add</button>
-              </div>
-              <div v-for="column in ds.columns.filter(c => c.isCustom)" :key="column.name" class="flex items-center justify-between p-2 rounded mt-1">
                 <div class="flex items-center">
                   <CheckIcon
                     v-if="isFieldInUse(column.name, ds.id)"
                     class="h-4 w-4 text-primary-600 mr-2"
                   />
-                  <span class="text-sm font-medium text-yellow-700 cursor-move" :draggable="true" @dragstart="$emit('field-drag', $event, column, ds.id)">{{ column.name }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
                 </div>
-                <div class="flex items-center gap-1">
-                  <button @click="editCustomFieldModal(ds, column)" class="p-1 text-gray-500 hover:text-primary-600" title="Edit">
-                    <PencilIcon class="h-4 w-4" />
-                  </button>
-                  <button @click="removeCustomFieldModal(ds, column)" class="p-1 text-red-500 hover:text-red-700" title="Remove">
-                    <TrashIcon class="h-4 w-4" />
-                  </button>
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-blue-100 text-blue-800': column.type === 'number',
+                    'bg-green-100 text-green-800': column.type === 'date',
+                    'bg-gray-100 text-gray-800': column.type === 'string'
+                  }"
+                >
+                  {{ column.type }}
+                </span>
+              </div>
+              <!-- Custom fields -->
+              <div class="mt-2 border-t pt-2">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-semibold text-primary-700">Custom Fields</span>
+                  <button @click="openCustomFieldModal(ds)" class="text-xs text-primary-600 hover:underline">+ Add</button>
+                </div>
+                <div v-for="column in ds.columns.filter(c => c.isCustom)" :key="column.name" class="flex items-center justify-between p-2 rounded mt-1">
+                  <div class="flex items-center">
+                    <CheckIcon
+                      v-if="isFieldInUse(column.name, ds.id)"
+                      class="h-4 w-4 text-primary-600 mr-2"
+                    />
+                    <span class="text-sm font-medium text-yellow-700 cursor-move" :draggable="true" @dragstart="$emit('field-drag', $event, column, ds.id)">{{ column.name }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button @click="editCustomFieldModal(ds, column)" class="p-1 text-gray-500 hover:text-primary-600" title="Edit">
+                      <PencilIcon class="h-4 w-4" />
+                    </button>
+                    <button @click="removeCustomFieldModal(ds, column)" class="p-1 text-red-500 hover:text-red-700" title="Remove">
+                      <TrashIcon class="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -83,6 +121,7 @@
         </div>
       </div>
     </div>
+
     <!-- Custom Field Modal -->
     <TransitionRoot appear :show="showCustomFieldModal" as="template">
       <Dialog as="div" @close="closeCustomFieldModal" class="relative z-50">
@@ -146,7 +185,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Cog6ToothIcon, ChevronDownIcon, CheckIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { 
+  Cog6ToothIcon, 
+  ChevronDownIcon, 
+  CheckIcon, 
+  PencilIcon, 
+  TrashIcon,
+  TableCellsIcon,
+  ChartBarIcon
+} from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useDataSourceStore, type DataSourceColumn } from '../stores/dataSource'
 
@@ -159,6 +206,14 @@ defineProps<{
 
 const { addCustomField, editCustomField, removeCustomField } = useDataSourceStore()
 
+// Tab management
+const activeTab = ref('overview')
+const tabs = [
+  { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+  { id: 'data-sources', name: 'Data Sources', icon: TableCellsIcon }
+]
+
+// Custom field modal state
 const showCustomFieldModal = ref(false)
 const customFieldForm = ref({ name: '', expression: '', type: 'number' })
 const customFieldEditMode = ref(false)
@@ -172,6 +227,7 @@ function openCustomFieldModal(ds: any) {
   customFieldTargetDataSource = ds
   customFieldOriginalName = ''
 }
+
 function editCustomFieldModal(ds: any, column: any) {
   showCustomFieldModal.value = true
   customFieldEditMode.value = true
@@ -179,11 +235,13 @@ function editCustomFieldModal(ds: any, column: any) {
   customFieldTargetDataSource = ds
   customFieldOriginalName = column.name
 }
+
 function closeCustomFieldModal() {
   showCustomFieldModal.value = false
   customFieldTargetDataSource = null
   customFieldOriginalName = ''
 }
+
 function saveCustomField() {
   if (!customFieldTargetDataSource) return
   if (!customFieldForm.value.name || !customFieldForm.value.expression) return
@@ -194,7 +252,8 @@ function saveCustomField() {
   }
   closeCustomFieldModal()
 }
+
 function removeCustomFieldModal(ds: any, column: any) {
   removeCustomField(ds, column.name)
 }
-</script> 
+</script>

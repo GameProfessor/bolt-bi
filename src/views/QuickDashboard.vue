@@ -47,7 +47,7 @@
     </div>
 
     <div class="flex h-[calc(100vh-4rem)]">
-      <!-- Left Sidebar -->
+      <!-- Left Sidebar with Tabs -->
       <DataPanel
         v-if="!previewMode"
         :selectedDataSources="selectedDataSources"
