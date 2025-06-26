@@ -477,11 +477,11 @@
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <TransitionChild
               as="template"
               enter="ease-out duration-300"
@@ -491,97 +491,125 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
+              <DialogPanel class="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-6xl">
                 <div v-if="selectedDataSource">
-                  <!-- Header Section -->
-                  <div class="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 class="text-lg font-medium text-gray-900">{{ selectedDataSource.name }}</h3>
-                      <p class="text-sm text-gray-500">
-                        {{ selectedDataSource.rows.length }} rows, {{ selectedDataSource.columns.length }} columns
-                      </p>
-                      <p v-if="selectedDataSource.description" class="text-sm text-gray-600 mt-1">
+                  <!-- Header with gradient background -->
+                  <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-6">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white bg-opacity-20 backdrop-blur-sm">
+                            <TableCellsIcon class="h-6 w-6 text-white" />
+                          </div>
+                        </div>
+                        <div class="ml-4">
+                          <DialogTitle as="h3" class="text-xl font-semibold text-white">
+                            {{ selectedDataSource.name }}
+                          </DialogTitle>
+                          <p class="text-sm text-primary-100 mt-1">
+                            {{ selectedDataSource.rows.length.toLocaleString() }} rows, {{ selectedDataSource.columns.length }} columns
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        @click="selectedDataSource = null"
+                        class="rounded-lg p-2 text-white hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+                      >
+                        <XMarkIcon class="h-5 w-5" />
+                      </button>
+                    </div>
+                    
+                    <!-- Description and Category in header -->
+                    <div class="mt-4">
+                      <p v-if="selectedDataSource.description" class="text-sm text-primary-100">
                         {{ selectedDataSource.description }}
                       </p>
                       <div class="mt-2">
                         <span
-                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          :class="getCategoryColor(selectedDataSource.category || 'General')"
+                          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white backdrop-blur-sm"
                         >
                           {{ selectedDataSource.category || 'General' }}
                         </span>
                       </div>
                     </div>
-                    <button
-                      @click="selectedDataSource = null"
-                      class="text-gray-400 hover:text-gray-600"
-                    >
-                      <XMarkIcon class="h-6 w-6" />
-                    </button>
                   </div>
-                  
-                  <!-- Separator -->
-                  <div class="border-t border-gray-200 mb-6"></div>
-                  
-                  <!-- Columns Section -->
-                  <div class="mb-6">
-                    <h4 class="text-sm font-medium text-gray-900 mb-3">Columns</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div
-                        v-for="column in selectedDataSource.columns"
-                        :key="column.name"
-                        class="flex items-center justify-between p-2 bg-gray-50 rounded"
-                      >
-                        <span class="text-sm font-medium">{{ column.name }}</span>
-                        <span
-                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                          :class="{
-                            'bg-blue-100 text-blue-800': column.type === 'number',
-                            'bg-green-100 text-green-800': column.type === 'date',
-                            'bg-gray-100 text-gray-800': column.type === 'string'
-                          }"
+
+                  <!-- Content -->
+                  <div class="px-6 py-6">
+                    <!-- Columns Section -->
+                    <div class="mb-8">
+                      <h4 class="text-lg font-semibold text-gray-900 mb-4">Columns</h4>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div
+                          v-for="column in selectedDataSource.columns"
+                          :key="column.name"
+                          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-150"
                         >
-                          {{ column.type }}
-                        </span>
+                          <span class="text-sm font-medium text-gray-900 truncate mr-2">{{ column.name }}</span>
+                          <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                            :class="{
+                              'bg-blue-100 text-blue-800': column.type === 'number',
+                              'bg-green-100 text-green-800': column.type === 'date',
+                              'bg-gray-100 text-gray-800': column.type === 'string'
+                            }"
+                          >
+                            {{ column.type }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Separator -->
+                    <div class="border-t border-gray-200 mb-8"></div>
+
+                    <!-- Data Preview Section -->
+                    <div>
+                      <h4 class="text-lg font-semibold text-gray-900 mb-4">Data Preview (First 10 rows)</h4>
+                      <div class="overflow-hidden border border-gray-200 rounded-lg">
+                        <div class="overflow-x-auto">
+                          <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                              <tr>
+                                <th
+                                  v-for="column in selectedDataSource.columns"
+                                  :key="column.name"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  {{ column.name }}
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                              <tr
+                                v-for="(row, index) in selectedDataSource.rows.slice(0, 10)"
+                                :key="index"
+                                class="hover:bg-gray-50 transition-colors duration-150"
+                              >
+                                <td
+                                  v-for="column in selectedDataSource.columns"
+                                  :key="column.name"
+                                  class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                >
+                                  {{ row[column.name] }}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Separator -->
-                  <div class="border-t border-gray-200 mb-6"></div>
-
-                  <!-- Data Preview Section -->
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-900 mb-3">Data Preview (First 10 rows)</h4>
-                    <div class="overflow-x-auto">
-                      <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                          <tr>
-                            <th
-                              v-for="column in selectedDataSource.columns"
-                              :key="column.name"
-                              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              {{ column.name }}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                          <tr
-                            v-for="(row, index) in selectedDataSource.rows.slice(0, 10)"
-                            :key="index"
-                            class="hover:bg-gray-50"
-                          >
-                            <td
-                              v-for="column in selectedDataSource.columns"
-                              :key="column.name"
-                              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                            >
-                              {{ row[column.name] }}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                  <!-- Footer -->
+                  <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex justify-end">
+                      <button
+                        @click="selectedDataSource = null"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-200"
+                      >
+                        Close
+                      </button>
                     </div>
                   </div>
                 </div>
