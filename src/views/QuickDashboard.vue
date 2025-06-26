@@ -97,7 +97,63 @@
       ></div>
 
       <!-- Main Dashboard Area -->
-      <div :class="['flex-1 p-6', previewMode ? 'bg-gray-900' : '']" style="position:relative;">
+      <div :class="['flex-1 p-3']" style="position:relative;">
+        <!-- Tabs UI -->
+        <nav class="flex gap-2 px-1 mt-0 mb-2" aria-label="Dashboard Tabs" style="align-items: flex-start;">
+          <div class="flex gap-2">
+            <transition-group name="fade" tag="div" class="flex gap-2">
+              <div
+                v-for="tab in dashboardTabs"
+                :key="tab.id"
+                class="relative group flex items-center"
+                @mouseenter="tabHoverId = tab.id"
+                @mouseleave="tabHoverId = null"
+              >
+                <input
+                  v-if="tab.id === editingTabId"
+                  v-model="editingTabName"
+                  :id="`tab-edit-input-${tab.id}`"
+                  @blur="finishRenameTab(tab.id)"
+                  @keyup.enter="finishRenameTab(tab.id)"
+                  @keyup.esc="cancelRenameTab()"
+                  @keydown="handleTabEditKey(tab.id, $event)"
+                  class="px-2 py-1 border rounded text-sm w-28 mr-1 focus:ring-2 focus:ring-primary-500"
+                  :style="'transition: box-shadow 0.2s;'"
+                  autofocus
+                />
+                <button
+                  v-else
+                  @click="activeTabId = tab.id"
+                  :class="[
+                    'py-2.5 px-4 text-center font-medium text-sm transition-all duration-200 flex items-center gap-2 rounded-lg shadow-sm border relative',
+                    activeTabId === tab.id
+                      ? 'border-primary-200 text-primary-700 bg-primary-50 shadow-md z-10'
+                      : 'border-gray-200 text-gray-600 bg-white hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+                  ]"
+                  :title="tab.name"
+                >
+                  <span>{{ tab.name }}</span>
+                  <PencilIcon
+                    v-if="activeTabId === tab.id && tabHoverId === tab.id"
+                    @click.stop="startRenameTab(tab.id)"
+                    class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
+                  />
+                </button>
+                <transition name="fade">
+                  <button
+                    v-if="dashboardTabs.length > 1 && tabHoverId === tab.id"
+                    @click="removeTab(tab.id)"
+                    class="absolute -right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white rounded-full p-1 shadow transition-opacity duration-150 opacity-80 group-hover:opacity-100"
+                    style="z-index:20"
+                  >
+                    &times;
+                  </button>
+                </transition>
+              </div>
+            </transition-group>
+            <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
+          </div>
+        </nav>
         <div class="bg-white rounded-lg shadow-sm h-full">
           <div class="p-6 h-full">
             <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
@@ -109,7 +165,6 @@
                 </p>
               </div>
             </div>
-
             <!-- GridStack Container -->
             <div v-else ref="gridStackContainer" class="grid-stack h-full">
               <div
@@ -162,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   ArrowLeftIcon,
@@ -189,6 +244,7 @@ import ChartPreview from '../components/ChartPreview.vue'
 import DataPanel from '../components/DataPanel.vue'
 import ChartPanel from '../components/ChartPanel.vue'
 import Toast from '../components/Toast.vue'
+import { nanoid } from 'nanoid'
 
 const router = useRouter()
 const route = useRoute()
@@ -224,7 +280,77 @@ interface ChartItem {
   }
 }
 
-const charts = ref<ChartItem[]>([])
+// Tabs for dashboard sections
+interface DashboardTab {
+  id: string
+  name: string
+  charts: ChartItem[]
+}
+
+const dashboardTabs = ref<DashboardTab[]>([
+  { id: nanoid(), name: 'Tab 1', charts: [] }
+])
+const activeTabId = ref(dashboardTabs.value[0].id)
+const editingTabId = ref<string | null>(null)
+const editingTabName = ref('')
+const tabHoverId = ref<string | null>(null)
+
+function addTab() {
+  const newTab = { id: nanoid(), name: `Tab ${dashboardTabs.value.length + 1}`, charts: [] }
+  dashboardTabs.value.push(newTab)
+  activeTabId.value = newTab.id
+  nextTick(() => initializeGridStack())
+}
+function removeTab(tabId: string) {
+  if (dashboardTabs.value.length === 1) return
+  const tab = dashboardTabs.value.find(t => t.id === tabId)
+  if (!tab) return
+  if (confirm(`Are you sure you want to remove the tab "${tab.name}" and all its charts? This cannot be undone.`)) {
+    const idx = dashboardTabs.value.findIndex(t => t.id === tabId)
+    dashboardTabs.value.splice(idx, 1)
+    if (activeTabId.value === tabId) {
+      activeTabId.value = dashboardTabs.value[Math.max(0, idx - 1)].id
+      nextTick(() => initializeGridStack())
+    }
+  }
+}
+function startRenameTab(tabId: string) {
+  const tab = dashboardTabs.value.find(t => t.id === tabId)
+  if (tab) {
+    editingTabId.value = tabId
+    editingTabName.value = tab.name
+    nextTick(() => {
+      const input = document.getElementById(`tab-edit-input-${tabId}`) as HTMLInputElement
+      if (input) input.focus()
+    })
+  }
+}
+function finishRenameTab(tabId: string) {
+  if (!editingTabName.value.trim()) return
+  const tab = dashboardTabs.value.find(t => t.id === tabId)
+  if (tab) tab.name = editingTabName.value.trim()
+  editingTabId.value = null
+}
+function cancelRenameTab() {
+  editingTabId.value = null
+}
+function handleTabEditKey(tabId: string, e: KeyboardEvent) {
+  if (e.key === 'Enter') finishRenameTab(tabId)
+  if (e.key === 'Escape') cancelRenameTab()
+}
+
+// Proxy charts to the active tab
+const charts = computed({
+  get: () => dashboardTabs.value.find(t => t.id === activeTabId.value)?.charts || [],
+  set: (val) => {
+    const tab = dashboardTabs.value.find(t => t.id === activeTabId.value)
+    if (tab) tab.charts = val
+  }
+})
+
+watch(activeTabId, () => {
+  nextTick(() => initializeGridStack())
+})
 
 // Add color scheme options
 const colorSchemes = [
