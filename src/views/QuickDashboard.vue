@@ -211,6 +211,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <Toast
+      :show="showToast"
+      :type="toastType"
+      :title="toastTitle"
+      :message="toastMessage"
+      @close="hideToast"
+    />
   </div>
 </template>
 
@@ -241,6 +250,7 @@ import { useChartStore, type ChartConfig } from '../stores/chart'
 import ChartPreview from '../components/ChartPreview.vue'
 import DataPanel from '../components/DataPanel.vue'
 import ChartPanel from '../components/ChartPanel.vue'
+import Toast from '../components/Toast.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -254,6 +264,15 @@ const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
 let gridStack: GridStack | null = null
+
+// Toast notification state
+const showToast = ref(false)
+const toastType = ref<'success' | 'warning' | 'error' | 'info'>('success')
+const toastTitle = ref('')
+const toastMessage = ref('')
+
+// Current dashboard ID for updates
+const currentDashboardId = ref<string | null>(null)
 
 interface ChartItem {
   id: string
@@ -574,51 +593,119 @@ const initializeGridStack = async () => {
   }
 }
 
+// Toast notification functions
+const showToastNotification = (type: 'success' | 'warning' | 'error' | 'info', title: string, message?: string) => {
+  toastType.value = type
+  toastTitle.value = title
+  toastMessage.value = message || ''
+  showToast.value = true
+  
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    hideToast()
+  }, 3000)
+}
+
+const hideToast = () => {
+  showToast.value = false
+}
+
 const saveDashboard = () => {
   if (!dashboardName.value || charts.value.length === 0) return
 
-  // Save selected data source IDs
-  const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
+  try {
+    // Save selected data source IDs
+    const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
 
-  // Create dashboard with description and dataSourceIds
-  const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+    if (currentDashboardId.value) {
+      // Update existing dashboard
+      const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
+      if (dashboard) {
+        // Update dashboard properties
+        dashboardStore.updateDashboard(currentDashboardId.value, {
+          name: dashboardName.value,
+          description: dashboardDescription.value,
+          dataSourceIds
+        })
 
-  // Create and save charts, then add widgets
-  charts.value.forEach(chartItem => {
-    // Create the chart in the chart store
-    const savedChart = chartStore.createChart({
-      name: chartItem.config.name!,
-      type: chartItem.config.type!,
-      dataSourceId: chartItem.config.dataSourceId!,
-      xAxis: chartItem.config.xAxis,
-      yAxis: chartItem.config.yAxis,
-      category: chartItem.config.category,
-      title: chartItem.config.title!,
-      backgroundColor: chartItem.config.backgroundColor!,
-      borderColor: chartItem.config.borderColor!
-    })
+        // Clear existing widgets and charts
+        dashboard.widgets.forEach(widget => {
+          chartStore.deleteChart(widget.chartId)
+        })
+        dashboard.widgets = []
 
-    // Add widget to dashboard
-    dashboardStore.addWidget(dashboard.id, savedChart.id)
-    
-    // Update widget layout
-    const widget = dashboard.widgets[dashboard.widgets.length - 1]
-    if (widget) {
-      dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
+        // Create and save new charts, then add widgets
+        charts.value.forEach(chartItem => {
+          // Create the chart in the chart store
+          const savedChart = chartStore.createChart({
+            name: chartItem.config.name!,
+            type: chartItem.config.type!,
+            dataSourceId: chartItem.config.dataSourceId!,
+            xAxis: chartItem.config.xAxis,
+            yAxis: chartItem.config.yAxis,
+            category: chartItem.config.category,
+            title: chartItem.config.title!,
+            backgroundColor: chartItem.config.backgroundColor!,
+            borderColor: chartItem.config.borderColor!
+          })
+
+          // Add widget to dashboard
+          dashboardStore.addWidget(currentDashboardId.value!, savedChart.id)
+          
+          // Update widget layout
+          const widget = dashboard.widgets[dashboard.widgets.length - 1]
+          if (widget) {
+            dashboardStore.updateWidgetLayout(currentDashboardId.value!, widget.id, chartItem.layout)
+          }
+        })
+
+        showToastNotification('success', 'Dashboard Updated', 'Your dashboard has been successfully updated.')
+      }
+    } else {
+      // Create new dashboard
+      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+      currentDashboardId.value = dashboard.id
+
+      // Create and save charts, then add widgets
+      charts.value.forEach(chartItem => {
+        // Create the chart in the chart store
+        const savedChart = chartStore.createChart({
+          name: chartItem.config.name!,
+          type: chartItem.config.type!,
+          dataSourceId: chartItem.config.dataSourceId!,
+          xAxis: chartItem.config.xAxis,
+          yAxis: chartItem.config.yAxis,
+          category: chartItem.config.category,
+          title: chartItem.config.title!,
+          backgroundColor: chartItem.config.backgroundColor!,
+          borderColor: chartItem.config.borderColor!
+        })
+
+        // Add widget to dashboard
+        dashboardStore.addWidget(dashboard.id, savedChart.id)
+        
+        // Update widget layout
+        const widget = dashboard.widgets[dashboard.widgets.length - 1]
+        if (widget) {
+          dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
+        }
+      })
+
+      showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
     }
-  })
-
-  // Navigate to the dashboard editor
-  router.push(`/dashboard/${dashboard.id}`)
+  } catch (error) {
+    console.error('Error saving dashboard:', error)
+    showToastNotification('error', 'Save Failed', 'There was an error saving your dashboard. Please try again.')
+  }
 }
 
 const goBack = () => {
   if (charts.value.length > 0) {
     if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
-      router.push('/dashboards')
+      router.push('/dashboard-store')
     }
   } else {
-    router.push('/dashboards')
+    router.push('/dashboard-store')
   }
 }
 
@@ -700,6 +787,7 @@ onMounted(async () => {
     // Load dashboard for editing
     const dashboard = dashboardStore.dashboards.find(d => d.id === dashboardId)
     if (dashboard) {
+      currentDashboardId.value = dashboardId
       dashboardName.value = dashboard.name
       dashboardDescription.value = dashboard.description || ''
       // Restore selected data sources
