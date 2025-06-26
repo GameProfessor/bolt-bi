@@ -105,10 +105,7 @@
                     Description
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rows
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Columns
+                    Category
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created Date
@@ -133,7 +130,7 @@
                       </div>
                       <div class="ml-4">
                         <div class="text-sm font-medium text-gray-900">{{ dataSource.name }}</div>
-                        <div class="text-sm text-gray-500">{{ dataSource.id }}</div>
+                        <div class="text-sm text-gray-500">{{ dataSource.rows.length.toLocaleString() }} rows, {{ dataSource.columns.length }} columns</div>
                       </div>
                     </div>
                   </td>
@@ -143,10 +140,12 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ dataSource.rows.length.toLocaleString() }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ dataSource.columns.length }}</div>
+                    <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="getCategoryColor(dataSource.category || 'General')"
+                    >
+                      {{ dataSource.category || 'General' }}
+                    </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ formatDate(dataSource.createdAt) }}
@@ -339,6 +338,29 @@
                       />
                     </div>
 
+                    <!-- Data Source Category -->
+                    <div>
+                      <label for="dataSourceCategory" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Category
+                      </label>
+                      <select
+                        id="dataSourceCategory"
+                        v-model="uploadForm.category"
+                        class="block w-full rounded-xl border-0 py-3 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm transition-all duration-200"
+                      >
+                        <option value="General">General</option>
+                        <option value="Sales">Sales</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Operations">Operations</option>
+                        <option value="HR">HR</option>
+                        <option value="Customer">Customer</option>
+                        <option value="Product">Product</option>
+                        <option value="Analytics">Analytics</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
                     <!-- File Upload Area -->
                     <div>
                       <label class="block text-sm font-semibold text-gray-900 mb-2">
@@ -480,6 +502,14 @@
                       <p v-if="selectedDataSource.description" class="text-sm text-gray-600 mt-1">
                         {{ selectedDataSource.description }}
                       </p>
+                      <div class="mt-2">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="getCategoryColor(selectedDataSource.category || 'General')"
+                        >
+                          {{ selectedDataSource.category || 'General' }}
+                        </span>
+                      </div>
                     </div>
                     <button
                       @click="selectedDataSource = null"
@@ -596,6 +626,7 @@ const itemsPerPage = ref(10)
 const uploadForm = reactive({
   name: '',
   description: '',
+  category: 'General',
   file: null as File | null
 })
 
@@ -657,6 +688,23 @@ const visiblePages = computed(() => {
   
   return pages
 })
+
+// Category color mapping
+const getCategoryColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'General': 'bg-gray-100 text-gray-800',
+    'Sales': 'bg-blue-100 text-blue-800',
+    'Marketing': 'bg-purple-100 text-purple-800',
+    'Finance': 'bg-green-100 text-green-800',
+    'Operations': 'bg-orange-100 text-orange-800',
+    'HR': 'bg-pink-100 text-pink-800',
+    'Customer': 'bg-indigo-100 text-indigo-800',
+    'Product': 'bg-yellow-100 text-yellow-800',
+    'Analytics': 'bg-teal-100 text-teal-800',
+    'Other': 'bg-gray-100 text-gray-800'
+  }
+  return colors[category] || colors['General']
+}
 
 // Pagination methods
 const goToPage = (page: number | string) => {
@@ -731,11 +779,12 @@ const formatFileSize = (bytes: number) => {
 
 const handleUpload = async () => {
   if (uploadForm.file && uploadForm.name) {
-    await dataSourceStore.parseCSV(uploadForm.file, uploadForm.name, uploadForm.description)
+    await dataSourceStore.parseCSV(uploadForm.file, uploadForm.name, uploadForm.description, uploadForm.category)
     if (!dataSourceStore.error) {
       showUploadModal.value = false
       uploadForm.name = ''
       uploadForm.description = ''
+      uploadForm.category = 'General'
       uploadForm.file = null
       if (fileInput.value) {
         fileInput.value.value = ''

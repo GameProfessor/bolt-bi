@@ -14,6 +14,7 @@ export interface DataSource {
   id: string
   name: string
   description?: string
+  category?: string
   columns: DataSourceColumn[]
   rows: any[]
   createdAt: Date
@@ -35,7 +36,8 @@ export const useDataSourceStore = defineStore('dataSource', () => {
         const parsed = JSON.parse(stored)
         dataSources.value = parsed.map((ds: any) => ({
           ...ds,
-          createdAt: new Date(ds.createdAt)
+          createdAt: new Date(ds.createdAt),
+          category: ds.category || 'General' // Default category for existing data
         }))
       } catch (e) {
         console.error('Failed to load data sources from storage:', e)
@@ -59,7 +61,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     return 'string'
   }
 
-  const parseCSV = async (file: File, name: string, description?: string): Promise<void> => {
+  const parseCSV = async (file: File, name: string, description?: string, category?: string): Promise<void> => {
     loading.value = true
     error.value = null
 
@@ -97,6 +99,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
             id: Date.now().toString(),
             name,
             description,
+            category: category || 'General',
             columns,
             rows,
             createdAt: new Date()
@@ -137,6 +140,14 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     const dataSource = dataSources.value.find(ds => ds.id === id)
     if (dataSource) {
       dataSource.description = newDescription
+      saveToStorage()
+    }
+  }
+
+  const updateDataSourceCategory = (id: string, newCategory: string) => {
+    const dataSource = dataSources.value.find(ds => ds.id === id)
+    if (dataSource) {
+      dataSource.category = newCategory
       saveToStorage()
     }
   }
@@ -194,6 +205,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     deleteDataSource,
     updateDataSourceName,
     updateDataSourceDescription,
+    updateDataSourceCategory,
     addCustomField,
     editCustomField,
     removeCustomField
