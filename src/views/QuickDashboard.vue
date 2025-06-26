@@ -134,7 +134,7 @@
                 >
                   <span>{{ tab.name }}</span>
                   <PencilIcon
-                    v-if="activeTabId === tab.id && tabHoverId === tab.id"
+                    v-if="tabHoverId === tab.id"
                     @click.stop="startRenameTab(tab.id)"
                     class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                   />
