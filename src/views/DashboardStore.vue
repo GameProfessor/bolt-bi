@@ -60,12 +60,13 @@
             @click="createBlankDashboard"
             class="flex-1 basis-0 bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
           >
-            <div class="p-3">
-              <div class="flex items-center justify-center h-20 bg-gray-50 rounded">
-                <div class="text-center">
-                  <PlusIcon class="mx-auto h-6 w-6 text-gray-400" />
-                  <p class="mt-1 text-xs font-medium text-gray-900">Blank Dashboard</p>
-                </div>
+            <div class="p-4">
+              <div class="flex items-center justify-center h-24 bg-gray-50 rounded mb-3">
+                <PlusIcon class="h-8 w-8 text-gray-400" />
+              </div>
+              <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1">Blank Dashboard</h3>
+                <p class="text-xs text-gray-500">General</p>
               </div>
             </div>
           </div>
@@ -76,20 +77,13 @@
             @click="createFromTemplate(template)"
             class="flex-1 basis-0 bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
           >
-            <div class="p-3">
-              <div class="h-20 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
-                <div class="h-full flex items-center justify-center">
-                  <component :is="template.icon" class="h-8 w-8 text-white opacity-80" />
-                </div>
+            <div class="p-4">
+              <div class="flex items-center justify-center h-24 bg-gradient-to-br rounded mb-3" :class="template.gradient">
+                <component :is="template.icon" class="h-8 w-8 text-white opacity-90" />
               </div>
-              <div class="mt-2">
-                <h3 class="text-xs font-medium text-gray-900 truncate">{{ template.name }}</h3>
-                <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
-                <div class="mt-1">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    {{ template.category }}
-                  </span>
-                </div>
+              <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1">{{ template.name }}</h3>
+                <p class="text-xs text-gray-500">{{ template.category }}</p>
               </div>
             </div>
           </div>
@@ -97,19 +91,20 @@
         <div
           v-else
           class="grid gap-4 transition-all duration-300"
-          style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));"
+          style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));"
         >
           <!-- Blank Dashboard Template -->
           <div
             @click="createBlankDashboard"
             class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-400"
           >
-            <div class="p-3">
-              <div class="flex items-center justify-center h-20 bg-gray-50 rounded">
-                <div class="text-center">
-                  <PlusIcon class="mx-auto h-6 w-6 text-gray-400" />
-                  <p class="mt-1 text-xs font-medium text-gray-900">Blank Dashboard</p>
-                </div>
+            <div class="p-4">
+              <div class="flex items-center justify-center h-24 bg-gray-50 rounded mb-3">
+                <PlusIcon class="h-8 w-8 text-gray-400" />
+              </div>
+              <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1">Blank Dashboard</h3>
+                <p class="text-xs text-gray-500">General</p>
               </div>
             </div>
           </div>
@@ -120,20 +115,13 @@
             @click="createFromTemplate(template)"
             class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
           >
-            <div class="p-3">
-              <div class="h-20 bg-gradient-to-br rounded overflow-hidden" :class="template.gradient">
-                <div class="h-full flex items-center justify-center">
-                  <component :is="template.icon" class="h-8 w-8 text-white opacity-80" />
-                </div>
+            <div class="p-4">
+              <div class="flex items-center justify-center h-24 bg-gradient-to-br rounded mb-3" :class="template.gradient">
+                <component :is="template.icon" class="h-8 w-8 text-white opacity-90" />
               </div>
-              <div class="mt-2">
-                <h3 class="text-xs font-medium text-gray-900 truncate">{{ template.name }}</h3>
-                <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
-                <div class="mt-1">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                    {{ template.category }}
-                  </span>
-                </div>
+              <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1">{{ template.name }}</h3>
+                <p class="text-xs text-gray-500">{{ template.category }}</p>
               </div>
             </div>
           </div>
@@ -157,7 +145,17 @@
                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
-            <!-- Filter -->
+            <!-- Category Filter -->
+            <select
+              v-model="selectedCategoryFilter"
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Categories</option>
+              <option v-for="category in uniqueCategories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+            <!-- Type Filter -->
             <select
               v-model="selectedFilter"
               class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
@@ -175,7 +173,7 @@
             <Squares2X2Icon class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-sm font-medium text-gray-900">No dashboards found</h3>
             <p class="mt-1 text-sm text-gray-500">
-              {{ searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating your first dashboard.' }}
+              {{ searchQuery || selectedCategoryFilter !== 'all' ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first dashboard.' }}
             </p>
           </div>
           <table v-else class="min-w-full divide-y divide-gray-200">
@@ -186,6 +184,9 @@
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created Date
@@ -225,6 +226,14 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
                   {{ dashboard.description || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    :class="getCategoryBadgeClass(dashboard.category)"
+                  >
+                    {{ dashboard.category || 'General' }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(dashboard.createdAt) }}
@@ -416,6 +425,7 @@ const dashboardStore = useDashboardStore()
 
 const searchQuery = ref('')
 const selectedFilter = ref('all')
+const selectedCategoryFilter = ref('all')
 const showShareModal = ref(false)
 const selectedDashboard = ref<Dashboard | null>(null)
 
@@ -610,8 +620,15 @@ const enhancedDashboards = computed(() => {
     ...dashboard,
     type: 'my' as 'my' | 'shared',
     owner: 'me',
-    description: dashboard.description || ''
+    description: dashboard.description || '',
+    category: dashboard.category || 'General'
   }))
+})
+
+// Get unique categories from dashboards
+const uniqueCategories = computed(() => {
+  const categories = new Set(enhancedDashboards.value.map(d => d.category))
+  return Array.from(categories).sort()
 })
 
 const filteredDashboards = computed(() => {
@@ -621,8 +638,14 @@ const filteredDashboards = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(dashboard =>
-      dashboard.name.toLowerCase().includes(query)
+      dashboard.name.toLowerCase().includes(query) ||
+      (dashboard.description && dashboard.description.toLowerCase().includes(query))
     )
+  }
+
+  // Apply category filter
+  if (selectedCategoryFilter.value !== 'all') {
+    filtered = filtered.filter(dashboard => dashboard.category === selectedCategoryFilter.value)
   }
 
   // Apply type filter
@@ -638,14 +661,35 @@ const shareLink = computed(() => {
   return `${window.location.origin}/dashboard/${selectedDashboard.value.id}?shared=true`
 })
 
+// Category badge styling
+const getCategoryBadgeClass = (category?: string) => {
+  const categoryColors: Record<string, string> = {
+    'Sales': 'bg-blue-100 text-blue-800',
+    'Finance': 'bg-green-100 text-green-800',
+    'Marketing': 'bg-purple-100 text-purple-800',
+    'HR': 'bg-orange-100 text-orange-800',
+    'Operations': 'bg-red-100 text-red-800',
+    'Executive': 'bg-gray-100 text-gray-800',
+    'Customer': 'bg-pink-100 text-pink-800',
+    'Project': 'bg-yellow-100 text-yellow-800',
+    'Web': 'bg-indigo-100 text-indigo-800',
+    'Supply Chain': 'bg-teal-100 text-teal-800',
+    'IT': 'bg-cyan-100 text-cyan-800',
+    'Product': 'bg-lime-100 text-lime-800',
+    'Retail': 'bg-fuchsia-100 text-fuchsia-800',
+    'General': 'bg-gray-100 text-gray-800'
+  }
+  return categoryColors[category || 'General'] || 'bg-gray-100 text-gray-800'
+}
+
 const createBlankDashboard = () => {
   router.push('/quick-dashboard')
 }
 
 const createFromTemplate = (template: any) => {
-  // For now, just create a blank dashboard with the template name
-  const dashboard = dashboardStore.createDashboard(`${template.name} Dashboard`)
-  router.push(`/dashboard/${dashboard.id}`)
+  // For now, just create a blank dashboard with the template name and category
+  const dashboard = dashboardStore.createDashboard(`${template.name} Dashboard`, template.description, [], template.category)
+  router.push(`/quick-dashboard?id=${dashboard.id}`)
 }
 
 const viewDashboard = (id: string) => {
@@ -658,7 +702,7 @@ const editDashboard = (id: string) => {
 
 const cloneDashboard = (dashboard: Dashboard) => {
   const clonedName = `${dashboard.name} (Copy)`
-  const clonedDashboard = dashboardStore.createDashboard(clonedName)
+  const clonedDashboard = dashboardStore.createDashboard(clonedName, dashboard.description, dashboard.dataSourceIds, dashboard.category)
   
   // Copy widgets from original dashboard
   dashboard.widgets.forEach(widget => {
@@ -674,7 +718,7 @@ const cloneDashboard = (dashboard: Dashboard) => {
     }
   })
   
-  router.push(`/dashboard/${clonedDashboard.id}`)
+  router.push(`/quick-dashboard?id=${clonedDashboard.id}`)
 }
 
 const shareDashboard = (dashboard: Dashboard) => {

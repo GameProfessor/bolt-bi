@@ -11,9 +11,8 @@
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
-            <div class="flex items-center">
+            <div class="flex items-center space-x-4">
               <div class="flex flex-col space-y-1">
-                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
                 <input
                   id="dashboardName"
                   v-model="dashboardName"
@@ -21,6 +20,28 @@
                   placeholder="Enter dashboard name"
                   class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
                 />
+              </div>
+              <!-- Category Selection -->
+              <div class="flex flex-col space-y-1">
+                <select
+                  v-model="dashboardCategory"
+                  class="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="General">General</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="HR">HR</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Executive">Executive</option>
+                  <option value="Customer">Customer</option>
+                  <option value="Project">Project</option>
+                  <option value="Web">Web</option>
+                  <option value="Supply Chain">Supply Chain</option>
+                  <option value="IT">IT</option>
+                  <option value="Product">Product</option>
+                  <option value="Retail">Retail</option>
+                </select>
               </div>
             </div>
           </div>
@@ -260,6 +281,7 @@ const chartStore = useChartStore()
 
 const dashboardName = ref('')
 const dashboardDescription = ref('')
+const dashboardCategory = ref('General')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
@@ -625,6 +647,7 @@ const saveDashboard = () => {
         dashboardStore.updateDashboard(currentDashboardId.value, {
           name: dashboardName.value,
           description: dashboardDescription.value,
+          category: dashboardCategory.value,
           dataSourceIds
         })
 
@@ -663,7 +686,7 @@ const saveDashboard = () => {
       }
     } else {
       // Create new dashboard
-      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
       currentDashboardId.value = dashboard.id
 
       // Create and save charts, then add widgets
@@ -790,6 +813,7 @@ onMounted(async () => {
       currentDashboardId.value = dashboardId
       dashboardName.value = dashboard.name
       dashboardDescription.value = dashboard.description || ''
+      dashboardCategory.value = dashboard.category || 'General'
       // Restore selected data sources
       if (dashboard.dataSourceIds && dashboard.dataSourceIds.length > 0) {
         selectedDataSources.value = dataSourceStore.dataSources.filter(ds => dashboard.dataSourceIds!.includes(ds.id))
