@@ -14,6 +14,7 @@ export interface DataSource {
   id: string
   name: string
   description?: string
+  category?: string
   columns: DataSourceColumn[]
   rows: any[]
   createdAt: Date
@@ -59,7 +60,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     return 'string'
   }
 
-  const parseCSV = async (file: File, name: string, description?: string): Promise<void> => {
+  const parseCSV = async (file: File, name: string, description?: string, category?: string): Promise<void> => {
     loading.value = true
     error.value = null
 
@@ -97,6 +98,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
             id: Date.now().toString(),
             name,
             description,
+            category,
             columns,
             rows,
             createdAt: new Date()
@@ -137,6 +139,14 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     const dataSource = dataSources.value.find(ds => ds.id === id)
     if (dataSource) {
       dataSource.description = newDescription
+      saveToStorage()
+    }
+  }
+
+  const updateDataSourceCategory = (id: string, newCategory: string) => {
+    const dataSource = dataSources.value.find(ds => ds.id === id)
+    if (dataSource) {
+      dataSource.category = newCategory
       saveToStorage()
     }
   }
@@ -194,6 +204,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
     deleteDataSource,
     updateDataSourceName,
     updateDataSourceDescription,
+    updateDataSourceCategory,
     addCustomField,
     editCustomField,
     removeCustomField
