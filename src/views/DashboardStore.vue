@@ -157,6 +157,16 @@
                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
+            <!-- Category Filter -->
+            <select
+              v-model="selectedCategoryFilter"
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+            >
+              <option value="">All Categories</option>
+              <option v-for="category in availableCategories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
             <!-- Filter -->
             <select
               v-model="selectedFilter"
@@ -186,6 +196,9 @@
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created Date
@@ -225,6 +238,15 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
                   {{ dashboard.description || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    v-if="dashboard.category"
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                  >
+                    {{ dashboard.category }}
+                  </span>
+                  <span v-else class="text-sm text-gray-500">-</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(dashboard.createdAt) }}
@@ -416,6 +438,7 @@ const dashboardStore = useDashboardStore()
 
 const searchQuery = ref('')
 const selectedFilter = ref('all')
+const selectedCategoryFilter = ref('')
 const showShareModal = ref(false)
 const selectedDashboard = ref<Dashboard | null>(null)
 
@@ -614,6 +637,11 @@ const enhancedDashboards = computed(() => {
   }))
 })
 
+// Available categories for filtering
+const availableCategories = computed(() => {
+  return dashboardStore.getCategories
+})
+
 const filteredDashboards = computed(() => {
   let filtered = enhancedDashboards.value
 
@@ -621,8 +649,15 @@ const filteredDashboards = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(dashboard =>
-      dashboard.name.toLowerCase().includes(query)
+      dashboard.name.toLowerCase().includes(query) ||
+      (dashboard.description && dashboard.description.toLowerCase().includes(query)) ||
+      (dashboard.category && dashboard.category.toLowerCase().includes(query))
     )
+  }
+
+  // Apply category filter
+  if (selectedCategoryFilter.value) {
+    filtered = filtered.filter(dashboard => dashboard.category === selectedCategoryFilter.value)
   }
 
   // Apply type filter
@@ -644,7 +679,7 @@ const createBlankDashboard = () => {
 
 const createFromTemplate = (template: any) => {
   // For now, just create a blank dashboard with the template name
-  const dashboard = dashboardStore.createDashboard(`${template.name} Dashboard`)
+  const dashboard = dashboardStore.createDashboard(`${template.name} Dashboard`, undefined, undefined, template.category)
   router.push(`/dashboard/${dashboard.id}`)
 }
 
@@ -658,7 +693,12 @@ const editDashboard = (id: string) => {
 
 const cloneDashboard = (dashboard: Dashboard) => {
   const clonedName = `${dashboard.name} (Copy)`
-  const clonedDashboard = dashboardStore.createDashboard(clonedName)
+  const clonedDashboard = dashboardStore.createDashboard(
+    clonedName, 
+    dashboard.description, 
+    dashboard.dataSourceIds, 
+    dashboard.category
+  )
   
   // Copy widgets from original dashboard
   dashboard.widgets.forEach(widget => {

@@ -26,6 +26,13 @@
           </div>
           <div class="flex items-center space-x-3">
             <button
+              @click="showDashboardSettings = true"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+            >
+              <Cog6ToothIcon class="h-4 w-4 mr-2" />
+              Settings
+            </button>
+            <button
               @click="saveDashboard"
               :disabled="!dashboardName || charts.length === 0"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
@@ -114,6 +121,137 @@
                       @click="showDataSourceManager = false"
                     >
                       Done
+                    </button>
+                  </div>
+                </DialogPanel>
+              </TransitionChild>
+            </div>
+          </div>
+        </Dialog>
+      </TransitionRoot>
+
+      <!-- Dashboard Settings Modal -->
+      <TransitionRoot appear :show="showDashboardSettings" as="template">
+        <Dialog as="div" @close="showDashboardSettings = false" class="relative z-50">
+          <TransitionChild
+            as="template"
+            enter="duration-300 ease-out"
+            enter-from="opacity-0"
+            enter-to="opacity-100"
+            leave="duration-200 ease-in"
+            leave-from="opacity-100"
+            leave-to="opacity-0"
+          >
+            <div class="fixed inset-0 bg-black bg-opacity-25" />
+          </TransitionChild>
+
+          <div class="fixed inset-0 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+              <TransitionChild
+                as="template"
+                enter="duration-300 ease-out"
+                enter-from="opacity-0 scale-95"
+                enter-to="opacity-100 scale-100"
+                leave="duration-200 ease-in"
+                leave-from="opacity-100 scale-100"
+                leave-to="opacity-0 scale-95"
+              >
+                <DialogPanel class="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                    Dashboard Settings
+                  </DialogTitle>
+                  <div class="mt-4 space-y-4">
+                    <div>
+                      <label for="dashboardNameSetting" class="block text-sm font-medium text-gray-700 mb-2">
+                        Dashboard Name
+                      </label>
+                      <input
+                        id="dashboardNameSetting"
+                        v-model="dashboardName"
+                        type="text"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        placeholder="Enter dashboard name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label for="dashboardDescription" class="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        id="dashboardDescription"
+                        v-model="dashboardDescription"
+                        rows="3"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        placeholder="Describe what this dashboard shows..."
+                      />
+                    </div>
+
+                    <div>
+                      <label for="dashboardCategory" class="block text-sm font-medium text-gray-700 mb-2">
+                        Category
+                      </label>
+                      <div class="flex space-x-2">
+                        <select
+                          id="dashboardCategory"
+                          v-model="dashboardCategory"
+                          class="flex-1 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        >
+                          <option value="">Select a category</option>
+                          <option v-for="category in existingCategories" :key="category" :value="category">
+                            {{ category }}
+                          </option>
+                        </select>
+                        <button
+                          @click="showNewCategoryInput = !showNewCategoryInput"
+                          type="button"
+                          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                          <PlusIcon class="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div v-if="showNewCategoryInput" class="mt-2">
+                        <input
+                          v-model="newCategoryName"
+                          type="text"
+                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          placeholder="Enter new category name"
+                          @keyup.enter="addNewCategory"
+                        />
+                        <div class="mt-2 flex space-x-2">
+                          <button
+                            @click="addNewCategory"
+                            type="button"
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                          >
+                            Add
+                          </button>
+                          <button
+                            @click="cancelNewCategory"
+                            type="button"
+                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      @click="showDashboardSettings = false"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      @click="saveDashboardSettings"
+                    >
+                      Save Settings
                     </button>
                   </div>
                 </DialogPanel>
@@ -260,10 +398,16 @@ const chartStore = useChartStore()
 
 const dashboardName = ref('')
 const dashboardDescription = ref('')
+const dashboardCategory = ref('')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
 let gridStack: GridStack | null = null
+
+// Dashboard settings modal
+const showDashboardSettings = ref(false)
+const showNewCategoryInput = ref(false)
+const newCategoryName = ref('')
 
 // Toast notification state
 const showToast = ref(false)
@@ -354,6 +498,10 @@ const chartTypes = [
 const selectedDataSource = computed(() => {
   if (!selectedDataSourceId.value) return null
   return dataSourceStore.getDataSourceById(selectedDataSourceId.value)
+})
+
+const existingCategories = computed(() => {
+  return dashboardStore.getCategories
 })
 
 const isChartConfigValid = computed(() => {
@@ -593,6 +741,25 @@ const initializeGridStack = async () => {
   }
 }
 
+// Dashboard settings functions
+const addNewCategory = () => {
+  if (newCategoryName.value.trim()) {
+    dashboardCategory.value = newCategoryName.value.trim()
+    newCategoryName.value = ''
+    showNewCategoryInput.value = false
+  }
+}
+
+const cancelNewCategory = () => {
+  newCategoryName.value = ''
+  showNewCategoryInput.value = false
+}
+
+const saveDashboardSettings = () => {
+  showDashboardSettings.value = false
+  showToastNotification('success', 'Settings Updated', 'Dashboard settings have been saved.')
+}
+
 // Toast notification functions
 const showToastNotification = (type: 'success' | 'warning' | 'error' | 'info', title: string, message?: string) => {
   toastType.value = type
@@ -625,6 +792,7 @@ const saveDashboard = () => {
         dashboardStore.updateDashboard(currentDashboardId.value, {
           name: dashboardName.value,
           description: dashboardDescription.value,
+          category: dashboardCategory.value || undefined,
           dataSourceIds
         })
 
@@ -663,7 +831,12 @@ const saveDashboard = () => {
       }
     } else {
       // Create new dashboard
-      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+      const dashboard = dashboardStore.createDashboard(
+        dashboardName.value, 
+        dashboardDescription.value, 
+        dataSourceIds, 
+        dashboardCategory.value || undefined
+      )
       currentDashboardId.value = dashboard.id
 
       // Create and save charts, then add widgets
@@ -790,6 +963,7 @@ onMounted(async () => {
       currentDashboardId.value = dashboardId
       dashboardName.value = dashboard.name
       dashboardDescription.value = dashboard.description || ''
+      dashboardCategory.value = dashboard.category || ''
       // Restore selected data sources
       if (dashboard.dataSourceIds && dashboard.dataSourceIds.length > 0) {
         selectedDataSources.value = dataSourceStore.dataSources.filter(ds => dashboard.dataSourceIds!.includes(ds.id))
