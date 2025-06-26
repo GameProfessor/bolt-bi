@@ -14,7 +14,6 @@ export interface Dashboard {
   id: string
   name: string
   description?: string
-  category?: string
   widgets: DashboardWidget[]
   createdAt: Date
   dataSourceIds?: string[]
@@ -28,20 +27,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return (id: string) => dashboards.value.find(d => d.id === id)
   })
 
-  const getDashboardsByCategory = computed(() => {
-    return (category: string) => dashboards.value.filter(d => d.category === category)
-  })
-
-  const getCategories = computed(() => {
-    const categories = new Set<string>()
-    dashboards.value.forEach(dashboard => {
-      if (dashboard.category) {
-        categories.add(dashboard.category)
-      }
-    })
-    return Array.from(categories).sort()
-  })
-
   const loadFromStorage = () => {
     const stored = localStorage.getItem('bi-dashboards')
     if (stored) {
@@ -50,8 +35,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         dashboards.value = parsed.map((dashboard: any) => ({
           ...dashboard,
           createdAt: new Date(dashboard.createdAt),
-          dataSourceIds: dashboard.dataSourceIds || [],
-          category: dashboard.category || undefined
+          dataSourceIds: dashboard.dataSourceIds || []
         }))
       } catch (e) {
         console.error('Failed to load dashboards from storage:', e)
@@ -63,12 +47,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     localStorage.setItem('bi-dashboards', JSON.stringify(dashboards.value))
   }
 
-  const createDashboard = (name: string, description?: string, dataSourceIds?: string[], category?: string) => {
+  const createDashboard = (name: string, description?: string, dataSourceIds?: string[]) => {
     const dashboard: Dashboard = {
       id: Date.now().toString(),
       name,
       description,
-      category,
       widgets: [],
       createdAt: new Date(),
       dataSourceIds: dataSourceIds || []
@@ -136,8 +119,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     dashboards,
     currentDashboard,
     getDashboardById,
-    getDashboardsByCategory,
-    getCategories,
     createDashboard,
     updateDashboard,
     deleteDashboard,
