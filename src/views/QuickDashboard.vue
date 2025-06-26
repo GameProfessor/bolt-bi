@@ -50,78 +50,16 @@
       <!-- Left Sidebar with Tabs -->
       <DataPanel
         v-if="!previewMode"
+        ref="dataPanelRef"
         :selectedDataSources="selectedDataSources"
         :expandedDataSources="expandedDataSources"
         :isFieldInUse="isFieldInUse"
         :width="leftSidebarWidth"
-        @open-manager="showDataSourceManager = true"
+        @open-manager="openDataSourceManager"
         @toggle-expand="toggleDataSource"
         @field-drag="onFieldDragStart"
+        @update-selected-data-sources="updateSelectedDataSources"
       />
-
-      <!-- Data Source Manager Modal -->
-      <TransitionRoot appear :show="showDataSourceManager" as="template">
-        <Dialog as="div" @close="showDataSourceManager = false" class="relative z-50">
-          <TransitionChild
-            as="template"
-            enter="duration-300 ease-out"
-            enter-from="opacity-0"
-            enter-to="opacity-100"
-            leave="duration-200 ease-in"
-            leave-from="opacity-100"
-            leave-to="opacity-0"
-          >
-            <div class="fixed inset-0 bg-black bg-opacity-25" />
-          </TransitionChild>
-
-          <div class="fixed inset-0 overflow-y-auto">
-            <div class="flex min-h-full items-center justify-center p-4 text-center">
-              <TransitionChild
-                as="template"
-                enter="duration-300 ease-out"
-                enter-from="opacity-0 scale-95"
-                enter-to="opacity-100 scale-100"
-                leave="duration-200 ease-in"
-                leave-from="opacity-100 scale-100"
-                leave-to="opacity-0 scale-95"
-              >
-                <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                    Manage Data Sources
-                  </DialogTitle>
-                  <div class="mt-4">
-                    <div class="space-y-4">
-                      <div v-for="ds in dataSourceStore.dataSources" :key="ds.id" class="flex items-center justify-between">
-                        <div class="flex items-center">
-                          <input
-                            type="checkbox"
-                            :id="'ds-' + ds.id"
-                            v-model="selectedDataSources"
-                            :value="ds"
-                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                          />
-                          <label :for="'ds-' + ds.id" class="ml-2 block text-sm text-gray-900">
-                            {{ ds.name }}
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mt-6 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      class="inline-flex justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-sm font-medium text-primary-900 hover:bg-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                      @click="showDataSourceManager = false"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
-            </div>
-          </div>
-        </Dialog>
-      </TransitionRoot>
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
@@ -263,6 +201,7 @@ const dashboardDescription = ref('')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
+const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
 let gridStack: GridStack | null = null
 
 // Toast notification state
@@ -747,7 +686,6 @@ const stopResizing = () => {
 const previewMode = ref(false)
 
 // Add new refs for data source management
-const showDataSourceManager = ref(false)
 const selectedDataSources = ref<Array<{ id: string; name: string; columns: DataSourceColumn[] }>>([])
 const expandedDataSources = ref<string[]>([])
 
@@ -779,6 +717,17 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
   } else {
     return chartConfig.xAxis === fieldName || chartConfig.yAxis === fieldName
   }
+}
+
+// Data source manager methods
+const openDataSourceManager = () => {
+  if (dataPanelRef.value) {
+    dataPanelRef.value.openDataSourceManager()
+  }
+}
+
+const updateSelectedDataSources = (dataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>) => {
+  selectedDataSources.value = dataSources
 }
 
 onMounted(async () => {
