@@ -1,17 +1,17 @@
 <template>
   <div class="bg-white border-r border-gray-200 flex flex-col" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
     <!-- Tab Navigation -->
-    <div class="border-b border-gray-200">
-      <nav class="flex" aria-label="Tabs">
+    <div class="border-b border-gray-200 p-3">
+      <nav class="flex gap-2" aria-label="Tabs">
         <button
           v-for="tab in tabs"
           :key="tab.id"
           @click="activeTab = tab.id"
           :class="[
-            'flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2',
+            'flex-1 py-2.5 px-3 text-center font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 rounded-lg shadow-sm border',
             activeTab === tab.id
-              ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+              ? 'border-primary-200 text-primary-700 bg-primary-50 shadow-md'
+              : 'border-gray-200 text-gray-600 bg-white hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
           ]"
           :title="tab.name"
         >
