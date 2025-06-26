@@ -493,7 +493,8 @@
             >
               <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
                 <div v-if="selectedDataSource">
-                  <div class="flex items-center justify-between mb-4">
+                  <!-- Header Section -->
+                  <div class="flex items-center justify-between mb-6">
                     <div>
                       <h3 class="text-lg font-medium text-gray-900">{{ selectedDataSource.name }}</h3>
                       <p class="text-sm text-gray-500">
@@ -519,8 +520,12 @@
                     </button>
                   </div>
                   
-                  <div class="mb-4">
-                    <h4 class="text-sm font-medium text-gray-900 mb-2">Columns</h4>
+                  <!-- Separator -->
+                  <div class="border-t border-gray-200 mb-6"></div>
+                  
+                  <!-- Columns Section -->
+                  <div class="mb-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Columns</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                       <div
                         v-for="column in selectedDataSource.columns"
@@ -542,8 +547,12 @@
                     </div>
                   </div>
 
+                  <!-- Separator -->
+                  <div class="border-t border-gray-200 mb-6"></div>
+
+                  <!-- Data Preview Section -->
                   <div>
-                    <h4 class="text-sm font-medium text-gray-900 mb-2">Data Preview (First 10 rows)</h4>
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Data Preview (First 10 rows)</h4>
                     <div class="overflow-x-auto">
                       <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
