@@ -26,6 +26,7 @@
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="p-4">
         <div class="space-y-6">
+
           <!-- Category Section -->
           <div>
             <label class="block text-sm font-medium text-gray-900 mb-2">
@@ -61,17 +62,39 @@
               placeholder="Dashboard description"
             />
           </div>
-
+          <!-- Toggle Dashboard Tabs -->
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm text-gray-900">Show dashboard tabs</span>
+            <label for="toggle-dashboard-tabs" class="flex items-center cursor-pointer select-none">
+              <span class="relative">
+                <input
+                  id="toggle-dashboard-tabs"
+                  type="checkbox"
+                  v-model="showDashboardTabs"
+                  @change="emit('toggle-dashboard-tabs', showDashboardTabs)"
+                  class="sr-only peer"
+                  :aria-checked="showDashboardTabs"
+                />
+                <span class="block w-10 h-6 bg-gray-200 rounded-full shadow-inner transition peer-checked:bg-primary-500"></span>
+                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></span>
+              </span>
+            </label>
+          </div>
           <!-- Save as Template Section -->
-          <div class="flex items-center">
-            <input
-              id="save-as-template"
-              v-model="saveAsTemplate"
-              type="checkbox"
-              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <label for="save-as-template" class="ml-2 block text-sm text-gray-900">
-              Save as template
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-900">Save as template</span>
+            <label for="save-as-template" class="flex items-center cursor-pointer select-none">
+              <span class="relative">
+                <input
+                  id="save-as-template"
+                  type="checkbox"
+                  v-model="saveAsTemplate"
+                  class="sr-only peer"
+                  :aria-checked="saveAsTemplate"
+                />
+                <span class="block w-10 h-6 bg-gray-200 rounded-full shadow-inner transition peer-checked:bg-primary-500"></span>
+                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></span>
+              </span>
             </label>
           </div>
         </div>
@@ -456,6 +479,7 @@ const emit = defineEmits<{
   'field-drag': [event: DragEvent, column: DataSourceColumn, dataSourceId: string]
   'update-selected-data-sources': [dataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>]
   'update-dashboard-info': [info: { category: string; description: string; saveAsTemplate: boolean }]
+  'toggle-dashboard-tabs': [show: boolean]
 }>()
 
 const dataSourceStore = useDataSourceStore()
@@ -474,6 +498,7 @@ const tabs = [
 const dashboardCategory = ref('')
 const dashboardDescription = ref('')
 const saveAsTemplate = ref(false)
+const showDashboardTabs = ref(true)
 
 // Watch for changes and emit to parent
 const emitDashboardInfo = () => {

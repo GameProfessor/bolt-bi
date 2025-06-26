@@ -59,6 +59,7 @@
         @toggle-expand="toggleDataSource"
         @field-drag="onFieldDragStart"
         @update-selected-data-sources="updateSelectedDataSources"
+        @toggle-dashboard-tabs="handleToggleDashboardTabs"
       />
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
@@ -99,7 +100,7 @@
       <!-- Main Dashboard Area -->
       <div :class="['flex-1 p-3']" style="position:relative;">
         <!-- Tabs UI -->
-        <nav class="flex gap-2 px-1 mt-0 mb-2" aria-label="Dashboard Tabs" style="align-items: flex-start;">
+        <nav v-if="showDashboardTabs" class="flex gap-2 px-1 mt-0 mb-2" aria-label="Dashboard Tabs" style="align-items: flex-start;">
           <div class="flex gap-2">
             <transition-group name="fade" tag="div" class="flex gap-2">
               <div
@@ -138,19 +139,19 @@
                     @click.stop="startRenameTab(tab.id)"
                     class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                   />
-                  <button
+            <button
                     v-if="dashboardTabs.length > 1 && tabHoverId === tab.id"
                     @click.stop="removeTab(tab.id)"
                     class="ml-1 text-gray-400 hover:text-red-500 bg-transparent rounded-full p-0.5 transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                     style="z-index:20"
                   >
                     &times;
-                  </button>
+            </button>
                 </button>
-              </div>
+          </div>
             </transition-group>
             <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
-          </div>
+        </div>
         </nav>
         <div class="bg-white rounded-lg shadow-sm h-full">
           <div class="p-6 h-full">
@@ -677,8 +678,8 @@ const saveDashboard = () => {
   if (!dashboardName.value || charts.value.length === 0) return
 
   try {
-    // Save selected data source IDs
-    const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
+  // Save selected data source IDs
+  const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
 
     if (currentDashboardId.value) {
       // Update existing dashboard
@@ -726,33 +727,33 @@ const saveDashboard = () => {
       }
     } else {
       // Create new dashboard
-      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+  const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
       currentDashboardId.value = dashboard.id
 
-      // Create and save charts, then add widgets
-      charts.value.forEach(chartItem => {
-        // Create the chart in the chart store
-        const savedChart = chartStore.createChart({
-          name: chartItem.config.name!,
-          type: chartItem.config.type!,
-          dataSourceId: chartItem.config.dataSourceId!,
-          xAxis: chartItem.config.xAxis,
-          yAxis: chartItem.config.yAxis,
-          category: chartItem.config.category,
-          title: chartItem.config.title!,
-          backgroundColor: chartItem.config.backgroundColor!,
-          borderColor: chartItem.config.borderColor!
-        })
+  // Create and save charts, then add widgets
+  charts.value.forEach(chartItem => {
+    // Create the chart in the chart store
+    const savedChart = chartStore.createChart({
+      name: chartItem.config.name!,
+      type: chartItem.config.type!,
+      dataSourceId: chartItem.config.dataSourceId!,
+      xAxis: chartItem.config.xAxis,
+      yAxis: chartItem.config.yAxis,
+      category: chartItem.config.category,
+      title: chartItem.config.title!,
+      backgroundColor: chartItem.config.backgroundColor!,
+      borderColor: chartItem.config.borderColor!
+    })
 
-        // Add widget to dashboard
-        dashboardStore.addWidget(dashboard.id, savedChart.id)
-        
-        // Update widget layout
-        const widget = dashboard.widgets[dashboard.widgets.length - 1]
-        if (widget) {
-          dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
-        }
-      })
+    // Add widget to dashboard
+    dashboardStore.addWidget(dashboard.id, savedChart.id)
+    
+    // Update widget layout
+    const widget = dashboard.widgets[dashboard.widgets.length - 1]
+    if (widget) {
+      dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
+    }
+  })
 
       showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
     }
@@ -852,6 +853,12 @@ const openDataSourceManager = () => {
 
 const updateSelectedDataSources = (dataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>) => {
   selectedDataSources.value = dataSources
+}
+
+const showDashboardTabs = ref(true)
+
+function handleToggleDashboardTabs(show: boolean) {
+  showDashboardTabs.value = show
 }
 
 onMounted(async () => {
