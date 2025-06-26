@@ -138,17 +138,15 @@
                     @click.stop="startRenameTab(tab.id)"
                     class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                   />
-                </button>
-                <transition name="fade">
                   <button
                     v-if="dashboardTabs.length > 1 && tabHoverId === tab.id"
-                    @click="removeTab(tab.id)"
-                    class="absolute -right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white rounded-full p-1 shadow transition-opacity duration-150 opacity-80 group-hover:opacity-100"
+                    @click.stop="removeTab(tab.id)"
+                    class="ml-1 text-gray-400 hover:text-red-500 bg-transparent rounded-full p-0.5 transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                     style="z-index:20"
                   >
                     &times;
                   </button>
-                </transition>
+                </button>
               </div>
             </transition-group>
             <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
