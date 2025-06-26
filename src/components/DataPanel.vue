@@ -388,6 +388,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { 
   Cog6ToothIcon, 
   ChevronDownIcon, 
@@ -417,7 +418,9 @@ const emit = defineEmits<{
   'update-selected-data-sources': [dataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>]
 }>()
 
-const { addCustomField, editCustomField, removeCustomField, dataSources } = useDataSourceStore()
+const dataSourceStore = useDataSourceStore()
+const { dataSources } = storeToRefs(dataSourceStore)
+const { addCustomField, editCustomField, removeCustomField } = dataSourceStore
 
 // Tab management
 const activeTab = ref('overview')
@@ -445,14 +448,16 @@ let customFieldOriginalName = ''
 // Computed properties for data source manager
 const availableCategories = computed(() => {
   const categories = new Set<string>()
-  dataSources.value.forEach(ds => {
-    categories.add(ds.category || 'General')
-  })
+  if (dataSources.value) {
+    dataSources.value.forEach(ds => {
+      categories.add(ds.category || 'General')
+    })
+  }
   return Array.from(categories).sort()
 })
 
 const filteredDataSources = computed(() => {
-  let filtered = dataSources.value
+  let filtered = dataSources.value || []
 
   // Apply search filter
   if (searchQuery.value) {
