@@ -16,7 +16,7 @@
           :title="tab.name"
         >
           <component :is="tab.icon" class="h-4 w-4" />
-          <span class="text-xs font-medium">{{ tab.name }}</span>
+         
         </button>
       </nav>
     </div>
