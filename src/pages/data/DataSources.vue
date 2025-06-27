@@ -291,6 +291,9 @@
                   </button>
                 </div>
 
+                <!-- Separator between header and body -->
+                <!-- <div class="border-t border-gray-200 mb-6"></div> -->
+
                 <!-- Form Content -->
                 <form @submit.prevent="handleUpload" class="space-y-4">
                   <!-- Data Source Name -->
@@ -308,23 +311,23 @@
                     />
                   </div>
 
-                  <!-- Data Source Description -->
+                  <!-- Data Source Description (single line) -->
                   <div>
                     <label for="dataSourceDescription" class="block text-sm font-medium text-gray-700 mb-2">
                       Description
                       <span class="text-gray-500 font-normal">(optional)</span>
                     </label>
-                    <textarea
+                    <input
                       id="dataSourceDescription"
                       v-model="uploadForm.description"
-                      rows="3"
+                      type="text"
                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                       placeholder="Describe what this data source contains..."
                     />
                   </div>
 
-                  <!-- Data Source Category -->
-                  <div>
+                  <!-- Data Source Category (half width) -->
+                  <div class="w-1/2">
                     <label for="dataSourceCategory" class="block text-sm font-medium text-gray-700 mb-2">
                       Category
                     </label>
@@ -406,7 +409,6 @@
                         <div class="mt-1 text-sm text-blue-700">
                           <ul class="list-disc list-inside space-y-1">
                             <li>First row should contain column headers</li>
-                            <li>Maximum file size: 10MB</li>
                             <li>Supported format: CSV (.csv)</li>
                           </ul>
                         </div>
