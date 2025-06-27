@@ -579,7 +579,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import {
   Dialog,
   DialogPanel,
@@ -724,16 +724,8 @@ const resetPagination = () => {
 }
 
 // Watch search query to reset pagination
-const unwatchSearch = computed(() => searchQuery.value)
-unwatchSearch.value // Access to trigger reactivity
-const searchWatcher = () => {
+watch(searchQuery, () => {
   resetPagination()
-}
-// Use a watcher effect
-const stopWatcher = computed(() => {
-  searchQuery.value // Access to trigger reactivity
-  resetPagination()
-  return null
 })
 
 const handleFileSelect = (event: Event) => {
