@@ -3,35 +3,29 @@
     <!-- Header -->
     <div class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <div class="flex items-center">
+        <div class="flex items-center h-16 justify-between">
+          <div class="flex items-center gap-2">
             <button
               @click="goBack"
               class="mr-4 text-gray-400 hover:text-gray-600"
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
-            <div class="flex items-center">
-              <div class="flex flex-col space-y-1">
-                <!-- <label for="dashboardName" class="text-xs font-medium text-gray-600">Dashboard Name</label> -->
-                <input
-                  id="dashboardName"
-                  v-model="dashboardName"
-                  type="text"
-                  placeholder="Enter dashboard name"
-                  class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-                />
-              </div>
-            </div>
+            <input
+              id="dashboardName"
+              v-model="dashboardName"
+              type="text"
+              placeholder="Enter dashboard name"
+              class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
+            />
           </div>
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center gap-3 ml-auto">
             <button
-              @click="saveDashboard"
-              :disabled="!dashboardName || charts.length === 0"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              title="Share dashboard"
             >
-              <DocumentCheckIcon class="h-4 w-4 mr-2" />
-              Save Dashboard
+              <ShareIcon class="h-4 w-4 mr-2" />
+              Share
             </button>
             <button
               @click="previewMode = true"
@@ -40,6 +34,14 @@
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
               Preview
+            </button>
+            <button
+              @click="saveDashboard"
+              :disabled="!dashboardName || charts.length === 0"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <DocumentCheckIcon class="h-4 w-4 mr-2" />
+              Save Dashboard
             </button>
           </div>
         </div>
@@ -232,7 +234,8 @@ import {
   ChevronDownIcon,
   CheckIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  ShareIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
