@@ -155,7 +155,7 @@
             <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
         </div>
         </nav>
-        <div class="bg-white rounded-lg shadow-sm h-full">
+        <div class="bg-white rounded-lg shadow-sm h-full" @dragover.prevent @drop="onDashboardDrop">
           <div class="p-6 h-full">
             <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
               <div class="text-center">
@@ -862,6 +862,72 @@ const showDashboardTabs = ref(true)
 
 function handleToggleDashboardTabs(show: boolean) {
   showDashboardTabs.value = show
+}
+
+// Add chart drag-and-drop capability (from TemplateDesigner.vue)
+function onDashboardDrop(event: DragEvent) {
+  try {
+    const data = event.dataTransfer?.getData('application/json')
+    if (!data) return
+    const { chartType } = JSON.parse(data)
+    if (!chartType) return
+
+    // Calculate drop position in grid coordinates
+    const gridContainer = gridStackContainer.value
+    if (!gridContainer) return
+
+    const rect = gridContainer.getBoundingClientRect()
+    const dropX = event.clientX - rect.left
+    const dropY = event.clientY - rect.top
+
+    // Convert to grid coordinates (assuming 12-column grid)
+    const cellWidth = rect.width / 12
+    const cellHeight = 70 // GridStack default cell height
+    const margin = 10 // GridStack default margin
+
+    const gridX = Math.floor(dropX / (cellWidth + margin))
+    const gridY = Math.floor(dropY / (cellHeight + margin))
+
+    // Ensure position is within bounds
+    const maxX = 12 - 4 // 12 columns - chart width
+    const clampedX = Math.max(0, Math.min(gridX, maxX))
+    const clampedY = Math.max(0, gridY)
+
+    // Add a new chart with empty data if no data source is selected
+    const chartId = Date.now().toString()
+    const hasDataSource = !!selectedDataSourceId.value
+    const newChart = {
+      id: chartId,
+      config: {
+        id: chartId,
+        name: `Chart ${charts.value.length + 1}`,
+        type: chartType,
+        dataSourceId: hasDataSource ? selectedDataSourceId.value : '',
+        xAxis: chartType === 'bar' ? [] : '',
+        yAxis: '',
+        category: '',
+        title: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        horizontal: false,
+        colorScheme: 'default',
+        createdAt: new Date(),
+        data: [] // explicitly empty data
+      },
+      layout: {
+        x: clampedX,
+        y: clampedY,
+        w: 4,
+        h: 4
+      }
+    }
+    charts.value.push(newChart)
+    nextTick(() => {
+      initializeGridStack()
+    })
+  } catch (e) {
+    // Ignore
+  }
 }
 
 onMounted(async () => {

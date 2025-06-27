@@ -4,9 +4,9 @@
       <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
       {{ error }}
     </div>
-    <div v-else-if="!hasValidData" class="flex items-center justify-center h-full text-gray-500 text-sm">
-      <ChartBarIcon class="h-8 w-8 mr-2" />
-      No data available
+    <div v-else-if="!hasValidData" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm">
+      <component :is="chartTypeIcon" class="h-8 w-8 mb-2" />
+      <span>No data available</span>
     </div>
     <KPICard v-else-if="chart.type === 'card'" :chart="chart" class="w-full h-full" />
     <canvas v-else ref="canvasRef" class="w-full h-full"></canvas>
@@ -33,7 +33,7 @@ import {
   ChartConfiguration,
   ChartType
 } from 'chart.js'
-import { ExclamationTriangleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon, ChartBarIcon, PresentationChartLineIcon, ChartPieIcon, CircleStackIcon } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '../stores/dataSource'
 import type { ChartConfig } from '../stores/chart'
 import KPICard from './KPICard.vue'
@@ -80,6 +80,21 @@ const hasValidData = computed(() => {
     return Array.isArray(props.chart.xAxis) ? props.chart.xAxis.length > 0 && !!props.chart.yAxis : !!props.chart.xAxis && !!props.chart.yAxis
   } else {
     return !!props.chart.xAxis && !!props.chart.yAxis
+  }
+})
+
+const chartTypeIcon = computed(() => {
+  switch (props.chart.type) {
+    case 'bar':
+      return ChartBarIcon
+    case 'line':
+      return PresentationChartLineIcon
+    case 'pie':
+      return ChartPieIcon
+    case 'scatter':
+      return CircleStackIcon
+    default:
+      return ChartBarIcon
   }
 })
 
