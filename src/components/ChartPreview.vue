@@ -56,7 +56,7 @@ ChartJS.register(
 )
 
 interface Props {
-  chart: Partial<ChartConfig>
+  chart: Partial<ChartConfig> & { data?: any[] }
 }
 
 const props = defineProps<Props>()
@@ -67,6 +67,7 @@ const error = ref<string>('')
 let chartInstance: ChartJS | null = null
 
 const hasValidData = computed(() => {
+  if (props.chart.data && Array.isArray(props.chart.data) && props.chart.data.length > 0) return true;
   if (!props.chart.dataSourceId || !props.chart.type) return false
   const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
   if (!dataSource || dataSource.rows.length === 0) return false
@@ -119,6 +120,77 @@ const createChart = async () => {
   error.value = ''
   if (!canvasRef.value || !hasValidData.value || props.chart.type === 'card') return
   try {
+    // If chart.data exists, use it directly
+    if (props.chart.data && Array.isArray(props.chart.data) && props.chart.data.length > 0) {
+      let chartData: any, chartOptions: any
+      // Build chartData/chartOptions for each chart type using props.chart.data
+      if (props.chart.type === 'pie') {
+        const labels = props.chart.data.map((d: any) => d.category)
+        const values = props.chart.data.map((d: any) => d.value)
+        chartData = {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: generateColors(labels.length),
+            borderColor: props.chart.borderColor || '#ffffff',
+            borderWidth: 1
+          }]
+        }
+      } else if (props.chart.type === 'bar' || props.chart.type === 'line') {
+        const labels = props.chart.data.map((d: any) => d.category || d.x)
+        const values = props.chart.data.map((d: any) => d.value || d.y)
+        chartData = {
+          labels,
+          datasets: [{
+            label: props.chart.yAxis,
+            data: values,
+            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            borderColor: props.chart.borderColor || '#1d4ed8',
+            borderWidth: props.chart.type === 'line' ? 2 : 1,
+            fill: props.chart.type === 'line' ? false : true,
+            tension: props.chart.type === 'line' ? 0.4 : 0,
+            pointRadius: props.chart.type === 'line' ? 2 : 0,
+            pointHoverRadius: props.chart.type === 'line' ? 4 : 0
+          }]
+        }
+      } else if (props.chart.type === 'scatter') {
+        chartData = {
+          datasets: [{
+            label: `${props.chart.yAxis} vs ${props.chart.xAxis}`,
+            data: props.chart.data,
+            backgroundColor: props.chart.backgroundColor || '#3b82f6',
+            borderColor: props.chart.borderColor || '#1d4ed8',
+            pointRadius: 3,
+            pointHoverRadius: 4
+          }]
+        }
+      }
+      chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top' as const, labels: { boxWidth: 12, padding: 8, font: { size: 10 } } },
+          title: { display: !!props.chart.title, text: props.chart.title || '', font: { size: 12 }, padding: { top: 5, bottom: 10 } },
+          tooltip: { titleFont: { size: 11 }, bodyFont: { size: 10 } }
+        },
+        animation: { duration: 0 },
+        layout: { padding: { top: 5, right: 5, bottom: 5, left: 5 } }
+      }
+      if (props.chart.type === 'bar' || props.chart.type === 'line') {
+        chartOptions.scales = {
+          y: { beginAtZero: true, title: { display: true, text: props.chart.yAxis, font: { size: 10 } }, ticks: { font: { size: 9 } } },
+          x: { title: { display: true, text: props.chart.xAxis, font: { size: 10 } }, ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 } }
+        }
+        chartOptions.indexAxis = props.chart.horizontal ? 'y' : 'x'
+      }
+      // Destroy existing chart
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+      await nextTick()
+      if (canvasRef.value) {
+        chartInstance = new ChartJS(canvasRef.value, { type: props.chart.type as ChartType, data: chartData, options: chartOptions })
+      }
+      return
+    }
     const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)
     if (!dataSource) {
       error.value = 'Data source not found'

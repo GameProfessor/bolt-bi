@@ -10,6 +10,8 @@
           v-for="type in chartTypes"
           :key="type.value"
           @click="$emit('update:selectedChartType', type.value)"
+          :draggable="true"
+          @dragstart="onChartTypeDragStart(type.value, $event)"
           :class="[
             'flex flex-col items-center p-3 border rounded-lg text-xs font-medium transition-colors duration-200',
             selectedChartType === type.value
@@ -26,7 +28,7 @@
     <!-- Chart Properties -->
     <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 overflow-y-auto">
       <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
-      <div v-if="selectedDataSources.length === 0" class="text-sm text-gray-500 text-center py-4">
+      <div v-if="selectedDataSources.length === 0 && !alwaysShowProperties" class="text-sm text-gray-500 text-center py-4">
         Please select at least one data source to configure chart properties
       </div>
       <div v-else class="space-y-3">
@@ -180,6 +182,7 @@ const props = defineProps<{
   editingChartId: string | null
   selectedDataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>
   width: number
+  alwaysShowProperties?: boolean
 }>()
 
 defineEmits([
@@ -189,4 +192,10 @@ defineEmits([
   'add-or-update-chart',
   'cancel-edit'
 ])
+
+function onChartTypeDragStart(type: string, event: DragEvent) {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('application/json', JSON.stringify({ chartType: type }))
+  }
+}
 </script> 

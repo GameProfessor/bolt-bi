@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import DataSources from '../views/DataSources.vue'
 import QuickDashboard from '../views/QuickDashboard.vue'
 import DashboardStore from '../views/DashboardStore.vue'
+import TemplateDesigner from '../views/TemplateDesigner.vue'
 
 const routes = [
   {
@@ -29,6 +30,11 @@ const routes = [
     path: '/quick-dashboard',
     name: 'QuickDashboard',
     component: QuickDashboard
+  },
+  {
+    path: '/template-designer',
+    name: 'TemplateDesigner',
+    component: TemplateDesigner
   }
 ]
 
