@@ -10,9 +10,20 @@ import { ref, computed } from 'vue'
 export interface Chart {
   id: string
   name: string
+  title?: string
   type: 'bar' | 'line' | 'pie' | 'scatter' | 'card'
-  data: any
-  config: any
+  dataSourceId: string
+  xAxis?: string | string[]
+  yAxis?: string
+  category?: string
+  keyMetric?: string
+  previousMetric?: string
+  differenceType?: 'absolute' | 'percentage'
+  aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max'
+  backgroundColor?: string
+  borderColor?: string
+  colorScheme?: string
+  filters?: Record<string, any>
   createdAt: Date
   updatedAt?: Date
 }
@@ -32,6 +43,7 @@ export interface ChartConfig {
   aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max'
   backgroundColor?: string
   borderColor?: string
+  colorScheme?: string
   filters?: Record<string, any>
 }
 
@@ -83,14 +95,28 @@ export const useChartStore = defineStore('chart', () => {
     }
   }
 
-  const createChart = async (chart: Omit<Chart, 'id' | 'createdAt'>) => {
+  const createChart = (chartConfig: ChartConfig) => {
     isLoading.value = true
     error.value = null
 
     try {
       const newChart: Chart = {
-        ...chart,
         id: Date.now().toString(),
+        name: chartConfig.name,
+        title: chartConfig.title,
+        type: chartConfig.type,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis,
+        yAxis: chartConfig.yAxis,
+        category: chartConfig.category,
+        keyMetric: chartConfig.keyMetric,
+        previousMetric: chartConfig.previousMetric,
+        differenceType: chartConfig.differenceType,
+        aggregation: chartConfig.aggregation,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme,
+        filters: chartConfig.filters,
         createdAt: new Date()
       }
       charts.value.push(newChart)
@@ -105,7 +131,18 @@ export const useChartStore = defineStore('chart', () => {
     }
   }
 
-  const deleteChart = async (id: string) => {
+  const updateChart = (id: string, updates: Partial<Chart>) => {
+    const chart = charts.value.find(c => c.id === id)
+    if (chart) {
+      Object.assign(chart, updates)
+      chart.updatedAt = new Date()
+      saveToStorage()
+      return chart
+    }
+    throw new Error(`Chart with id ${id} not found`)
+  }
+
+  const deleteChart = (id: string) => {
     isLoading.value = true
     error.value = null
 
@@ -136,7 +173,7 @@ export const useChartStore = defineStore('chart', () => {
     // State
     charts,
     currentChart,
-    isLoading,
+    loading: isLoading,
     error,
 
     // Getters
@@ -145,6 +182,7 @@ export const useChartStore = defineStore('chart', () => {
     // Actions
     loadCharts,
     createChart,
+    updateChart,
     deleteChart,
     clearError
   }

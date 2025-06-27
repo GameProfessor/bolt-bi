@@ -240,7 +240,7 @@ import {
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
 import { useDataSourceStore, useDashboardStore, useChartStore } from '@/stores'
-import type { DataSourceColumn } from '@/types/dataSource'
+import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
 import DataPanel from '@/components/data/DataPanel.vue'
 import ChartPanel from '@/components/charts/ChartPanel.vue'
@@ -724,20 +724,21 @@ const saveDashboard = () => {
         charts.value.forEach(chartItem => {
           // Create the chart in the chart store
           const savedChart = chartStore.createChart({
-            name: chartItem.config.name!,
-            type: chartItem.config.type!,
-            dataSourceId: chartItem.config.dataSourceId!,
+            name: chartItem.config.name || `Chart ${Date.now()}`,
+            type: chartItem.config.type || 'bar',
+            dataSourceId: chartItem.config.dataSourceId || '',
             xAxis: chartItem.config.xAxis,
             yAxis: chartItem.config.yAxis,
             category: chartItem.config.category,
-            title: chartItem.config.title!,
-            backgroundColor: chartItem.config.backgroundColor!,
-            borderColor: chartItem.config.borderColor!
+            title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
+            backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
+            borderColor: chartItem.config.borderColor || '#1E40AF',
+            colorScheme: chartItem.config.colorScheme
           })
 
           // Add widget to dashboard
           dashboardStore.addWidget(currentDashboardId.value!, savedChart.id)
-          
+
           // Update widget layout
           const widget = dashboard.widgets[dashboard.widgets.length - 1]
           if (widget) {
@@ -756,20 +757,21 @@ const saveDashboard = () => {
   charts.value.forEach(chartItem => {
     // Create the chart in the chart store
     const savedChart = chartStore.createChart({
-      name: chartItem.config.name!,
-      type: chartItem.config.type!,
-      dataSourceId: chartItem.config.dataSourceId!,
+      name: chartItem.config.name || `Chart ${Date.now()}`,
+      type: chartItem.config.type || 'bar',
+      dataSourceId: chartItem.config.dataSourceId || '',
       xAxis: chartItem.config.xAxis,
       yAxis: chartItem.config.yAxis,
       category: chartItem.config.category,
-      title: chartItem.config.title!,
-      backgroundColor: chartItem.config.backgroundColor!,
-      borderColor: chartItem.config.borderColor!
+      title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
+      backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
+      borderColor: chartItem.config.borderColor || '#1E40AF',
+      colorScheme: chartItem.config.colorScheme
     })
 
     // Add widget to dashboard
     dashboardStore.addWidget(dashboard.id, savedChart.id)
-    
+
     // Update widget layout
     const widget = dashboard.widgets[dashboard.widgets.length - 1]
     if (widget) {
