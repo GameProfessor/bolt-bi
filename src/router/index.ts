@@ -1,44 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
-import DataSources from '../views/DataSources.vue'
-import QuickDashboard from '../views/QuickDashboard.vue'
-import DashboardStore from '../views/DashboardStore.vue'
-import TemplateDesigner from '../views/TemplateDesigner.vue'
+import { allRoutes } from './modules'
+import { setupRouterGuards } from './guards'
 
-const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/data-sources',
-    name: 'DataSources',
-    component: DataSources
-  },
-  {
-    path: '/dashboards',
-    name: 'DashboardStore',
-    component: DashboardStore
-  },
-  {
-    path: '/dashboard-store',
-    name: 'DashboardStoreAlias',
-    component: DashboardStore
-  },
-  {
-    path: '/quick-dashboard',
-    name: 'QuickDashboard',
-    component: QuickDashboard
-  },
-  {
-    path: '/template-designer',
-    name: 'TemplateDesigner',
-    component: TemplateDesigner
-  }
-]
+// Export router utilities and modules for use in components
+export * from './modules'
+export * from './utils'
+export * from './guards'
 
 export const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: allRoutes,
+  scrollBehavior(to, _from, savedPosition) {
+    // Nếu có saved position (back/forward), sử dụng nó
+    if (savedPosition) {
+      return savedPosition
+    }
+    // Nếu có hash, scroll đến element đó
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth'
+      }
+    }
+    // Mặc định scroll lên top
+    return { top: 0 }
+  }
 })
+
+// Setup router guards
+setupRouterGuards(router)
