@@ -152,22 +152,13 @@
                 </button>
           </div>
             </transition-group>
-            <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
+            <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded border-2 shadow-lg shadow-primary-200/40 transition-colors duration-150 hover:bg-primary-100 hover:text-primary-700 focus:outline-none">+</button>
         </div>
         </nav>
-        <div class="bg-white rounded-lg shadow-sm h-full" @dragover.prevent @drop="onDashboardDrop">
-          <div class="p-6 h-full">
-            <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500">
-              <div class="text-center">
-                <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
-                <p class="text-sm text-gray-500">
-                  Select a data source, choose a chart type, and drag fields to create your first chart.
-                </p>
-              </div>
-            </div>
-            <!-- GridStack Container -->
-            <div v-else ref="gridStackContainer" class="grid-stack h-full">
+        <div class="bg-white rounded-lg shadow-sm h-full">
+          <div class="p-6 h-full flex-1 flex flex-col" @dragover.prevent @drop="onDashboardDrop">
+            <!-- GridStack Container - Always render -->
+            <div ref="gridStackContainer" class="grid-stack h-full min-h-full flex-1 relative">
               <div
                 v-for="chart in charts"
                 :key="chart.id"
@@ -196,6 +187,16 @@
                   <div class="chart-content">
                     <ChartPreview :chart="chart.config" class="w-full h-full" />
                   </div>
+                </div>
+              </div>
+              <!-- Empty state overlay INSIDE grid area -->
+              <div v-if="charts.length === 0" class="absolute inset-0 flex items-center justify-center text-gray-500 border-2 border-dashed border-primary-300 rounded-lg bg-primary-50 transition-colors duration-200 pointer-events-none">
+                <div class="text-center">
+                  <Squares2X2Icon class="mx-auto h-12 w-12 mb-4 text-primary-400" />
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
+                  <p class="text-sm text-gray-500">
+                    Drag a chart type here to add your first chart.
+                  </p>
                 </div>
               </div>
             </div>
