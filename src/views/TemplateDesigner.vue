@@ -73,17 +73,8 @@
             @drop="onDashboardDrop"
             style="height:100%"
           >
-            <div v-if="charts.length === 0" class="flex items-center justify-center h-full text-gray-500 border-2 border-dashed border-primary-300 rounded-lg bg-primary-50 transition-colors duration-200">
-              <div class="text-center">
-                <Squares2X2Icon class="mx-auto h-12 w-12 mb-4 text-primary-400" />
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Template</h3>
-                <p class="text-sm text-gray-500">
-                  Drag a chart type here to add your first chart.
-                </p>
-              </div>
-            </div>
-            <!-- GridStack Container -->
-            <div v-else ref="gridStackContainer" class="grid-stack h-full">
+            <!-- GridStack Container - Always render -->
+            <div ref="gridStackContainer" class="grid-stack h-full">
               <div
                 v-for="chart in charts"
                 :key="chart.id"
@@ -115,6 +106,18 @@
                 </div>
               </div>
             </div>
+            
+            <!-- Empty state overlay -->
+            <div v-if="charts.length === 0" class="absolute inset-0 flex items-center justify-center text-gray-500 border-2 border-dashed border-primary-300 rounded-lg bg-primary-50 transition-colors duration-200 pointer-events-none">
+              <div class="text-center">
+                <Squares2X2Icon class="mx-auto h-12 w-12 mb-4 text-primary-400" />
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Template</h3>
+                <p class="text-sm text-gray-500">
+                  Drag a chart type here to add your first chart.
+                </p>
+              </div>
+            </div>
+            
             <!-- Exit Preview Button -->
             <button v-if="previewMode" @click="previewMode = false" class="absolute top-4 right-4 z-50 px-4 py-2 bg-white text-primary-700 border border-gray-300 rounded shadow hover:bg-gray-50">Exit Preview</button>
           </div>
@@ -432,7 +435,7 @@ function stopResizing() {
 }
 
 function initializeGridStack() {
-  if (!gridStackContainer.value || charts.value.length === 0) return
+  if (!gridStackContainer.value) return
   nextTick(() => {
     if (gridStack) {
       gridStack.destroy(false)
@@ -473,7 +476,38 @@ function onDashboardDrop(event: DragEvent) {
     if (!data) return
     const { chartType } = JSON.parse(data)
     if (!chartType) return
-    // Add a new chart with default config/data
+    
+    console.log('Dropping chart type:', chartType)
+    
+    // Calculate drop position in grid coordinates
+    const gridContainer = gridStackContainer.value
+    if (!gridContainer) {
+      console.log('No grid container found')
+      return
+    }
+    
+    const rect = gridContainer.getBoundingClientRect()
+    const dropX = event.clientX - rect.left
+    const dropY = event.clientY - rect.top
+    
+    console.log('Drop coordinates:', { dropX, dropY, rect })
+    
+    // Convert to grid coordinates (assuming 12-column grid)
+    const cellWidth = rect.width / 12
+    const cellHeight = 70 // GridStack default cell height
+    const margin = 10 // GridStack default margin
+    
+    const gridX = Math.floor(dropX / (cellWidth + margin))
+    const gridY = Math.floor(dropY / (cellHeight + margin))
+    
+    // Ensure position is within bounds
+    const maxX = 12 - 4 // 12 columns - chart width
+    const clampedX = Math.max(0, Math.min(gridX, maxX))
+    const clampedY = Math.max(0, gridY)
+    
+    console.log('Grid coordinates:', { gridX, gridY, clampedX, clampedY })
+    
+    // Add a new chart with default config/data at drop position
     const chartId = Date.now().toString()
     const newChart = {
       id: chartId,
@@ -491,23 +525,29 @@ function onDashboardDrop(event: DragEvent) {
         data: getFakeChartData(chartType)
       },
       layout: {
-        x: 0,
-        y: 0,
-        w: 6,
+        x: clampedX,
+        y: clampedY,
+        w: 4,
         h: 4
       }
     }
+    
+    console.log('Adding new chart:', newChart)
     charts.value.push(newChart)
+    
     nextTick(() => {
+      console.log('Initializing GridStack with charts:', charts.value.length)
       initializeGridStack()
     })
   } catch (e) {
-    // Ignore
+    console.error('Error in onDashboardDrop:', e)
   }
 }
 
 onMounted(() => {
-  initializeGridStack()
+  nextTick(() => {
+    initializeGridStack()
+  })
 })
 
 onUnmounted(() => {

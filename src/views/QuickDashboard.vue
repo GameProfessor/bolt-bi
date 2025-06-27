@@ -11,14 +11,14 @@
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
-            <input
-              id="dashboardName"
-              v-model="dashboardName"
-              type="text"
-              placeholder="Enter dashboard name"
-              class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-            />
-          </div>
+                <input
+                  id="dashboardName"
+                  v-model="dashboardName"
+                  type="text"
+                  placeholder="Enter dashboard name"
+                  class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
+                />
+              </div>
           <div class="flex items-center gap-3 ml-auto">
             <button
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
@@ -44,9 +44,9 @@
               Save Dashboard
             </button>
           </div>
+                  </div>
         </div>
       </div>
-    </div>
 
     <div class="flex h-[calc(100vh-4rem)]">
       <!-- Left Sidebar with Tabs -->
