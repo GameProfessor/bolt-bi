@@ -37,7 +37,12 @@ export const useDataSourceStore = defineStore('dataSource', () => {
         dataSources.value = parsed.map((ds: any) => ({
           ...ds,
           createdAt: new Date(ds.createdAt),
-          category: ds.category || 'General' // Default category for existing data
+          category: ds.category || 'General', // Default category for existing data
+          rows: [], // Initialize as empty array since we don't store raw data
+          columns: ds.columns.map((col: any) => ({
+            ...col,
+            values: [] // Initialize as empty array since we don't store raw data
+          }))
         }))
       } catch (e) {
         console.error('Failed to load data sources from storage:', e)
@@ -46,7 +51,30 @@ export const useDataSourceStore = defineStore('dataSource', () => {
   }
 
   const saveToStorage = () => {
-    localStorage.setItem('bi-data-sources', JSON.stringify(dataSources.value))
+    try {
+      // Only save metadata, exclude large data arrays to prevent QuotaExceededError
+      const metadataOnly = dataSources.value.map(ds => ({
+        id: ds.id,
+        name: ds.name,
+        description: ds.description,
+        category: ds.category,
+        createdAt: ds.createdAt,
+        columns: ds.columns.map(col => ({
+          name: col.name,
+          type: col.type,
+          isCustom: col.isCustom,
+          expression: col.expression
+          // Exclude 'values' array to save space
+        }))
+        // Exclude 'rows' array to save space
+      }))
+      
+      localStorage.setItem('bi-data-sources', JSON.stringify(metadataOnly))
+    } catch (e) {
+      console.error('Failed to save data sources to storage:', e)
+      // Set error state to inform user
+      error.value = 'Failed to save data sources. Storage quota may be exceeded.'
+    }
   }
 
   const detectColumnType = (values: any[]): 'string' | 'number' | 'date' => {
