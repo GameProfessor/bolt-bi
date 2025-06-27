@@ -314,10 +314,10 @@
                       Description
                       <span class="text-gray-500 font-normal">(optional)</span>
                     </label>
-                    <textarea
+                    <input
                       id="dataSourceDescription"
                       v-model="uploadForm.description"
-                      rows="3"
+                      type="text"
                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                       placeholder="Describe what this data source contains..."
                     />
