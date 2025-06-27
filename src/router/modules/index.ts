@@ -2,7 +2,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 // Import all route modules
 import dashboardRoutes from './dashboard'
-import chartRoutes from './charts'
 import dataRoutes from './data'
 import designRoutes from './design'
 import settingsRoutes from './settings'
@@ -11,7 +10,6 @@ import errorRoutes from './error'
 // Combine all routes
 export const allRoutes: RouteRecordRaw[] = [
   ...dashboardRoutes,
-  ...chartRoutes,
   ...dataRoutes,
   ...designRoutes,
   ...settingsRoutes,
@@ -21,7 +19,6 @@ export const allRoutes: RouteRecordRaw[] = [
 // Export individual modules for specific use cases
 export {
   dashboardRoutes,
-  chartRoutes,
   dataRoutes,
   designRoutes,
   settingsRoutes,

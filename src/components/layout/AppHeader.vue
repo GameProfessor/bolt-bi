@@ -111,12 +111,12 @@ const navigationItems = [
     routeName: 'DataSources',
     icon: TableCellsIcon
   },
-  {
-    name: 'Charts',
-    to: '/charts',
-    routeName: 'ChartList',
-    icon: PresentationChartLineIcon
-  },
+  // {
+  //   name: 'Charts',
+  //   to: '/charts',
+  //   routeName: 'ChartList',
+  //   icon: PresentationChartLineIcon
+  // },
   {
     name: 'Dashboards',
     to: '/dashboards',
