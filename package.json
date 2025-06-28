@@ -23,6 +23,7 @@
     "jsdom": "^26.1.0",
     "papaparse": "^5.4.1",
     "pinia": "^2.1.7",
+    "sweetalert2": "^11.22.1",
     "vitest": "^3.2.4",
     "vue": "^3.4.38",
     "vue-chartjs": "^5.2.0",

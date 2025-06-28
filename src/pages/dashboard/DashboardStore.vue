@@ -277,7 +277,7 @@
                       <ShareIcon class="h-5 w-5" />
                     </button>
                     <button
-                      @click="deleteDashboard(dashboard.id)"
+                      @click="deleteDashboard(dashboard)"
                       class="text-red-600 hover:text-red-900"
                       title="Delete Dashboard"
                     >
@@ -376,6 +376,17 @@
         </div>
       </Dialog>
     </TransitionRoot>
+
+    <!-- Delete Dashboard Modal -->
+    <ConfirmDialog
+      :show="showDeleteModal"
+      title="Delete Dashboard"
+      message="Are you sure you want to delete this dashboard? This action cannot be undone."
+      type="danger"
+      confirm-text="Delete"
+      @close="showDeleteModal = false"
+      @confirm="deleteDashboardConfirmed"
+    />
   </div>
 </template>
 
@@ -402,7 +413,6 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
-  TableCellsIcon,
   CurrencyDollarIcon,
   UserGroupIcon,
   TruckIcon,
@@ -411,6 +421,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useDashboardStore } from '@/stores'
 import type { Dashboard } from '@/types/dashboard'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const router = useRouter()
 const dashboardStore = useDashboardStore()
@@ -418,7 +429,9 @@ const dashboardStore = useDashboardStore()
 const searchQuery = ref('')
 const selectedFilter = ref('all')
 const showShareModal = ref(false)
+const showDeleteModal = ref(false)
 const selectedDashboard = ref<Dashboard | null>(null)
+const dashboardToDelete = ref<Dashboard | null>(null)
 
 // Dashboard templates
 const dashboardTemplates = [
@@ -695,10 +708,16 @@ const copyShareLink = async () => {
   }
 }
 
-const deleteDashboard = (id: string) => {
-  if (confirm('Are you sure you want to delete this dashboard? This action cannot be undone.')) {
-    dashboardStore.deleteDashboard(id)
+const deleteDashboard = (dashboard: Dashboard) => {
+  dashboardToDelete.value = dashboard
+  showDeleteModal.value = true
+}
+
+const deleteDashboardConfirmed = () => {
+  if (dashboardToDelete.value) {
+    dashboardStore.deleteDashboard(dashboardToDelete.value.id)
   }
+  showDeleteModal.value = false
 }
 
 const formatDate = (date: Date) => {

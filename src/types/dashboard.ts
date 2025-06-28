@@ -27,9 +27,10 @@ export interface Dashboard {
   name: string
   description?: string
   widgets: DashboardWidget[]
+  tabs?: DashboardTab[]
   createdAt: Date
   updatedAt?: Date
-  dataSourceIds: string[]
+  dataSourceIds?: string[]
   isPublic?: boolean
   tags?: string[]
   layout?: DashboardLayout
@@ -124,4 +125,10 @@ export interface DashboardActions {
   applyFilter: (filter: DashboardFilter) => void
   clearFilters: () => void
   exportDashboard: (id: string, options: DashboardExportOptions) => Promise<Blob>
+}
+
+export interface DashboardTab {
+  id: string
+  name: string
+  widgetIds: string[]
 }
