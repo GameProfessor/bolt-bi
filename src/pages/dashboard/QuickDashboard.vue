@@ -29,15 +29,14 @@
             </button>
             <button
               @click="previewMode = true"
-              :disabled="charts.length === 0"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
               Preview
             </button>
             <button
               @click="saveDashboard"
-              :disabled="!dashboardName || charts.length === 0"
+              :disabled="!dashboardName"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <DocumentCheckIcon class="h-4 w-4 mr-2" />
@@ -228,7 +227,7 @@
                     @click="editChart(chart)"
                     :class="{ 'cursor-pointer': !previewMode }"
                   >
-                    <ChartPreview :chart="chart.config" class="w-full h-full" />
+                    <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -254,6 +253,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { nanoid } from 'nanoid'
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -273,25 +273,26 @@ import {
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
-import { useDataSourceStore, useDashboardStore, useChartStore } from '@/stores'
+import { useDataSourceStore, useDashboardStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
+import type { DashboardChart, DashboardTab } from '@/types/dashboard'
+import type { ChartType } from '@/types/chart'
+import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart } from '@/types/dashboard'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
 import DataPanel from '@/components/data/DataPanel.vue'
 import ChartPanel from '@/components/charts/ChartPanel.vue'
 import Toast from '@/components/ui/Toast.vue'
-import { nanoid } from 'nanoid'
 
 const router = useRouter()
 const route = useRoute()
 const dataSourceStore = useDataSourceStore()
 const dashboardStore = useDashboardStore()
-const chartStore = useChartStore()
 
 const dashboardName = ref('')
 const dashboardDescription = ref('')
 const dashboardCategory = ref('')
 const selectedDataSourceId = ref('')
-const selectedChartType = ref<ChartConfig['type'] | ''>('')
+const selectedChartType = ref<ChartType | ''>('')
 const gridStackContainer = ref<HTMLElement>()
 const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
 let gridStack: GridStack | null = null
@@ -305,57 +306,104 @@ const toastMessage = ref('')
 // Current dashboard ID for updates
 const currentDashboardId = ref<string | null>(null)
 
-// Legacy ChartConfig interface for backward compatibility
-interface ChartConfig {
-  id: string
-  name: string
-  type: 'bar' | 'line' | 'pie' | 'scatter' | 'card'
-  dataSourceId: string
-  xAxis?: string | string[]
-  yAxis?: string
-  category?: string
-  title: string
-  backgroundColor: string
-  borderColor: string
-  createdAt: Date
-  horizontal?: boolean // for bar chart orientation
-  colorScheme?: string // for bar chart color scheme
-  keyMetric?: string // for card chart
-  previousMetric?: string // for card chart
-}
-
-interface ChartItem {
-  id: string
-  config: Partial<ChartConfig>
-  layout: {
-    x: number
-    y: number
-    w: number
-    h: number
-  }
-}
+// Chart configuration for editing
+const chartConfig = reactive({
+  title: '',
+  dataSourceId: '',
+  backgroundColor: '#3b82f6',
+  borderColor: '#1d4ed8',
+  colorScheme: 'default',
+  // Bar chart specific
+  xAxis: [] as string[],
+  yAxis: '',
+  horizontal: false,
+  // Pie chart specific
+  category: '',
+  value: '',
+  // Line chart specific
+  smooth: false,
+  fillArea: false,
+  // Card specific
+  keyMetric: '',
+  previousMetric: '',
+  differenceType: 'percentage' as 'absolute' | 'percentage',
+  aggregation: 'sum' as 'sum' | 'avg' | 'count' | 'min' | 'max'
+})
 
 // Tabs for dashboard sections
-interface DashboardTab {
-  id: string
-  name: string
-  charts: ChartItem[]
-}
-
 const dashboardTabs = ref<DashboardTab[]>([
-  { id: nanoid(), name: 'Tab 1', charts: [] }
+  { id: nanoid(), name: 'Tab 1', chartIds: [] }
 ])
 const activeTabId = ref(dashboardTabs.value[0].id)
 const editingTabId = ref<string | null>(null)
 const editingTabName = ref('')
 const tabHoverId = ref<string | null>(null)
 
+// Get charts for the active tab
+const charts = computed(() => {
+  const dashboard = currentDashboardId.value ? dashboardStore.getDashboardById(currentDashboardId.value) : null
+  if (!dashboard) return []
+  
+  const activeTab = dashboardTabs.value.find(t => t.id === activeTabId.value)
+  if (!activeTab) return []
+  
+  return dashboard.charts.filter(chart => activeTab.chartIds.includes(chart.id))
+})
+
+// Chart types
+const chartTypes = [
+  { value: 'bar' as const, label: 'Bar', icon: ChartBarIcon },
+  { value: 'line' as const, label: 'Line', icon: PresentationChartLineIcon },
+  { value: 'pie' as const, label: 'Pie', icon: ChartPieIcon },
+  { value: 'scatter' as const, label: 'Scatter', icon: CircleStackIcon },
+  { value: 'card' as const, label: 'Card', icon: Cog6ToothIcon }
+] as const
+
+// Color schemes
+const colorSchemes = [
+  { value: 'default', label: 'Default' },
+  { value: 'pastel', label: 'Pastel' },
+  { value: 'vivid', label: 'Vivid' },
+  { value: 'earth', label: 'Earth' }
+]
+
+const colorPalettes: Record<string, string[]> = {
+  default: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'],
+  pastel: ['#a5b4fc', '#fbcfe8', '#bbf7d0', '#fde68a', '#ddd6fe'],
+  vivid: ['#e11d48', '#2563eb', '#059669', '#f59e42', '#a21caf'],
+  earth: ['#a16207', '#713f12', '#166534', '#155e75', '#7c2d12']
+}
+
+// Validation
+const isChartConfigValid = computed(() => {
+  if (!selectedChartType.value) return false
+  
+  // For new charts, we don't require title or dataSourceId initially
+  // The chart can be created and then configured with data later
+  switch (selectedChartType.value) {
+    case 'bar':
+      return true // Allow creation without data initially
+    case 'line':
+      return true // Allow creation without data initially
+    case 'pie':
+      return true // Allow creation without data initially
+    case 'scatter':
+      return true // Allow creation without data initially
+    case 'card':
+      return true // Allow creation without data initially
+    default:
+      return false
+  }
+})
+
+// Tab management
 function addTab() {
-  const newTab = { id: nanoid(), name: `Tab ${dashboardTabs.value.length + 1}`, charts: [] }
+  const newTab = { id: nanoid(), name: `Tab ${dashboardTabs.value.length + 1}`, chartIds: [] }
   dashboardTabs.value.push(newTab)
   activeTabId.value = newTab.id
   nextTick(() => initializeGridStack())
 }
+
 function removeTab(tabId: string) {
   if (dashboardTabs.value.length === 1) return
   const tab = dashboardTabs.value.find(t => t.id === tabId)
@@ -369,6 +417,7 @@ function removeTab(tabId: string) {
     }
   }
 }
+
 function startRenameTab(tabId: string) {
   const tab = dashboardTabs.value.find(t => t.id === tabId)
   if (tab) {
@@ -380,369 +429,327 @@ function startRenameTab(tabId: string) {
     })
   }
 }
+
 function finishRenameTab(tabId: string) {
   if (!editingTabName.value.trim()) return
   const tab = dashboardTabs.value.find(t => t.id === tabId)
   if (tab) tab.name = editingTabName.value.trim()
   editingTabId.value = null
 }
+
 function cancelRenameTab() {
   editingTabId.value = null
 }
+
 function handleTabEditKey(tabId: string, e: KeyboardEvent) {
   if (e.key === 'Enter') finishRenameTab(tabId)
   if (e.key === 'Escape') cancelRenameTab()
 }
 
-// Proxy charts to the active tab
-const charts = computed({
-  get: () => dashboardTabs.value.find(t => t.id === activeTabId.value)?.charts || [],
-  set: (val) => {
-    const tab = dashboardTabs.value.find(t => t.id === activeTabId.value)
-    if (tab) tab.charts = val
-  }
-})
+// Chart management
+const editingChartId = ref<string | null>(null)
+const openChartMenuId = ref<string | null>(null)
 
-watch(activeTabId, () => {
-  nextTick(() => initializeGridStack())
-})
-
-// Add color scheme options
-const colorSchemes = [
-  { value: 'default', label: 'Default' },
-  { value: 'pastel', label: 'Pastel' },
-  { value: 'vivid', label: 'Vivid' },
-  { value: 'earth', label: 'Earth' }
-]
-
-// Add color palettes for preview
-const colorPalettes: Record<string, string[]> = {
-  default: [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-    '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
-    '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
-  ],
-  pastel: [
-    '#a5b4fc', '#fbcfe8', '#bbf7d0', '#fde68a', '#ddd6fe',
-    '#bae6fd', '#fed7aa', '#d9f99d', '#f9a8d4', '#c7d2fe',
-    '#99f6e4', '#fecdd3', '#e9d5ff', '#bbf7d0', '#fef08a'
-  ],
-  vivid: [
-    '#e11d48', '#2563eb', '#059669', '#f59e42', '#a21caf',
-    '#0ea5e9', '#f43f5e', '#22d3ee', '#facc15', '#7c3aed',
-    '#f472b6', '#16a34a', '#fbbf24', '#f87171', '#38bdf8'
-  ],
-  earth: [
-    '#a16207', '#713f12', '#166534', '#155e75', '#7c2d12',
-    '#be185d', '#4d7c0f', '#b91c1c', '#0e7490', '#a21caf',
-    '#ca8a04', '#ea580c', '#15803d', '#1e293b', '#f59e42'
-  ]
-}
-
-// Extend ChartConfigLike
-interface ChartConfigLike {
-  title: string
-  xAxis: string[] | string
-  yAxis: string
-  category: string
-  backgroundColor: string
-  borderColor: string
-  horizontal: boolean
-  colorScheme: string
-  dataSourceId: string
-}
-
-const chartConfig = reactive<ChartConfigLike>({
-  title: '',
-  xAxis: [],
-  yAxis: '',
-  category: '',
-  backgroundColor: '#3b82f6',
-  borderColor: '#1d4ed8',
-  horizontal: false,
-  colorScheme: 'default',
-  dataSourceId: ''
-})
-
-const chartTypes = [
-  { value: 'bar', label: 'Bar', icon: ChartBarIcon },
-  { value: 'line', label: 'Line', icon: PresentationChartLineIcon },
-  { value: 'pie', label: 'Pie', icon: ChartPieIcon },
-  { value: 'scatter', label: 'Scatter', icon: CircleStackIcon }
-] as const
-
-const selectedDataSource = computed(() => {
-  if (!selectedDataSourceId.value) return null
-  return dataSourceStore.getDataSourceById(selectedDataSourceId.value)
-})
-
-const isChartConfigValid = computed(() => {
-  if (!selectedChartType.value) return false
-  
-  // If no data source is selected, only require a title for basic configuration
-  if (!chartConfig.dataSourceId) {
-    return !!chartConfig.title
-  }
-  
-  // If data source is selected, validate based on chart type
-  if (selectedChartType.value === 'pie') {
-    return !!chartConfig.category
-  } else if (selectedChartType.value === 'bar') {
-    return Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 && !!chartConfig.yAxis
-  } else {
-    return !!chartConfig.xAxis && !!chartConfig.yAxis
-  }
-})
-
-const onDataSourceChange = () => {
-  resetChartConfig()
-}
-
-const resetChartConfig = () => {
+function resetChartConfig() {
   chartConfig.title = ''
+  chartConfig.dataSourceId = ''
+  chartConfig.backgroundColor = '#3b82f6'
+  chartConfig.borderColor = '#1d4ed8'
+  chartConfig.colorScheme = 'default'
   chartConfig.xAxis = []
   chartConfig.yAxis = ''
   chartConfig.category = ''
+  chartConfig.value = ''
   chartConfig.horizontal = false
-  chartConfig.dataSourceId = ''
+  chartConfig.smooth = false
+  chartConfig.fillArea = false
+  chartConfig.keyMetric = ''
+  chartConfig.previousMetric = ''
+  chartConfig.differenceType = 'percentage'
+  chartConfig.aggregation = 'sum'
   selectedChartType.value = ''
 }
 
-const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSourceId: string) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', JSON.stringify({
-      name: column.name,
-      type: column.type,
-      dataSourceId
-    }))
-  }
-}
-
-const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category') => {
-  event.preventDefault()
-  if (!event.dataTransfer) return
-  try {
-    const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
-    
-    // Validate field type for Y-axis (should be numeric)
-    if (target === 'yAxis' && fieldData.type !== 'number') {
-      alert('Y-axis requires a numeric field')
-      return
-    }
-
-    // Check if we already have fields from a different data source
-    // Only check if we have multiple fields (for bar chart) or if we're not replacing a single field
-    if (chartConfig.dataSourceId && chartConfig.dataSourceId !== fieldData.dataSourceId) {
-      if (selectedChartType.value === 'bar' && Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0) {
-        alert('Cannot mix fields from different data sources in the same chart')
-        return
-      }
-      // For non-bar charts or when replacing a single field, allow the change
-      // This will effectively replace the existing field and data source
-    }
-
-    if (target === 'xAxis' && selectedChartType.value === 'bar') {
-      // Add to array, no duplicates
-      if (Array.isArray(chartConfig.xAxis) && !chartConfig.xAxis.includes(fieldData.name)) {
-        chartConfig.xAxis.push(fieldData.name)
-      }
-    } else {
-      chartConfig[target] = fieldData.name
-    }
-    // Store the data source ID for the chart
-    chartConfig.dataSourceId = fieldData.dataSourceId
-  } catch (error) {
-    console.error('Failed to parse dropped field data:', error)
-  }
-}
-
-const openChartMenuId = ref<string | null>(null)
-const editingChartId = ref<string | null>(null)
-const chartTypeColRef = ref<HTMLElement>()
-
-const toggleChartMenu = (id: string) => {
-  openChartMenuId.value = openChartMenuId.value === id ? null : id
-}
-
-const editChart = (chart: ChartItem) => {
-  openChartMenuId.value = null
-  editingChartId.value = chart.id
-  selectedChartType.value = chart.config.type || ''
-  chartConfig.title = chart.config.title || ''
-  chartConfig.dataSourceId = chart.config.dataSourceId || ''
-  
-  if (chart.config.type === 'bar') {
-    if (Array.isArray(chart.config.xAxis)) {
-      chartConfig.xAxis = [...chart.config.xAxis]
-    } else if (typeof chart.config.xAxis === 'string' && chart.config.xAxis) {
-      chartConfig.xAxis = [chart.config.xAxis]
-    } else {
-      chartConfig.xAxis = []
-    }
-  } else {
-    chartConfig.xAxis = typeof chart.config.xAxis === 'string' ? chart.config.xAxis : ''
-  }
-  chartConfig.yAxis = chart.config.yAxis || ''
-  chartConfig.category = chart.config.category || ''
-  chartConfig.backgroundColor = chart.config.backgroundColor || '#3b82f6'
-  chartConfig.borderColor = chart.config.borderColor || '#1d4ed8'
-  chartConfig.horizontal = chart.config.horizontal || false
-  chartConfig.colorScheme = chart.config.colorScheme || 'default'
-}
-
-const exportChart = (chart: ChartItem, type: 'pdf' | 'png') => {
-  openChartMenuId.value = null
-  alert(`Exporting chart '${chart.config.title || chart.config.name}' as ${type.toUpperCase()} (stub)`)
-}
-
-const addOrUpdateChart = () => {
+function addOrUpdateChart() {
   if (!isChartConfigValid.value) return
+  
+  // Create a temporary dashboard if one doesn't exist yet
+  if (!currentDashboardId.value) {
+    const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
+    currentDashboardId.value = tempDashboard.id
+    dashboardName.value = tempDashboard.name
+  }
+  
   if (editingChartId.value) {
     // Update existing chart
-    const idx = charts.value.findIndex(c => c.id === editingChartId.value)
-    if (idx !== -1) {
-      charts.value[idx].config = {
-        ...charts.value[idx].config,
-        id: charts.value[idx].id,
-        name: chartConfig.title || `Chart ${idx + 1}`,
-        type: selectedChartType.value as ChartConfig['type'],
-        dataSourceId: chartConfig.dataSourceId || '',
-        xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
-        yAxis: chartConfig.yAxis || undefined,
-        category: chartConfig.category || undefined,
-        title: chartConfig.title,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
-        colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-        createdAt: charts.value[idx].config.createdAt || new Date()
+    const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
+    if (dashboard) {
+      const chart = dashboard.charts.find(c => c.id === editingChartId.value)
+      if (chart) {
+        const updates: Partial<DashboardChart> = {
+          base: {
+            title: chartConfig.title,
+            dataSourceId: chartConfig.dataSourceId,
+            backgroundColor: chartConfig.backgroundColor,
+            borderColor: chartConfig.borderColor,
+            colorScheme: chartConfig.colorScheme
+          }
+        }
+        
+        // Update type-specific properties
+        switch (selectedChartType.value) {
+          case 'bar':
+            updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
+            break
+          case 'line':
+            updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis, smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+            break
+          case 'pie':
+            updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
+            break
+          case 'scatter':
+            updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis } }
+            break
+          case 'card':
+            updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
+            break
+        }
+        
+        dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
       }
     }
     editingChartId.value = null
     resetChartConfig()
-    nextTick(() => initializeGridStack())
+    // Add a small delay to ensure the store update is processed
+    setTimeout(() => {
+      nextTick(() => initializeGridStack())
+    }, 100)
     return
   }
+  
   // Add new chart
   addChart()
 }
 
-const cancelEdit = () => {
+function addChart() {
+  if (!isChartConfigValid.value) return
+  
+  // Create a temporary dashboard if one doesn't exist yet
+  if (!currentDashboardId.value) {
+    const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
+    currentDashboardId.value = tempDashboard.id
+    dashboardName.value = tempDashboard.name
+  }
+  
+  let newChart: DashboardChart
+  
+  switch (selectedChartType.value) {
+    case 'bar':
+      newChart = createBarChart({
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis,
+        yAxis: chartConfig.yAxis,
+        horizontal: chartConfig.horizontal,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
+      })
+      break
+    case 'line':
+      newChart = createLineChart({
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis[0] || '',
+        yAxis: chartConfig.yAxis || '',
+        smooth: chartConfig.smooth,
+        fillArea: chartConfig.fillArea,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
+      })
+      break
+    case 'pie':
+      newChart = createPieChart({
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        category: chartConfig.category || '',
+        value: chartConfig.value || '',
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
+      })
+      break
+    case 'scatter':
+      newChart = createScatterChart({
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis[0] || '',
+        yAxis: chartConfig.yAxis || '',
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
+      })
+      break
+    case 'card':
+      newChart = createCardChart({
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        keyMetric: chartConfig.keyMetric || '',
+        previousMetric: chartConfig.previousMetric,
+        differenceType: chartConfig.differenceType,
+        aggregation: chartConfig.aggregation,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
+      })
+      break
+    default:
+      return
+  }
+  
+  // Add chart to dashboard
+  const savedChart = dashboardStore.addChart(currentDashboardId.value, newChart)
+  
+  // Add chart to active tab
+  const activeTab = dashboardTabs.value.find(t => t.id === activeTabId.value)
+  if (activeTab) {
+    activeTab.chartIds.push(savedChart.id)
+  }
+  
+  resetChartConfig()
+  // Add a small delay to ensure the store update is processed
+  setTimeout(() => {
+    nextTick(() => initializeGridStack())
+  }, 100)
+}
+
+function editChart(chart: DashboardChart) {
+  openChartMenuId.value = null
+  editingChartId.value = chart.id
+  selectedChartType.value = chart.type
+  
+  // Set base properties
+  chartConfig.title = chart.base.title
+  chartConfig.dataSourceId = chart.base.dataSourceId
+  chartConfig.backgroundColor = chart.base.backgroundColor || '#3b82f6'
+  chartConfig.borderColor = chart.base.borderColor || '#1d4ed8'
+  chartConfig.colorScheme = chart.base.colorScheme || 'default'
+  
+  // Set type-specific properties
+  switch (chart.type) {
+    case 'bar':
+      if (chart.properties.bar) {
+        chartConfig.xAxis = chart.properties.bar.xAxis
+        chartConfig.yAxis = chart.properties.bar.yAxis
+        chartConfig.horizontal = chart.properties.bar.horizontal || false
+      }
+      break
+    case 'line':
+      if (chart.properties.line) {
+        chartConfig.xAxis = [chart.properties.line.xAxis]
+        chartConfig.yAxis = chart.properties.line.yAxis
+        chartConfig.smooth = chart.properties.line.smooth || false
+        chartConfig.fillArea = chart.properties.line.fillArea || false
+      }
+      break
+    case 'pie':
+      if (chart.properties.pie) {
+        chartConfig.category = chart.properties.pie.category
+        chartConfig.value = chart.properties.pie.value
+      }
+      break
+    case 'scatter':
+      if (chart.properties.scatter) {
+        chartConfig.xAxis = [chart.properties.scatter.xAxis]
+        chartConfig.yAxis = chart.properties.scatter.yAxis
+      }
+      break
+    case 'card':
+      if (chart.properties.card) {
+        chartConfig.keyMetric = chart.properties.card.keyMetric || ''
+        chartConfig.previousMetric = chart.properties.card.previousMetric || ''
+        chartConfig.differenceType = chart.properties.card.differenceType || 'percentage'
+        chartConfig.aggregation = chart.properties.card.aggregation || 'sum'
+      }
+      break
+  }
+}
+
+function removeChart(chartId: string) {
+  if (confirm('Are you sure you want to remove this chart?') && currentDashboardId.value) {
+    dashboardStore.removeChart(currentDashboardId.value, chartId)
+    
+    // Remove from all tabs
+    dashboardTabs.value.forEach(tab => {
+      tab.chartIds = tab.chartIds.filter(id => id !== chartId)
+    })
+    
+    nextTick(() => initializeGridStack())
+  }
+}
+
+function cancelEdit() {
   editingChartId.value = null
   resetChartConfig()
 }
 
-const addChart = () => {
-  if (!isChartConfigValid.value) return
-  const chartId = Date.now().toString()
-  const newChart: ChartItem = {
-    id: chartId,
-    config: {
-      id: chartId,
-      name: chartConfig.title || `Chart ${charts.value.length + 1}`,
-      type: selectedChartType.value as ChartConfig['type'],
-      dataSourceId: chartConfig.dataSourceId || '',
-      xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
-      yAxis: chartConfig.yAxis || undefined,
-      category: chartConfig.category || undefined,
-      title: chartConfig.title,
-      backgroundColor: chartConfig.backgroundColor,
-      borderColor: chartConfig.borderColor,
-      horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
-      colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-      createdAt: new Date()
-    },
-    layout: {
-      x: 0,
-      y: 0,
-      w: 6,
-      h: 4
-    }
-  }
-  charts.value.push(newChart)
-  resetChartConfig()
+function exportChart(chart: DashboardChart, type: 'pdf' | 'png') {
+  openChartMenuId.value = null
+  alert(`Exporting chart '${chart.base.title}' as ${type.toUpperCase()} (stub)`)
+}
+
+function toggleChartMenu(id: string) {
+  openChartMenuId.value = openChartMenuId.value === id ? null : id
+}
+
+// GridStack management
+function initializeGridStack() {
+  if (!gridStackContainer.value || charts.value.length === 0) return
+
   nextTick(() => {
-    initializeGridStack()
+    try {
+      if (gridStack) {
+        gridStack.destroy(false)
+        gridStack = null
+      }
+
+      gridStack = GridStack.init({
+        cellHeight: 70,
+        margin: 10,
+        minRow: 1,
+        animate: true,
+        resizable: {
+          handles: 'e, se, s, sw, w'
+        },
+        draggable: {
+          handle: '.grid-stack-item-content',
+          scroll: false
+        }
+      }, gridStackContainer.value)
+
+      // Listen for layout changes
+      gridStack.on('change', (event, items) => {
+        items.forEach(item => {
+          if (currentDashboardId.value && item.id && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
+            dashboardStore.updateChartLayout(currentDashboardId.value, item.id, {
+              x: item.x,
+              y: item.y,
+              w: item.w,
+              h: item.h
+            })
+          }
+        })
+      })
+    } catch (error) {
+      console.error('Failed to initialize GridStack:', error)
+    }
   })
 }
 
-const removeChart = (chartId: string) => {
-  if (confirm('Are you sure you want to remove this chart?')) {
-    charts.value = charts.value.filter(chart => chart.id !== chartId)
-    
-    nextTick(() => {
-      initializeGridStack()
-    })
-  }
-}
-
-const initializeGridStack = async () => {
-  if (!gridStackContainer.value || charts.value.length === 0) return
-
-  await nextTick()
-
-  try {
-    if (gridStack) {
-      gridStack.destroy(false)
-      gridStack = null
-    }
-
-    gridStack = GridStack.init({
-      cellHeight: 70,
-      margin: 10,
-      minRow: 1,
-      animate: true,
-      resizable: {
-        handles: 'e, se, s, sw, w'
-      },
-      draggable: {
-        handle: '.grid-stack-item-content',
-        scroll: false
-      }
-    }, gridStackContainer.value)
-
-    // Listen for layout changes
-    gridStack.on('change', (event, items) => {
-      items.forEach(item => {
-        const chart = charts.value.find(c => c.id === item.id)
-        if (chart && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
-          chart.layout = {
-            x: item.x,
-            y: item.y,
-            w: item.w,
-            h: item.h
-          }
-        }
-      })
-    })
-  } catch (error) {
-    console.error('Failed to initialize GridStack:', error)
-  }
-}
-
-// Toast notification functions
-const showToastNotification = (type: 'success' | 'warning' | 'error' | 'info', title: string, message?: string) => {
-  toastType.value = type
-  toastTitle.value = title
-  toastMessage.value = message || ''
-  showToast.value = true
-  
-  // Auto-hide after 3 seconds
-  setTimeout(() => {
-    hideToast()
-  }, 3000)
-}
-
-const hideToast = () => {
-  showToast.value = false
-}
-
+// Save dashboard
 const saveDashboard = () => {
   if (!dashboardName.value) return
-
-  // Check if there are any charts in any tab
-  const hasCharts = dashboardTabs.value.some(tab => tab.charts.length > 0)
-  if (!hasCharts) return
 
   try {
     // Save selected data source IDs
@@ -762,57 +769,8 @@ const saveDashboard = () => {
           dataSourceIds
         })
 
-        // Clear existing widgets and charts
-        dashboard.widgets.forEach(widget => {
-          chartStore.deleteChart(widget.chartId)
-        })
-        dashboard.widgets = []
-        dashboard.tabs = []
-
-        // Create and save charts from all tabs
-        const allWidgets: any[] = []
-        const allTabs: any[] = []
-
-        dashboardTabs.value.forEach(tab => {
-          const tabWidgets: any[] = []
-          
-          // Create and save charts for this tab
-          tab.charts.forEach(chartItem => {
-            // Create the chart in the chart store
-            const savedChart = chartStore.createChart({
-              name: chartItem.config.name || `Chart ${Date.now()}`,
-              type: chartItem.config.type || 'bar',
-              dataSourceId: chartItem.config.dataSourceId || '',
-              xAxis: chartItem.config.xAxis,
-              yAxis: chartItem.config.yAxis,
-              category: chartItem.config.category,
-              title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
-              backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
-              borderColor: chartItem.config.borderColor || '#1E40AF',
-              colorScheme: chartItem.config.colorScheme
-            })
-
-            // Add widget to dashboard
-            const widget = dashboardStore.addWidget(currentDashboardId.value!, savedChart.id)
-            
-            // Update widget layout
-            dashboardStore.updateWidgetLayout(currentDashboardId.value!, widget.id, chartItem.layout)
-            
-            // Track widget for this tab
-            tabWidgets.push(widget.id)
-            allWidgets.push(widget)
-          })
-
-          // Create tab entry
-          allTabs.push({
-            id: tab.id,
-            name: tab.name,
-            widgetIds: tabWidgets
-          })
-        })
-
-        // Update dashboard with all tabs
-        dashboard.tabs = allTabs
+        // Update tabs
+        dashboard.tabs = dashboardTabs.value
 
         showToastNotification('success', 'Dashboard Updated', 'Your dashboard has been successfully updated.')
       }
@@ -822,48 +780,8 @@ const saveDashboard = () => {
       const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
       currentDashboardId.value = dashboard.id
 
-      // Create and save charts from all tabs
-      const allTabs: any[] = []
-
-      dashboardTabs.value.forEach(tab => {
-        const tabWidgets: any[] = []
-        
-        // Create and save charts for this tab
-        tab.charts.forEach(chartItem => {
-          // Create the chart in the chart store
-          const savedChart = chartStore.createChart({
-            name: chartItem.config.name || `Chart ${Date.now()}`,
-            type: chartItem.config.type || 'bar',
-            dataSourceId: chartItem.config.dataSourceId || '',
-            xAxis: chartItem.config.xAxis,
-            yAxis: chartItem.config.yAxis,
-            category: chartItem.config.category,
-            title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
-            backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
-            borderColor: chartItem.config.borderColor || '#1E40AF',
-            colorScheme: chartItem.config.colorScheme
-          })
-
-          // Add widget to dashboard
-          const widget = dashboardStore.addWidget(dashboard.id, savedChart.id)
-          
-          // Update widget layout
-          dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
-          
-          // Track widget for this tab
-          tabWidgets.push(widget.id)
-        })
-
-        // Create tab entry
-        allTabs.push({
-          id: tab.id,
-          name: tab.name,
-          widgetIds: tabWidgets
-        })
-      })
-
-      // Update dashboard with all tabs
-      dashboard.tabs = allTabs
+      // Update tabs
+      dashboard.tabs = dashboardTabs.value
 
       showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
     }
@@ -873,8 +791,27 @@ const saveDashboard = () => {
   }
 }
 
-const goBack = () => {
-  if (charts.value.length > 0) {
+// Toast notification functions
+function showToastNotification(type: 'success' | 'warning' | 'error' | 'info', title: string, message?: string) {
+  toastType.value = type
+  toastTitle.value = title
+  toastMessage.value = message || ''
+  showToast.value = true
+  
+  setTimeout(() => {
+    hideToast()
+  }, 3000)
+}
+
+function hideToast() {
+  showToast.value = false
+}
+
+function goBack() {
+  // Check if there are any charts or if a dashboard has been created
+  const hasCharts = charts.value.length > 0 || currentDashboardId.value !== null
+  
+  if (hasCharts) {
     if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
       router.push('/dashboard-store')
     }
@@ -943,15 +880,18 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
 
   // Check if the field is used in any of the chart properties
   if (selectedChartType.value === 'pie') {
-    return chartConfig.category === fieldName
+    return chartConfig.category === fieldName || chartConfig.value === fieldName
   } else if (selectedChartType.value === 'bar') {
     return (
-      (Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.includes(fieldName)) ||
+      chartConfig.xAxis.includes(fieldName) ||
       chartConfig.yAxis === fieldName
     )
-  } else {
-    return chartConfig.xAxis === fieldName || chartConfig.yAxis === fieldName
+  } else if (selectedChartType.value === 'line' || selectedChartType.value === 'scatter') {
+    return chartConfig.xAxis.includes(fieldName) || chartConfig.yAxis === fieldName
+  } else if (selectedChartType.value === 'card') {
+    return chartConfig.keyMetric === fieldName || chartConfig.previousMetric === fieldName
   }
+  return false
 }
 
 // Data source manager methods
@@ -1096,7 +1036,12 @@ const onDragOver = (event: DragEvent) => {
 }
 
 const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) => {
-  const chartId = Date.now().toString()
+  // Create a temporary dashboard if one doesn't exist yet
+  if (!currentDashboardId.value) {
+    const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
+    currentDashboardId.value = tempDashboard.id
+    dashboardName.value = tempDashboard.name
+  }
   
   // Calculate grid position based on mouse coordinates (for final placement)
   let gridX = 0
@@ -1128,137 +1073,228 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
     gridY = Math.max(0, gridY) // Ensure chart doesn't go above top edge
   }
   
-  const newChart: ChartItem = {
-    id: chartId,
-    config: {
-      id: chartId,
-      name: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
-      type: chartType as ChartConfig['type'],
-      dataSourceId: '',
-      xAxis: chartType === 'bar' ? [] : '',
-      yAxis: '',
-      category: '',
-      title: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
-      horizontal: false,
-      colorScheme: 'default',
-      createdAt: new Date()
-    },
-    layout: {
-      x: gridX,
-      y: gridY,
-      w: 4,
-      h: 3
+  let newChart: DashboardChart
+  
+  switch (chartType) {
+    case 'bar':
+      newChart = createBarChart({
+        title: 'Bar Chart',
+        dataSourceId: '',
+        xAxis: [],
+        yAxis: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        colorScheme: 'default'
+      })
+      break
+    case 'line':
+      newChart = createLineChart({
+        title: 'Line Chart',
+        dataSourceId: '',
+        xAxis: '',
+        yAxis: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        colorScheme: 'default'
+      })
+      break
+    case 'pie':
+      newChart = createPieChart({
+        title: 'Pie Chart',
+        dataSourceId: '',
+        category: '',
+        value: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        colorScheme: 'default'
+      })
+      break
+    case 'scatter':
+      newChart = createScatterChart({
+        title: 'Scatter Chart',
+        dataSourceId: '',
+        xAxis: '',
+        yAxis: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        colorScheme: 'default'
+      })
+      break
+    case 'card':
+      newChart = createCardChart({
+        title: 'KPI Card',
+        dataSourceId: '',
+        keyMetric: '',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
+        colorScheme: 'default'
+      })
+      break
+    default:
+      console.error('Unknown chart type:', chartType)
+      return
+  }
+  
+  // Update layout
+  newChart.layout = { x: gridX, y: gridY, w: 4, h: 3 }
+  
+  try {
+    // Add chart to dashboard
+    const savedChart = dashboardStore.addChart(currentDashboardId.value, newChart)
+    
+    // Add chart to active tab
+    const activeTab = dashboardTabs.value.find(t => t.id === activeTabId.value)
+    if (activeTab) {
+      activeTab.chartIds.push(savedChart.id)
     }
+    
+    // Automatically select the chart type and show properties
+    selectedChartType.value = chartType as 'bar' | 'line' | 'pie' | 'scatter' | 'card'
+    
+    // Set the chart config to match the new chart
+    chartConfig.title = newChart.base.title
+    chartConfig.dataSourceId = newChart.base.dataSourceId
+    chartConfig.backgroundColor = newChart.base.backgroundColor || '#3b82f6'
+    chartConfig.borderColor = newChart.base.borderColor || '#1d4ed8'
+    chartConfig.colorScheme = newChart.base.colorScheme || 'default'
+    
+    // Set type-specific properties
+    switch (chartType) {
+      case 'bar':
+        if (newChart.properties.bar) {
+          chartConfig.xAxis = newChart.properties.bar.xAxis
+          chartConfig.yAxis = newChart.properties.bar.yAxis
+          chartConfig.horizontal = newChart.properties.bar.horizontal || false
+        }
+        break
+      case 'line':
+        if (newChart.properties.line) {
+          chartConfig.xAxis = [newChart.properties.line.xAxis]
+          chartConfig.yAxis = newChart.properties.line.yAxis
+          chartConfig.smooth = newChart.properties.line.smooth || false
+          chartConfig.fillArea = newChart.properties.line.fillArea || false
+        }
+        break
+      case 'pie':
+        if (newChart.properties.pie) {
+          chartConfig.category = newChart.properties.pie.category
+          chartConfig.value = newChart.properties.pie.value
+        }
+        break
+      case 'scatter':
+        if (newChart.properties.scatter) {
+          chartConfig.xAxis = [newChart.properties.scatter.xAxis]
+          chartConfig.yAxis = newChart.properties.scatter.yAxis
+        }
+        break
+      case 'card':
+        if (newChart.properties.card) {
+          chartConfig.keyMetric = newChart.properties.card.keyMetric || ''
+          chartConfig.previousMetric = newChart.properties.card.previousMetric || ''
+          chartConfig.differenceType = newChart.properties.card.differenceType || 'percentage'
+          chartConfig.aggregation = newChart.properties.card.aggregation || 'sum'
+        }
+        break
+    }
+    
+    // Set editing mode to the newly created chart
+    editingChartId.value = savedChart.id
+    
+    // Add a small delay to ensure the store update is processed
+    setTimeout(() => {
+      nextTick(() => {
+        initializeGridStack()
+      })
+    }, 100)
+  } catch (error) {
+    console.error('Error adding chart to dashboard:', error)
   }
-  
-  charts.value.push(newChart)
-  
-  // Automatically select the chart type and show properties
-  selectedChartType.value = chartType as ChartConfig['type']
-  
-  // Set the chart config to match the new chart
-  chartConfig.title = newChart.config.title || ''
-  chartConfig.dataSourceId = newChart.config.dataSourceId || ''
-  chartConfig.backgroundColor = newChart.config.backgroundColor || '#3b82f6'
-  chartConfig.borderColor = newChart.config.borderColor || '#1d4ed8'
-  chartConfig.horizontal = newChart.config.horizontal || false
-  chartConfig.colorScheme = newChart.config.colorScheme || 'default'
-  
-  if (chartType === 'bar') {
-    chartConfig.xAxis = Array.isArray(newChart.config.xAxis) ? [...newChart.config.xAxis] : []
-  } else {
-    chartConfig.xAxis = typeof newChart.config.xAxis === 'string' ? newChart.config.xAxis : ''
-  }
-  chartConfig.yAxis = newChart.config.yAxis || ''
-  chartConfig.category = newChart.config.category || ''
-  
-  // Set editing mode to the newly created chart
-  editingChartId.value = chartId
-  
-  nextTick(() => {
-    initializeGridStack()
-  })
 }
 
+// Field drag and drop
+const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSourceId: string) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', JSON.stringify({
+      name: column.name,
+      type: column.type,
+      dataSourceId
+    }))
+  }
+}
+
+const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric') => {
+  event.preventDefault()
+  if (!event.dataTransfer) return
+  try {
+    const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
+    
+    // Validate field type for Y-axis (should be numeric)
+    if (target === 'yAxis' && fieldData.type !== 'number') {
+      alert('Y-axis requires a numeric field')
+      return
+    }
+
+    // Check if we already have fields from a different data source
+    if (chartConfig.dataSourceId && chartConfig.dataSourceId !== fieldData.dataSourceId) {
+      if (selectedChartType.value === 'bar' && chartConfig.xAxis.length > 0) {
+        alert('Cannot mix fields from different data sources in the same chart')
+        return
+      }
+    }
+
+    if (target === 'xAxis' && selectedChartType.value === 'bar') {
+      // Add to array, no duplicates
+      if (!chartConfig.xAxis.includes(fieldData.name)) {
+        chartConfig.xAxis.push(fieldData.name)
+      }
+    } else if (target === 'xAxis') {
+      chartConfig.xAxis = [fieldData.name]
+    } else if (target === 'yAxis') {
+      chartConfig.yAxis = fieldData.name
+    } else if (target === 'category') {
+      chartConfig.category = fieldData.name
+    } else if (target === 'value') {
+      chartConfig.value = fieldData.name
+    } else if (target === 'keyMetric') {
+      chartConfig.keyMetric = fieldData.name
+    }
+    
+    // Store the data source ID for the chart
+    chartConfig.dataSourceId = fieldData.dataSourceId
+  } catch (error) {
+    console.error('Failed to parse dropped field data:', error)
+  }
+}
+
+// Load dashboard on mount
 onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
     // Load dashboard for editing
-    const dashboard = dashboardStore.dashboards.find(d => d.id === dashboardId)
+    const dashboard = dashboardStore.getDashboardById(dashboardId)
     if (dashboard) {
       currentDashboardId.value = dashboardId
       dashboardName.value = dashboard.name
       dashboardDescription.value = dashboard.description || ''
       dashboardCategory.value = dashboard.category || ''
+      
       // Restore selected data sources
       if (dashboard.dataSourceIds && dashboard.dataSourceIds.length > 0) {
         selectedDataSources.value = dataSourceStore.dataSources.filter(ds => dashboard.dataSourceIds!.includes(ds.id))
       }
       
-      // Load tabs and their charts
+      // Load tabs
       if (dashboard.tabs && dashboard.tabs.length > 0) {
-        // Restore tabs
-        dashboardTabs.value = dashboard.tabs.map(tab => ({
-          id: tab.id,
-          name: tab.name,
-          charts: [] // Will be populated below
-        }))
-        
-        // Set active tab to first tab
+        dashboardTabs.value = dashboard.tabs
         activeTabId.value = dashboardTabs.value[0].id
-        
-        // Load charts for each tab
-        dashboardTabs.value.forEach(tab => {
-          const tabData = dashboard.tabs.find(t => t.id === tab.id)
-          if (tabData) {
-            // Find widgets for this tab
-            const tabWidgets = dashboard.widgets.filter(widget => 
-              tabData.widgetIds.includes(widget.id)
-            )
-            
-            // Load charts for this tab
-            tab.charts = tabWidgets.map(widget => {
-              const chart = chartStore.charts.find(c => c.id === widget.chartId)
-              return chart
-                ? {
-                    id: chart.id,
-                    config: { ...chart },
-                    layout: {
-                      x: widget.x,
-                      y: widget.y,
-                      w: widget.w,
-                      h: widget.h
-                    }
-                  }
-                : null
-            }).filter(Boolean) as ChartItem[]
-          }
-        })
-      } else {
-        // Legacy: Load charts for single tab (backward compatibility)
-        charts.value = dashboard.widgets.map(widget => {
-          const chart = chartStore.charts.find(c => c.id === widget.chartId)
-          return chart
-            ? {
-                id: chart.id,
-                config: { ...chart },
-                layout: {
-                  x: widget.x,
-                  y: widget.y,
-                  w: widget.w,
-                  h: widget.h
-                }
-              }
-            : null
-        }).filter(Boolean) as ChartItem[]
       }
       
       await nextTick()
       initializeGridStack()
     }
   }
+  // Remove automatic dashboard creation for new dashboards
+  // Dashboard will be created only when user clicks "Save Dashboard"
 })
 
 onUnmounted(() => {

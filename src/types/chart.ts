@@ -17,6 +17,7 @@ export type ChartType =
   | 'funnel'
   | 'heatmap'
   | 'treemap'
+  | 'card'
 
 export interface ChartData {
   labels: string[]

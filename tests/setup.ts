@@ -5,6 +5,7 @@
 
 import { vi } from 'vitest'
 import { config } from '@vue/test-utils'
+import { ref } from 'vue'
 
 // Mock IntersectionObserver
 global.IntersectionObserver = vi.fn(() => ({
@@ -113,6 +114,22 @@ vi.mock('papaparse', () => ({
     })
   }
 }))
+
+// Mock dashboard store
+const dashboardStore = {
+  dashboards: ref([]),
+  currentDashboard: ref(null),
+  loading: ref(false),
+  error: ref(null),
+  loadDashboards: vi.fn(),
+  createDashboard: vi.fn(),
+  updateDashboard: vi.fn(),
+  deleteDashboard: vi.fn(),
+  addChart: vi.fn(),
+  removeChart: vi.fn(),
+  updateChart: vi.fn(),
+  clearError: vi.fn()
+}
 
 // Console warnings/errors in tests
 const originalError = console.error

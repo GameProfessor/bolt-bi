@@ -7,7 +7,7 @@ import { apiClient } from '@/api/client'
 import { API_ENDPOINTS } from '@/api/endpoints'
 import type { 
   Dashboard, 
-  DashboardWidget, 
+  DashboardChart, 
   DashboardExportOptions,
   DashboardShareSettings 
 } from '@/types/dashboard'
@@ -79,49 +79,49 @@ export class DashboardService {
   }
 
   /**
-   * Thêm widget vào dashboard
+   * Thêm chart vào dashboard
    */
-  async addWidget(dashboardId: string, widget: Omit<DashboardWidget, 'id'>): Promise<DashboardWidget> {
+  async addChart(dashboardId: string, chart: Omit<DashboardChart, 'id' | 'dashboardId' | 'createdAt'>): Promise<DashboardChart> {
     try {
-      const response = await apiClient.post<DashboardWidget>(
-        API_ENDPOINTS.DASHBOARD_WIDGETS(dashboardId), 
-        widget
+      const response = await apiClient.post<DashboardChart>(
+        API_ENDPOINTS.DASHBOARD_CHARTS(dashboardId), 
+        chart
       )
       return response.data
     } catch (error) {
-      console.error(`Error adding widget to dashboard ${dashboardId}:`, error)
+      console.error(`Error adding chart to dashboard ${dashboardId}:`, error)
       throw error
     }
   }
 
   /**
-   * Cập nhật widget
+   * Cập nhật chart
    */
-  async updateWidget(
+  async updateChart(
     dashboardId: string, 
-    widgetId: string, 
-    updates: Partial<DashboardWidget>
-  ): Promise<DashboardWidget> {
+    chartId: string, 
+    updates: Partial<DashboardChart>
+  ): Promise<DashboardChart> {
     try {
-      const response = await apiClient.put<DashboardWidget>(
-        `${API_ENDPOINTS.DASHBOARD_WIDGETS(dashboardId)}/${widgetId}`,
+      const response = await apiClient.put<DashboardChart>(
+        `${API_ENDPOINTS.DASHBOARD_CHARTS(dashboardId)}/${chartId}`,
         updates
       )
       return response.data
     } catch (error) {
-      console.error(`Error updating widget ${widgetId}:`, error)
+      console.error(`Error updating chart ${chartId}:`, error)
       throw error
     }
   }
 
   /**
-   * Xóa widget khỏi dashboard
+   * Xóa chart khỏi dashboard
    */
-  async removeWidget(dashboardId: string, widgetId: string): Promise<void> {
+  async removeChart(dashboardId: string, chartId: string): Promise<void> {
     try {
-      await apiClient.delete(`${API_ENDPOINTS.DASHBOARD_WIDGETS(dashboardId)}/${widgetId}`)
+      await apiClient.delete(`${API_ENDPOINTS.DASHBOARD_CHARTS(dashboardId)}/${chartId}`)
     } catch (error) {
-      console.error(`Error removing widget ${widgetId}:`, error)
+      console.error(`Error removing chart ${chartId}:`, error)
       throw error
     }
   }

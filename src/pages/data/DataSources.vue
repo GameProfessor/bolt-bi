@@ -577,6 +577,18 @@
         </div>
       </Dialog>
     </TransitionRoot>
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="Delete Data Source"
+      message="Are you sure you want to delete this data source? This action cannot be undone."
+      type="danger"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      @close="handleDialogClose"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
 
@@ -605,14 +617,21 @@ import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
-import type { DataSource } from '@/types/dataSource'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const dataSourceStore = useDataSourceStore()
+
+// Use the DataSource type from the store
+type DataSource = ReturnType<typeof useDataSourceStore>['dataSources'][0]
 
 const showUploadModal = ref(false)
 const selectedDataSource = ref<DataSource | null>(null)
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
+
+// Delete confirmation dialog
+const showDeleteDialog = ref(false)
+const dataSourceToDelete = ref<DataSource | null>(null)
 
 // Search and pagination
 const searchQuery = ref('')
@@ -790,9 +809,24 @@ const handleUpload = async () => {
 }
 
 const deleteDataSource = (id: string) => {
-  if (confirm('Are you sure you want to delete this data source? This action cannot be undone.')) {
-    dataSourceStore.deleteDataSource(id)
+  const dataSource = dataSourceStore.dataSources.find(ds => ds.id === id)
+  if (dataSource) {
+    dataSourceToDelete.value = dataSource
+    showDeleteDialog.value = true
   }
+}
+
+const confirmDelete = () => {
+  if (dataSourceToDelete.value) {
+    dataSourceStore.deleteDataSource(dataSourceToDelete.value.id)
+    dataSourceToDelete.value = null
+    showDeleteDialog.value = false
+  }
+}
+
+const handleDialogClose = () => {
+  dataSourceToDelete.value = null
+  showDeleteDialog.value = false
 }
 
 const formatDate = (date: Date) => {

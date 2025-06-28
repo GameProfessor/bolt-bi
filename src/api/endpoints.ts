@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
   // Dashboard endpoints
   DASHBOARDS: '/api/dashboards',
   DASHBOARD_BY_ID: (id: string) => `/api/dashboards/${id}`,
-  DASHBOARD_WIDGETS: (id: string) => `/api/dashboards/${id}/widgets`,
+  DASHBOARD_CHARTS: (id: string) => `/api/dashboards/${id}/charts`,
   
   // Data Source endpoints
   DATA_SOURCES: '/api/data-sources',

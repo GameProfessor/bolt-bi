@@ -41,7 +41,7 @@ import {
   CircleStackIcon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
-import type { ChartConfig } from '@/stores'
+import type { DashboardChart } from '@/types/dashboard'
 import KPICard from './KPICard.vue'
 
 // Register Chart.js components
@@ -62,7 +62,7 @@ ChartJS.register(
 )
 
 interface Props {
-  chart: Partial<ChartConfig> & { data?: any[] }
+  chart: DashboardChart
 }
 
 const props = defineProps<Props>()
@@ -86,20 +86,43 @@ const chartTypeIcon = computed(() => {
   return chartTypeIcons[chartType as keyof typeof chartTypeIcons] || ChartBarIcon
 })
 
+// Extract chart properties from DashboardChart structure
+const chartData = computed(() => {
+  return {
+    type: props.chart.type,
+    title: props.chart.base.title,
+    dataSourceId: props.chart.base.dataSourceId,
+    backgroundColor: props.chart.base.backgroundColor,
+    borderColor: props.chart.base.borderColor,
+    colorScheme: props.chart.base.colorScheme,
+    // Extract type-specific properties
+    xAxis: props.chart.properties.bar?.xAxis || props.chart.properties.line?.xAxis || props.chart.properties.scatter?.xAxis,
+    yAxis: props.chart.properties.bar?.yAxis || props.chart.properties.line?.yAxis || props.chart.properties.scatter?.yAxis,
+    category: props.chart.properties.pie?.category,
+    value: props.chart.properties.pie?.value,
+    keyMetric: props.chart.properties.card?.keyMetric,
+    previousMetric: props.chart.properties.card?.previousMetric,
+    horizontal: props.chart.properties.bar?.horizontal,
+    smooth: props.chart.properties.line?.smooth,
+    fillArea: props.chart.properties.line?.fillArea,
+    differenceType: props.chart.properties.card?.differenceType,
+    aggregation: props.chart.properties.card?.aggregation
+  }
+})
+
 const hasValidData = computed(() => {
-  if (props.chart.data && Array.isArray(props.chart.data) && props.chart.data.length > 0) return true;
-  if (!props.chart.dataSourceId || !props.chart.type) return false
-  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
+  if (!chartData.value.dataSourceId || !chartData.value.type) return false
+  const dataSource = dataSourceStore.getDataSourceById(chartData.value.dataSourceId)
   if (!dataSource || dataSource.rows.length === 0) return false
   
-  if (props.chart.type === 'card') {
-    return !!props.chart.keyMetric
-  } else if (props.chart.type === 'pie') {
-    return !!props.chart.category
-  } else if (props.chart.type === 'bar') {
-    return Array.isArray(props.chart.xAxis) ? props.chart.xAxis.length > 0 && !!props.chart.yAxis : !!props.chart.xAxis && !!props.chart.yAxis
+  if (chartData.value.type === 'card') {
+    return !!chartData.value.keyMetric
+  } else if (chartData.value.type === 'pie') {
+    return !!chartData.value.category
+  } else if (chartData.value.type === 'bar') {
+    return Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis.length > 0 && !!chartData.value.yAxis : !!chartData.value.xAxis && !!chartData.value.yAxis
   } else {
-    return !!props.chart.xAxis && !!props.chart.yAxis
+    return !!chartData.value.xAxis && !!chartData.value.yAxis
   }
 })
 
@@ -138,80 +161,9 @@ function getPalette(scheme: string, count: number): string[] {
 
 const createChart = async () => {
   error.value = ''
-  if (!canvasRef.value || !hasValidData.value || props.chart.type === 'card') return
+  if (!canvasRef.value || !hasValidData.value || chartData.value.type === 'card') return
   try {
-    // If chart.data exists, use it directly
-    if (props.chart.data && Array.isArray(props.chart.data) && props.chart.data.length > 0) {
-      let chartData: any, chartOptions: any
-      // Build chartData/chartOptions for each chart type using props.chart.data
-      if (props.chart.type === 'pie') {
-        const labels = props.chart.data.map((d: any) => d.category)
-        const values = props.chart.data.map((d: any) => d.value)
-        chartData = {
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: generateColors(labels.length),
-            borderColor: props.chart.borderColor || '#ffffff',
-            borderWidth: 1
-          }]
-        }
-      } else if (props.chart.type === 'bar' || props.chart.type === 'line') {
-        const labels = props.chart.data.map((d: any) => d.category || d.x)
-        const values = props.chart.data.map((d: any) => d.value || d.y)
-        chartData = {
-          labels,
-          datasets: [{
-            label: props.chart.yAxis,
-            data: values,
-            backgroundColor: props.chart.backgroundColor || '#3b82f6',
-            borderColor: props.chart.borderColor || '#1d4ed8',
-            borderWidth: props.chart.type === 'line' ? 2 : 1,
-            fill: props.chart.type === 'line' ? false : true,
-            tension: props.chart.type === 'line' ? 0.4 : 0,
-            pointRadius: props.chart.type === 'line' ? 2 : 0,
-            pointHoverRadius: props.chart.type === 'line' ? 4 : 0
-          }]
-        }
-      } else if (props.chart.type === 'scatter') {
-        chartData = {
-          datasets: [{
-            label: `${props.chart.yAxis} vs ${props.chart.xAxis}`,
-            data: props.chart.data,
-            backgroundColor: props.chart.backgroundColor || '#3b82f6',
-            borderColor: props.chart.borderColor || '#1d4ed8',
-            pointRadius: 3,
-            pointHoverRadius: 4
-          }]
-        }
-      }
-      chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, position: 'top' as const, labels: { boxWidth: 12, padding: 8, font: { size: 10 } } },
-          title: { display: !!props.chart.title, text: props.chart.title || '', font: { size: 12 }, padding: { top: 5, bottom: 10 } },
-          tooltip: { titleFont: { size: 11 }, bodyFont: { size: 10 } }
-        },
-        animation: { duration: 0 },
-        layout: { padding: { top: 5, right: 5, bottom: 5, left: 5 } }
-      }
-      if (props.chart.type === 'bar' || props.chart.type === 'line') {
-        chartOptions.scales = {
-          y: { beginAtZero: true, title: { display: true, text: props.chart.yAxis, font: { size: 10 } }, ticks: { font: { size: 9 } } },
-          x: { title: { display: true, text: props.chart.xAxis, font: { size: 10 } }, ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 } }
-        }
-        chartOptions.indexAxis = props.chart.horizontal ? 'y' : 'x'
-      }
-      // Destroy existing chart
-      if (chartInstance) { chartInstance.destroy(); chartInstance = null }
-      await nextTick()
-      if (canvasRef.value) {
-        chartInstance = new ChartJS(canvasRef.value, { type: props.chart.type as ChartType, data: chartData, options: chartOptions })
-      }
-      return
-    }
-    const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)
+    const dataSource = dataSourceStore.getDataSourceById(chartData.value.dataSourceId!)
     if (!dataSource) {
       error.value = 'Data source not found'
       return
@@ -221,7 +173,7 @@ const createChart = async () => {
       chartInstance.destroy()
       chartInstance = null
     }
-    let chartData: any
+    let chartDataConfig: any
     let chartOptions: any = {
       responsive: true,
       maintainAspectRatio: false,
@@ -238,8 +190,8 @@ const createChart = async () => {
           }
         },
         title: {
-          display: !!props.chart.title,
-          text: props.chart.title || '',
+          display: !!chartData.value.title,
+          text: chartData.value.title || '',
           font: {
             size: 12
           },
@@ -269,8 +221,8 @@ const createChart = async () => {
         }
       }
     }
-    if (props.chart.type === 'pie') {
-      const categoryColumn = dataSource.columns.find(c => c.name === props.chart.category)
+    if (chartData.value.type === 'pie') {
+      const categoryColumn = dataSource.columns.find(c => c.name === chartData.value.category)
       if (!categoryColumn) {
         error.value = 'Category column not found'
         return
@@ -293,25 +245,25 @@ const createChart = async () => {
         return
       }
 
-      chartData = {
+      chartDataConfig = {
         labels,
         datasets: [{
           data: values,
           backgroundColor: generateColors(labels.length),
-          borderColor: props.chart.borderColor || '#ffffff',
+          borderColor: chartData.value.borderColor || '#ffffff',
           borderWidth: 1
         }]
       }
-    } else if (props.chart.type === 'bar') {
+    } else if (chartData.value.type === 'bar') {
       // Multi-dimension grouping for bar chart
-      const xAxes = Array.isArray(props.chart.xAxis) ? props.chart.xAxis : props.chart.xAxis ? [props.chart.xAxis] : [];
-      const yAxis = props.chart.yAxis
+      const xAxes = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis : chartData.value.xAxis ? [chartData.value.xAxis] : [];
+      const yAxis = chartData.value.yAxis
       if (!yAxis || xAxes.length === 0) {
         error.value = 'X and Y axis required'
         return
       }
       // Group rows by all xAxes fields
-      if (xAxes.every(f => typeof f === 'string')) {
+      if (xAxes.every((f: string) => typeof f === 'string')) {
         const groupKey = (row: any) => {
           let key = ''
           for (let i = 0; i < xAxes.length; i++) {
@@ -338,14 +290,14 @@ const createChart = async () => {
           return
         }
         // Use color scheme for bar colors
-        const barColors = getPalette(props.chart.colorScheme || 'default', labels.length)
-        chartData = {
+        const barColors = getPalette(chartData.value.colorScheme || 'default', labels.length)
+        chartDataConfig = {
           labels,
           datasets: [{
             label: yAxis,
             data: values,
             backgroundColor: barColors,
-            borderColor: props.chart.borderColor || '#1d4ed8',
+            borderColor: chartData.value.borderColor || '#1d4ed8',
             borderWidth: 1
           }]
         }
@@ -353,29 +305,29 @@ const createChart = async () => {
           y: {
             beginAtZero: true,
             title: {
-              display: !props.chart.horizontal,
-              text: props.chart.yAxis,
+              display: !chartData.value.horizontal,
+              text: chartData.value.yAxis,
               font: { size: 10 }
             },
             ticks: { font: { size: 9 } }
           },
           x: {
             title: {
-              display: props.chart.horizontal,
+              display: chartData.value.horizontal,
               text: xAxes.join(', '),
               font: { size: 10 }
             },
             ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }
           }
         }
-        chartOptions.indexAxis = props.chart.horizontal ? 'y' : 'x'
+        chartOptions.indexAxis = chartData.value.horizontal ? 'y' : 'x'
       } else {
         error.value = 'Invalid X-axis fields'
         return
       }
     } else {
-      const xColumn = dataSource.columns.find(c => c.name === props.chart.xAxis)
-      const yColumn = dataSource.columns.find(c => c.name === props.chart.yAxis)
+      const xColumn = dataSource.columns.find(c => c.name === chartData.value.xAxis)
+      const yColumn = dataSource.columns.find(c => c.name === chartData.value.yAxis)
       
       if (!xColumn || !yColumn) {
         error.value = 'Required columns not found'
@@ -383,11 +335,11 @@ const createChart = async () => {
       }
 
       // Filter out null/undefined values and ensure numeric y-values
-      const xAxisField = Array.isArray(props.chart.xAxis) ? props.chart.xAxis[0] : props.chart.xAxis
+      const xAxisField = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis[0] : chartData.value.xAxis
       const validData = dataSource.rows
         .map((row) => ({
           x: row[xAxisField!],
-          y: Number(row[props.chart.yAxis!])
+          y: Number(row[chartData.value.yAxis!])
         }))
         .filter(item => item.x != null && item.x !== '' && !isNaN(item.y))
 
@@ -396,132 +348,73 @@ const createChart = async () => {
         return
       }
 
-      if (props.chart.type === 'scatter') {
-        chartData = {
+      if (chartData.value.type === 'scatter') {
+        chartDataConfig = {
           datasets: [{
-            label: `${props.chart.yAxis} vs ${props.chart.xAxis}`,
+            label: `${chartData.value.yAxis} vs ${chartData.value.xAxis}`,
             data: validData,
-            backgroundColor: props.chart.backgroundColor || '#3b82f6',
-            borderColor: props.chart.borderColor || '#1d4ed8',
+            backgroundColor: chartData.value.backgroundColor || '#3b82f6',
+            borderColor: chartData.value.borderColor || '#1d4ed8',
             pointRadius: 3,
             pointHoverRadius: 4
           }]
         }
-        
-        chartOptions.scales = {
-          x: {
-            type: 'linear',
-            position: 'bottom',
-            title: {
-              display: true,
-              text: props.chart.xAxis,
-              font: {
-                size: 10
-              }
-            },
-            ticks: {
-              font: {
-                size: 9
-              }
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: props.chart.yAxis,
-              font: {
-                size: 10
-              }
-            },
-            ticks: {
-              font: {
-                size: 9
-              }
-            }
+      } else if (chartData.value.type === 'line') {
+        // Sort by x-axis for line charts
+        validData.sort((a, b) => {
+          if (typeof a.x === 'number' && typeof b.x === 'number') {
+            return a.x - b.x
           }
-        }
-      } else {
-        // For bar and line charts, group by x-axis and sum y-values
-        const groupedData: { [key: string]: number } = {}
-        validData.forEach(item => {
-          const key = String(item.x)
-          groupedData[key] = (groupedData[key] || 0) + item.y
+          return String(a.x).localeCompare(String(b.x))
         })
 
-        const labels = Object.keys(groupedData)
-        const values = Object.values(groupedData)
-
-        if (labels.length === 0) {
-          error.value = 'No valid data for chart'
-          return
-        }
-
-        chartData = {
-          labels,
+        chartDataConfig = {
+          labels: validData.map(d => d.x),
           datasets: [{
-            label: props.chart.yAxis,
-            data: values,
-            backgroundColor: props.chart.backgroundColor || '#3b82f6',
-            borderColor: props.chart.borderColor || '#1d4ed8',
-            borderWidth: props.chart.type === 'line' ? 2 : 1,
-            fill: props.chart.type === 'line' ? false : true,
-            tension: props.chart.type === 'line' ? 0.4 : 0,
-            pointRadius: props.chart.type === 'line' ? 2 : 0,
-            pointHoverRadius: props.chart.type === 'line' ? 4 : 0
+            label: chartData.value.yAxis,
+            data: validData.map(d => d.y),
+            backgroundColor: chartData.value.backgroundColor || '#3b82f6',
+            borderColor: chartData.value.borderColor || '#1d4ed8',
+            borderWidth: 2,
+            fill: chartData.value.fillArea || false,
+            tension: chartData.value.smooth ? 0.4 : 0,
+            pointRadius: 2,
+            pointHoverRadius: 4
           }]
         }
-
         chartOptions.scales = {
           y: {
             beginAtZero: true,
             title: {
               display: true,
-              text: props.chart.yAxis,
-              font: {
-                size: 10
-              }
+              text: chartData.value.yAxis,
+              font: { size: 10 }
             },
-            ticks: {
-              font: {
-                size: 9
-              }
-            }
+            ticks: { font: { size: 9 } }
           },
           x: {
             title: {
               display: true,
-              text: props.chart.xAxis,
-              font: {
-                size: 10
-              }
+              text: chartData.value.xAxis,
+              font: { size: 10 }
             },
-            ticks: {
-              font: {
-                size: 9
-              },
-              maxRotation: 45,
-              minRotation: 0
-            }
+            ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }
           }
         }
       }
     }
 
-    const config: ChartConfiguration = {
-      type: props.chart.type as ChartType,
-      data: chartData,
-      options: chartOptions
-    }
-
-    // Wait for next tick to ensure canvas is ready
     await nextTick()
-    
     if (canvasRef.value) {
-      chartInstance = new ChartJS(canvasRef.value, config)
+      chartInstance = new ChartJS(canvasRef.value, { 
+        type: chartData.value.type as ChartType, 
+        data: chartDataConfig, 
+        options: chartOptions 
+      })
     }
   } catch (err) {
-    console.error('Chart creation error:', err)
-    error.value = `Failed to create chart: ${err instanceof Error ? err.message : 'Unknown error'}`
+    console.error('Error creating chart:', err)
+    error.value = 'Failed to create chart'
   }
 }
 
@@ -539,30 +432,19 @@ const generateColors = (count: number) => {
   return result
 }
 
-// Watch for changes and recreate chart
-watch(
-  () => [
-    props.chart.dataSourceId, 
-    props.chart.type, 
-    props.chart.xAxis, 
-    props.chart.yAxis, 
-    props.chart.category, 
-    props.chart.backgroundColor, 
-    props.chart.borderColor, 
-    props.chart.title,
-    props.chart.keyMetric,
-    props.chart.previousMetric,
-    props.chart.differenceType
-  ],
-  () => {
-    if (hasValidData.value && props.chart.type !== 'card') {
-      nextTick(() => {
-        createChart()
-      })
-    }
-  },
-  { deep: true }
-)
+// Watch for changes in chart properties and recreate chart
+watch(() => chartData.value, () => {
+  if (chartData.value.type && hasValidData.value) {
+    createChart()
+  }
+}, { deep: true })
+
+// Watch for changes in data source
+watch(() => dataSourceStore.dataSources, () => {
+  if (chartData.value.type && hasValidData.value) {
+    createChart()
+  }
+}, { deep: true })
 
 onMounted(() => {
   if (hasValidData.value && props.chart.type !== 'card') {

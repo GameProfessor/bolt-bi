@@ -46,7 +46,7 @@
               </div>
               <div class="ml-4">
                 <h3 class="text-lg font-medium text-gray-900">Charts</h3>
-                <p class="text-sm text-gray-600">{{ chartStore.charts.length }} charts created</p>
+                <p class="text-sm text-gray-600">{{ totalCharts }} charts created</p>
               </div>
             </div>
             <div class="mt-4">
@@ -155,9 +155,16 @@ import {
   Squares2X2Icon,
   ArrowRightIcon
 } from '@heroicons/vue/24/outline'
-import { useDataSourceStore, useChartStore, useDashboardStore } from '@/stores'
+import { useDataSourceStore, useDashboardStore } from '@/stores'
+import { computed } from 'vue'
 
 const dataSourceStore = useDataSourceStore()
-const chartStore = useChartStore()
 const dashboardStore = useDashboardStore()
+
+// Calculate total charts across all dashboards
+const totalCharts = computed(() => {
+  return dashboardStore.dashboards.reduce((total, dashboard) => {
+    return total + dashboard.charts.length
+  }, 0)
+})
 </script>

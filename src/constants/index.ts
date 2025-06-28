@@ -77,10 +77,10 @@ export const DASHBOARD = {
   DEFAULT_ROW_HEIGHT: 60,
   DEFAULT_MARGIN: [10, 10] as [number, number],
   DEFAULT_CONTAINER_PADDING: [10, 10] as [number, number],
-  MIN_WIDGET_WIDTH: 2,
-  MIN_WIDGET_HEIGHT: 2,
-  MAX_WIDGET_WIDTH: 12,
-  MAX_WIDGET_HEIGHT: 20
+  MIN_CHART_WIDTH: 2,
+  MIN_CHART_HEIGHT: 2,
+  MAX_CHART_WIDTH: 12,
+  MAX_CHART_HEIGHT: 20
 } as const
 
 // Chart constants

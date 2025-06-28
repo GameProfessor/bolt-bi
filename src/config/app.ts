@@ -75,7 +75,7 @@ export const appConfig = {
       margin: [10, 10],
       containerPadding: [10, 10]
     },
-    widget: {
+    chart: {
       minWidth: 2,
       minHeight: 2,
       maxWidth: 12,

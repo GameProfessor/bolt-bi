@@ -40,7 +40,7 @@ export interface DashboardApiResponse {
   id: string
   name: string
   description?: string
-  widgets: WidgetApiResponse[]
+  charts: ChartApiResponse[]
   createdAt: string
   updatedAt: string
   dataSourceIds: string[]
@@ -48,15 +48,22 @@ export interface DashboardApiResponse {
   tags: string[]
 }
 
-export interface WidgetApiResponse {
+// Chart API types (updated to include layout information)
+export interface ChartApiResponse {
   id: string
-  chartId: string
-  x: number
-  y: number
-  w: number
-  h: number
-  title?: string
-  config?: Record<string, any>
+  name: string
+  type: string
+  dataSourceId: string
+  config: Record<string, any>
+  layout: {
+    x: number
+    y: number
+    w: number
+    h: number
+  }
+  data?: any[]
+  createdAt: string
+  updatedAt: string
 }
 
 // Data Source API types
@@ -67,18 +74,6 @@ export interface DataSourceApiResponse {
   config: Record<string, any>
   status: 'active' | 'inactive' | 'error'
   lastSync?: string
-  createdAt: string
-  updatedAt: string
-}
-
-// Chart API types
-export interface ChartApiResponse {
-  id: string
-  name: string
-  type: string
-  dataSourceId: string
-  config: Record<string, any>
-  data?: any[]
   createdAt: string
   updatedAt: string
 }

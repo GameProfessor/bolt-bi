@@ -193,32 +193,9 @@
 // })
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-export interface DashboardWidget {
-  id: string
-  chartId: string
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-export interface DashboardTab {
-  id: string
-  name: string
-  widgetIds: string[] // IDs of widgets that belong to this tab
-}
-
-export interface Dashboard {
-  id: string
-  name: string
-  description?: string
-  widgets: DashboardWidget[]
-  tabs: DashboardTab[]
-  createdAt: Date
-  dataSourceIds?: string[]
-  category?: string
-}
+import { nanoid } from 'nanoid'
+import type { Dashboard, DashboardChart, DashboardTab } from '@/types/dashboard'
+import { createChart } from '@/types/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const dashboards = ref<Dashboard[]>([])
@@ -236,6 +213,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
         dashboards.value = parsed.map((dashboard: any) => ({
           ...dashboard,
           createdAt: new Date(dashboard.createdAt),
+          charts: dashboard.charts?.map((chart: any) => ({
+            ...chart,
+            createdAt: new Date(chart.createdAt),
+            updatedAt: chart.updatedAt ? new Date(chart.updatedAt) : undefined
+          })) || [],
           dataSourceIds: dashboard.dataSourceIds || []
         }))
       } catch (e) {
@@ -250,11 +232,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const createDashboard = (name: string, description?: string, dataSourceIds?: string[], category?: string) => {
     const dashboard: Dashboard = {
-      id: Date.now().toString(),
+      id: nanoid(),
       name,
       description,
-      widgets: [],
-      tabs: [],
+      charts: [],
+      tabs: [{ id: nanoid(), name: 'Tab 1', chartIds: [] }],
       createdAt: new Date(),
       dataSourceIds: dataSourceIds || [],
       category
@@ -280,38 +262,129 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
-  const addWidget = (dashboardId: string, chartId: string) => {
+  // Chart management methods
+  const addChart = (dashboardId: string, chart: Omit<DashboardChart, 'id' | 'dashboardId' | 'createdAt'>) => {
     const dashboard = dashboards.value.find(d => d.id === dashboardId)
     if (dashboard) {
-      const widget: DashboardWidget = {
-        id: Date.now().toString(),
-        chartId,
-        x: 0,
-        y: 0,
-        w: 6,
-        h: 4
+      const newChart: DashboardChart = {
+        ...chart,
+        id: nanoid(),
+        dashboardId,
+        createdAt: new Date()
       }
-      dashboard.widgets.push(widget)
+      dashboard.charts.push(newChart)
       saveToStorage()
-      return widget
+      return newChart
     }
     throw new Error(`Dashboard with id ${dashboardId} not found`)
   }
 
-  const removeWidget = (dashboardId: string, widgetId: string) => {
+  const updateChart = (dashboardId: string, chartId: string, updates: Partial<DashboardChart>) => {
     const dashboard = dashboards.value.find(d => d.id === dashboardId)
     if (dashboard) {
-      dashboard.widgets = dashboard.widgets.filter(w => w.id !== widgetId)
+      const chartIndex = dashboard.charts.findIndex(c => c.id === chartId)
+      if (chartIndex !== -1) {
+        // Create a new chart object to ensure Vue reactivity
+        const updatedChart = {
+          ...dashboard.charts[chartIndex],
+          ...updates,
+          updatedAt: new Date()
+        }
+        // Replace the chart in the array to trigger reactivity
+        dashboard.charts[chartIndex] = updatedChart
+        saveToStorage()
+        return updatedChart
+      }
+    }
+    throw new Error(`Chart with id ${chartId} not found`)
+  }
+
+  const removeChart = (dashboardId: string, chartId: string) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard) {
+      dashboard.charts = dashboard.charts.filter(c => c.id !== chartId)
+      
+      // Remove chart from all tabs
+      dashboard.tabs.forEach(tab => {
+        tab.chartIds = tab.chartIds.filter(id => id !== chartId)
+      })
+      
       saveToStorage()
     }
   }
 
-  const updateWidgetLayout = (dashboardId: string, widgetId: string, layout: Partial<DashboardWidget>) => {
+  const updateChartLayout = (dashboardId: string, chartId: string, layout: { x: number, y: number, w: number, h: number }) => {
     const dashboard = dashboards.value.find(d => d.id === dashboardId)
     if (dashboard) {
-      const widget = dashboard.widgets.find(w => w.id === widgetId)
-      if (widget) {
-        Object.assign(widget, layout)
+      const chart = dashboard.charts.find(c => c.id === chartId)
+      if (chart) {
+        chart.layout = layout
+        chart.updatedAt = new Date()
+        saveToStorage()
+      }
+    }
+  }
+
+  // Tab management methods
+  const addTab = (dashboardId: string, name: string) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard) {
+      const newTab: DashboardTab = {
+        id: nanoid(),
+        name,
+        chartIds: []
+      }
+      dashboard.tabs.push(newTab)
+      saveToStorage()
+      return newTab
+    }
+  }
+
+  const updateTab = (dashboardId: string, tabId: string, updates: Partial<DashboardTab>) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard) {
+      const tab = dashboard.tabs.find(t => t.id === tabId)
+      if (tab) {
+        Object.assign(tab, updates)
+        saveToStorage()
+      }
+    }
+  }
+
+  const removeTab = (dashboardId: string, tabId: string) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard && dashboard.tabs.length > 1) {
+      const tab = dashboard.tabs.find(t => t.id === tabId)
+      if (tab) {
+        // Remove all charts in this tab
+        tab.chartIds.forEach(chartId => {
+          removeChart(dashboardId, chartId)
+        })
+        
+        // Remove the tab
+        dashboard.tabs = dashboard.tabs.filter(t => t.id !== tabId)
+        saveToStorage()
+      }
+    }
+  }
+
+  const addChartToTab = (dashboardId: string, tabId: string, chartId: string) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard) {
+      const tab = dashboard.tabs.find(t => t.id === tabId)
+      if (tab && !tab.chartIds.includes(chartId)) {
+        tab.chartIds.push(chartId)
+        saveToStorage()
+      }
+    }
+  }
+
+  const removeChartFromTab = (dashboardId: string, tabId: string, chartId: string) => {
+    const dashboard = dashboards.value.find(d => d.id === dashboardId)
+    if (dashboard) {
+      const tab = dashboard.tabs.find(t => t.id === tabId)
+      if (tab) {
+        tab.chartIds = tab.chartIds.filter(id => id !== chartId)
         saveToStorage()
       }
     }
@@ -327,8 +400,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
     createDashboard,
     updateDashboard,
     deleteDashboard,
-    addWidget,
-    removeWidget,
-    updateWidgetLayout
+    addChart,
+    updateChart,
+    removeChart,
+    updateChartLayout,
+    addTab,
+    updateTab,
+    removeTab,
+    addChartToTab,
+    removeChartFromTab
   }
 })

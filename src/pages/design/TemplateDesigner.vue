@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { nanoid } from 'nanoid'
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -282,7 +283,7 @@ function addOrUpdateChart() {
 
 function addChart() {
   if (!isChartConfigValid.value) return
-  const chartId = Date.now().toString()
+  const chartId = nanoid()
   const newChart: ChartItem = {
     id: chartId,
     config: {
@@ -394,7 +395,7 @@ function toggleChartMenu(id: string) {
 
 function exportChart(chart: ChartItem, type: 'pdf' | 'png') {
   openChartMenuId.value = null
-  alert(`Exporting chart '${chart.config.title || chart.config.name}' as ${type.toUpperCase()} (stub)`)
+  alert(`Exporting chart '${chart.config.title}' as ${type.toUpperCase()} (stub)`)
 }
 
 function goBack() {
@@ -474,7 +475,7 @@ function onDashboardDrop(event: DragEvent) {
     const { chartType } = JSON.parse(data)
     if (!chartType) return
     // Add a new chart with default config/data
-    const chartId = Date.now().toString()
+    const chartId = nanoid()
     const newChart = {
       id: chartId,
       config: {

@@ -34,11 +34,11 @@
       </div> -->
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title (Optional)</label>
           <input
             v-model="chartConfig.title"
             type="text"
-            placeholder="Enter chart title"
+            placeholder="Enter chart title (optional)"
             class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
           />
         </div>
@@ -171,7 +171,7 @@
 
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/outline'
-import type { ChartConfig, DataSourceColumn } from '@/stores'
+import type { DataSourceColumn } from '@/stores'
 import { computed } from 'vue'
 
 const props = defineProps<{

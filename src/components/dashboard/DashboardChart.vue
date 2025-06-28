@@ -5,8 +5,8 @@
       <span>Chart not found</span>
     </div>
     <div v-else class="h-full flex flex-col">
-      <div v-if="chart.name" class="px-3 py-2 border-b border-gray-100 flex-shrink-0">
-        <h3 class="text-xs font-medium text-gray-900 truncate">{{ chart.name }}</h3>
+      <div v-if="chart.base.title" class="px-3 py-2 border-b border-gray-100 flex-shrink-0">
+        <h3 class="text-xs font-medium text-gray-900 truncate">{{ chart.base.title }}</h3>
       </div>
       <div class="flex-1 min-h-0 p-2">
         <ChartPreview :chart="chart" class="w-full h-full" />
@@ -18,28 +18,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { useChartStore } from '@/stores/index'
-import type { Dashboard } from '@/stores/index'
-
-// Legacy interface for backward compatibility
-interface DashboardWidget {
-  id: string
-  chartId: string
-  x: number
-  y: number
-  w: number
-  h: number
-}
+import type { DashboardChart } from '@/types/dashboard'
 import ChartPreview from '../charts/ChartPreview.vue'
 
 interface Props {
-  widget: DashboardWidget
+  chart: DashboardChart
 }
 
 const props = defineProps<Props>()
-const chartStore = useChartStore()
 
 const chart = computed(() => {
-  return chartStore.getChartById(props.widget.chartId)
+  return props.chart
 })
 </script>

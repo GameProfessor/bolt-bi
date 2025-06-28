@@ -3,7 +3,7 @@
  * Test fixtures và mock data
  */
 
-import type { Dashboard, DashboardWidget } from '@/types/dashboard'
+import type { Dashboard, DashboardChart } from '@/types/dashboard'
 import type { DataSource } from '@/types/dataSource'
 import type { Chart } from '@/types/chart'
 import type { User } from '@/types'
@@ -29,19 +29,34 @@ export const mockUser: User = {
 }
 
 /**
- * Mock Dashboard Widget
+ * Mock Dashboard Chart
  */
-export const mockWidget: DashboardWidget = {
-  id: 'widget-1',
-  title: 'Test Widget',
-  type: 'chart',
-  chartId: 'chart-1',
-  position: { x: 0, y: 0, w: 6, h: 4 },
-  config: {
-    showTitle: true,
-    showLegend: true,
-    refreshInterval: 300
-  }
+export const mockChart: DashboardChart = {
+  id: 'chart-1',
+  dashboardId: 'dashboard-1',
+  type: 'bar',
+  base: {
+    title: 'Test Chart',
+    dataSourceId: 'ds-1',
+    backgroundColor: '#3B82F6',
+    borderColor: '#1E40AF',
+    colorScheme: 'default'
+  },
+  properties: {
+    bar: {
+      xAxis: ['Category'],
+      yAxis: 'Value',
+      horizontal: false
+    }
+  },
+  layout: {
+    x: 0,
+    y: 0,
+    w: 6,
+    h: 4
+  },
+  createdAt: new Date('2023-12-21T10:30:00.000Z'),
+  updatedAt: new Date('2023-12-21T10:30:00.000Z')
 }
 
 /**
@@ -51,13 +66,17 @@ export const mockDashboard: Dashboard = {
   id: 'dashboard-1',
   name: 'Test Dashboard',
   description: 'A test dashboard',
-  widgets: [mockWidget],
-  layout: 'grid',
-  isPublic: false,
-  tags: ['test', 'sample'],
-  createdBy: 'user-1',
-  createdAt: new Date('2023-01-01'),
-  updatedAt: new Date('2023-12-01')
+  charts: [mockChart],
+  tabs: [
+    {
+      id: 'tab-1',
+      name: 'Tab 1',
+      chartIds: ['chart-1']
+    }
+  ],
+  createdAt: new Date('2023-12-21T10:30:00.000Z'),
+  dataSourceIds: ['ds-1'],
+  category: 'Test'
 }
 
 /**
@@ -104,27 +123,6 @@ export const mockDataSource: DataSource = {
 
 /**
  * Mock Chart
- */
-export const mockChart: Chart = {
-  id: 'chart-1',
-  name: 'Test Chart',
-  type: 'bar',
-  dataSourceId: 'datasource-1',
-  config: {
-    xAxis: 'name',
-    yAxis: 'value',
-    aggregation: 'sum',
-    colors: ['#3B82F6', '#EF4444', '#10B981'],
-    showLegend: true,
-    showGrid: true
-  },
-  createdBy: 'user-1',
-  createdAt: new Date('2023-01-01'),
-  updatedAt: new Date('2023-12-01')
-}
-
-/**
- * Mock Chart Data
  */
 export const mockChartData = {
   labels: ['January', 'February', 'March', 'April', 'May'],
@@ -285,18 +283,13 @@ export const createMockData = {
     ...overrides
   }),
   
-  widget: (overrides: Partial<DashboardWidget> = {}): DashboardWidget => ({
-    ...mockWidget,
+  chart: (overrides: Partial<DashboardChart> = {}): DashboardChart => ({
+    ...mockChart,
     ...overrides
   }),
   
   dataSource: (overrides: Partial<DataSource> = {}): DataSource => ({
     ...mockDataSource,
-    ...overrides
-  }),
-  
-  chart: (overrides: Partial<Chart> = {}): Chart => ({
-    ...mockChart,
     ...overrides
   })
 }

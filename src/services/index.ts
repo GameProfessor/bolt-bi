@@ -11,7 +11,7 @@ export { exportService, ExportService } from './exportService'
 // Re-export types
 export type { 
   Dashboard, 
-  DashboardWidget, 
+  DashboardChart, 
   DashboardExportOptions,
   DashboardShareSettings 
 } from '@/types/dashboard'

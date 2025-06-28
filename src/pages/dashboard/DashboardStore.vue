@@ -219,7 +219,7 @@
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900">{{ dashboard.name }}</div>
-                      <div class="text-sm text-gray-500">{{ dashboard.widgets.length }} widgets</div>
+                      <div class="text-sm text-gray-500">{{ dashboard.charts.length }} charts</div>
                     </div>
                   </div>
                 </td>
@@ -676,18 +676,9 @@ const cloneDashboard = (dashboard: Dashboard) => {
   const clonedName = `${dashboard.name} (Copy)`
   const clonedDashboard = dashboardStore.createDashboard(clonedName)
   
-  // Copy widgets from original dashboard
-  dashboard.widgets.forEach(widget => {
-    dashboardStore.addWidget(clonedDashboard.id, widget.chartId)
-    const newWidget = clonedDashboard.widgets[clonedDashboard.widgets.length - 1]
-    if (newWidget) {
-      dashboardStore.updateWidgetLayout(clonedDashboard.id, newWidget.id, {
-        x: widget.x,
-        y: widget.y,
-        w: widget.w,
-        h: widget.h
-      })
-    }
+  // Copy charts from original dashboard
+  dashboard.charts.forEach(chart => {
+    dashboardStore.addChart(clonedDashboard.id, chart)
   })
   
   router.push(`/dashboard/${clonedDashboard.id}`)

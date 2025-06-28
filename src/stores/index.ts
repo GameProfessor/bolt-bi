@@ -11,20 +11,16 @@ export const pinia = createPinia()
 // Export stores
 export { useDashboardStore } from './modules/dashboard'
 export { useDataSourceStore } from './modules/dataSource'
-export { useChartStore } from './modules/chart'
 export { useAppStore } from './modules/app'
 
-// Re-export types from store modules
+// Re-export types from types directory
 export type {
-  Dashboard
-} from './modules/dashboard'
+  Dashboard,
+  DashboardChart,
+  DashboardTab
+} from '@/types/dashboard'
 
 export type {
   DataSource,
   DataSourceColumn
 } from './modules/dataSource'
-
-export type {
-  Chart,
-  ChartConfig
-} from './modules/chart'
