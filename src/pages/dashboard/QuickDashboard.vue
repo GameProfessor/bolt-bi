@@ -107,9 +107,26 @@
         :class="['flex-1 p-3']" 
         style="position:relative;"
         @drop="onChartTypeDrop"
-        @dragover.prevent
-        @dragenter.prevent
+        @dragover="onDragOver"
+        @dragenter.prevent="onDragEnter"
+        @dragleave="onDragLeave"
       >
+        <!-- Drag Preview Shadow -->
+        <div 
+          v-if="showDragPreview"
+          class="absolute border-2 border-dashed border-primary-400 bg-primary-50 bg-opacity-30 rounded-lg pointer-events-none z-10"
+          :style="{
+            left: dragPreviewStyle.left + 'px',
+            top: dragPreviewStyle.top + 'px',
+            width: dragPreviewStyle.width + 'px',
+            height: dragPreviewStyle.height + 'px'
+          }"
+        >
+          <div class="flex items-center justify-center h-full text-primary-600 text-sm font-medium">
+            Drop to create chart
+          </div>
+        </div>
+        
         <!-- Tabs UI -->
         <nav v-if="showDashboardTabs" class="flex gap-2 px-1 mt-0 mb-2" aria-label="Dashboard Tabs" style="align-items: flex-start;">
           <div class="flex gap-2">
@@ -915,8 +932,97 @@ function onUpdateDashboardInfo({ category, description }: { category: string; de
   dashboardDescription.value = description
 }
 
+const showDragPreview = ref(false)
+const dragPreviewStyle = ref({
+  left: 0,
+  top: 0,
+  width: 0,
+  height: 0
+})
+
+const onDragEnter = (event: DragEvent) => {
+  event.preventDefault()
+  if (!event.dataTransfer) return
+  
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('application/json'))
+    if (data.chartType) {
+      showDragPreview.value = true
+      updateDragPreviewPosition(event)
+    }
+  } catch (error) {
+    // If we can't parse the data, it might not be a chart type drag
+    // We'll still show the preview for any drag operation
+    showDragPreview.value = true
+    updateDragPreviewPosition(event)
+  }
+}
+
+const onDragLeave = (event: DragEvent) => {
+  // Only hide preview if we're leaving the dashboard area completely
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+  
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    showDragPreview.value = false
+  }
+}
+
+const updateDragPreviewPosition = (event: DragEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  
+  // Calculate preview dimensions
+  const cellWidth = (window.innerWidth - 240 - 260 - 48) / 12
+  const cellHeight = 70 + 10
+  const previewWidth = 4 * cellWidth - 24
+  const previewHeight = 3 * cellHeight - 24
+  
+  // Calculate preview position (smooth, centered on mouse)
+  let previewLeft = x - (previewWidth / 2)
+  let previewTop = y - (previewHeight / 2)
+  
+  // Check if the preview would go outside the dashboard area
+  const dashboardWidth = rect.width - 24
+  const dashboardHeight = rect.height - 24
+  
+  // Constrain preview within dashboard boundaries
+  previewLeft = Math.max(12, Math.min(previewLeft, dashboardWidth - previewWidth - 12))
+  previewTop = Math.max(12, Math.min(previewTop, dashboardHeight - previewHeight - 12))
+  
+  // Check if preview is within boundaries
+  const isWithinBoundaries = 
+    previewLeft >= 12 && 
+    previewTop >= 12 && 
+    previewLeft + previewWidth <= dashboardWidth - 12 && 
+    previewTop + previewHeight <= dashboardHeight - 12
+  
+  // Hide preview if outside boundaries
+  if (!isWithinBoundaries) {
+    showDragPreview.value = false
+    return
+  }
+  
+  // Update preview position
+  dragPreviewStyle.value = {
+    left: previewLeft,
+    top: previewTop,
+    width: previewWidth,
+    height: previewHeight
+  }
+  
+  // Show preview if it was hidden and now is within boundaries
+  if (!showDragPreview.value) {
+    showDragPreview.value = true
+  }
+}
+
 const onChartTypeDrop = (event: DragEvent) => {
   event.preventDefault()
+  showDragPreview.value = false // Hide preview when dropping
+  
   if (!event.dataTransfer) return
   
   try {
@@ -933,10 +1039,17 @@ const onChartTypeDrop = (event: DragEvent) => {
   }
 }
 
+const onDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  if (showDragPreview.value) {
+    updateDragPreviewPosition(event)
+  }
+}
+
 const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) => {
   const chartId = Date.now().toString()
   
-  // Calculate grid position based on mouse coordinates
+  // Calculate grid position based on mouse coordinates (for final placement)
   let gridX = 0
   let gridY = 0
   
@@ -945,12 +1058,25 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
     const cellWidth = (window.innerWidth - 240 - 260 - 48) / 12 // Approximate cell width (dashboard width minus sidebars and padding)
     const cellHeight = 70 + 10 // cell height + margin
     
-    gridX = Math.floor(mouseX / cellWidth)
-    gridY = Math.floor(mouseY / cellHeight)
+    // Chart dimensions (4x3 grid units)
+    const chartWidth = 4
+    const chartHeight = 3
+    
+    // Calculate the center of the chart in grid units
+    const chartCenterX = chartWidth / 2
+    const chartCenterY = chartHeight / 2
+    
+    // Convert mouse position to grid coordinates
+    const mouseGridX = mouseX / cellWidth
+    const mouseGridY = mouseY / cellHeight
+    
+    // Calculate grid position so that chart center is closest to mouse position
+    gridX = Math.round(mouseGridX - chartCenterX)
+    gridY = Math.round(mouseGridY - chartCenterY)
     
     // Ensure the chart fits within the grid bounds
-    gridX = Math.max(0, Math.min(gridX, 12 - 6)) // 6 is the default chart width
-    gridY = Math.max(0, gridY)
+    gridX = Math.max(0, Math.min(gridX, 12 - chartWidth)) // Ensure chart doesn't go beyond right edge
+    gridY = Math.max(0, gridY) // Ensure chart doesn't go above top edge
   }
   
   const newChart: ChartItem = {
