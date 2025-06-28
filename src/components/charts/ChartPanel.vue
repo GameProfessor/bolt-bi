@@ -5,24 +5,34 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Chart Type
       </label>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-4 gap-2">
         <button
           v-for="type in chartTypes"
           :key="type.value"
           @click="$emit('update:selectedChartType', type.value)"
           :draggable="true"
           @dragstart="onChartTypeDragStart(type.value, $event)"
+          @mouseenter="showTooltip = type.label; tooltipTarget = $event.target as HTMLElement"
+          @mouseleave="showTooltip = ''"
           :class="[
-            'flex flex-col items-center p-3 border rounded-lg text-xs font-medium transition-colors duration-200',
+            'flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative',
             selectedChartType === type.value
               ? 'border-primary-500 bg-primary-50 text-primary-700'
-              : 'border-gray-300 text-gray-700 hover:border-gray-400'
+              : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
           ]"
         >
-          <component :is="type.icon" class="h-5 w-5 mb-1" />
-          {{ type.label }}
+          <component :is="type.icon" class="h-5 w-5" />
         </button>
       </div>
+    </div>
+
+    <!-- Custom Tooltip -->
+    <div
+      v-if="showTooltip"
+      class="fixed z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg pointer-events-none"
+      :style="tooltipStyle"
+    >
+      {{ showTooltip }}
     </div>
 
     <!-- Chart Properties -->
@@ -172,7 +182,7 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { DataSourceColumn } from '@/stores'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   chartTypes: ReadonlyArray<{ value: string; label: string; icon: any }>
@@ -194,6 +204,22 @@ defineEmits([
   'add-or-update-chart',
   'cancel-edit'
 ])
+
+// Tooltip state
+const showTooltip = ref('')
+const tooltipTarget = ref<HTMLElement | null>(null)
+
+// Computed tooltip style
+const tooltipStyle = computed(() => {
+  if (!tooltipTarget.value) return {}
+  
+  const rect = tooltipTarget.value.getBoundingClientRect()
+  return {
+    left: rect.left + rect.width / 2 + 'px',
+    top: rect.top - 30 + 'px',
+    transform: 'translateX(-50%)'
+  }
+})
 
 function onChartTypeDragStart(type: string, event: DragEvent) {
   if (event.dataTransfer) {

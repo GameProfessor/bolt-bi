@@ -210,7 +210,7 @@
                 <div class="grid-stack-item-content">
                   <div class="chart-header flex justify-end items-center gap-2">
                     <!-- 3-dot menu -->
-                    <div class="relative">
+                    <div class="relative chart-menu-container">
                       <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                       </button>
@@ -449,6 +449,18 @@ function handleTabEditKey(tabId: string, e: KeyboardEvent) {
 // Chart management
 const editingChartId = ref<string | null>(null)
 const openChartMenuId = ref<string | null>(null)
+
+// Click outside handler for chart menu
+const handleClickOutside = (event: Event) => {
+  if (openChartMenuId.value) {
+    const target = event.target as HTMLElement
+    // Check if the click target is within any chart menu container
+    const isWithinChartMenu = target.closest('.chart-menu-container')
+    if (!isWithinChartMenu) {
+      openChartMenuId.value = null
+    }
+  }
+}
 
 function resetChartConfig() {
   chartConfig.title = ''
@@ -1295,6 +1307,9 @@ onMounted(async () => {
   }
   // Remove automatic dashboard creation for new dashboards
   // Dashboard will be created only when user clicks "Save Dashboard"
+  
+  // Add click outside listener for chart menu
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
@@ -1304,6 +1319,7 @@ onUnmounted(() => {
   }
   document.removeEventListener('mousemove', onResizing)
   document.removeEventListener('mouseup', stopResizing)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
