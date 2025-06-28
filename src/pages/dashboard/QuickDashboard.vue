@@ -57,11 +57,14 @@
         :expandedDataSources="expandedDataSources"
         :isFieldInUse="isFieldInUse"
         :width="leftSidebarWidth"
+        :category="dashboardCategory"
+        :description="dashboardDescription"
         @open-manager="openDataSourceManager"
         @toggle-expand="toggleDataSource"
         @field-drag="onFieldDragStart"
         @update-selected-data-sources="updateSelectedDataSources"
         @toggle-dashboard-tabs="handleToggleDashboardTabs"
+        @update-dashboard-info="onUpdateDashboardInfo"
       />
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
@@ -255,6 +258,7 @@ const chartStore = useChartStore()
 
 const dashboardName = ref('')
 const dashboardDescription = ref('')
+const dashboardCategory = ref('')
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartConfig['type'] | ''>('')
 const gridStackContainer = ref<HTMLElement>()
@@ -416,6 +420,7 @@ interface ChartConfigLike {
   horizontal: boolean
   colorScheme: string
   dataSourceId: string
+  differenceType?: 'percentage' | 'absolute'
 }
 
 const chartConfig = reactive<ChartConfigLike>({
@@ -427,7 +432,8 @@ const chartConfig = reactive<ChartConfigLike>({
   borderColor: '#1d4ed8',
   horizontal: false,
   colorScheme: 'default',
-  dataSourceId: ''
+  dataSourceId: '',
+  differenceType: undefined
 })
 
 const chartTypes = [
@@ -574,7 +580,8 @@ const addOrUpdateChart = () => {
         borderColor: chartConfig.borderColor,
         horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
         colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-        createdAt: charts.value[idx].config.createdAt || new Date()
+        createdAt: charts.value[idx].config.createdAt || new Date(),
+        ...(chartConfig.differenceType !== undefined ? { differenceType: chartConfig.differenceType === 'value' ? 'absolute' : chartConfig.differenceType } : {})
       }
     }
     editingChartId.value = null
@@ -609,7 +616,8 @@ const addChart = () => {
       borderColor: chartConfig.borderColor,
       horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
       colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-      createdAt: new Date()
+      createdAt: new Date(),
+      ...(chartConfig.differenceType !== undefined ? { differenceType: chartConfig.differenceType === 'value' ? 'absolute' : chartConfig.differenceType } : {})
     },
     layout: {
       x: 0,
@@ -700,17 +708,20 @@ const saveDashboard = () => {
   if (!dashboardName.value || charts.value.length === 0) return
 
   try {
-  // Save selected data source IDs
-  const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
+    // Save selected data source IDs
+    const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
 
     if (currentDashboardId.value) {
+      console.log(`Updating dashboard with ID: ${currentDashboardId.value}`)
       // Update existing dashboard
       const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
       if (dashboard) {
+        console.log(`Updating dashboard with ID: ${currentDashboardId.value}, name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
         // Update dashboard properties
         dashboardStore.updateDashboard(currentDashboardId.value, {
           name: dashboardName.value,
           description: dashboardDescription.value,
+          category: dashboardCategory.value,
           dataSourceIds
         })
 
@@ -733,7 +744,8 @@ const saveDashboard = () => {
             title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
             backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
             borderColor: chartItem.config.borderColor || '#1E40AF',
-            colorScheme: chartItem.config.colorScheme
+            colorScheme: chartItem.config.colorScheme,
+            ...(chartItem.config.differenceType !== undefined ? { differenceType: chartItem.config.differenceType === 'value' ? 'absolute' : chartItem.config.differenceType } : {})
           })
 
           // Add widget to dashboard
@@ -750,34 +762,36 @@ const saveDashboard = () => {
       }
     } else {
       // Create new dashboard
-  const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds)
+      console.log(`Creating new dashboard with ID: ${currentDashboardId.value}, name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
+      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
       currentDashboardId.value = dashboard.id
 
-  // Create and save charts, then add widgets
-  charts.value.forEach(chartItem => {
-    // Create the chart in the chart store
-    const savedChart = chartStore.createChart({
-      name: chartItem.config.name || `Chart ${Date.now()}`,
-      type: chartItem.config.type || 'bar',
-      dataSourceId: chartItem.config.dataSourceId || '',
-      xAxis: chartItem.config.xAxis,
-      yAxis: chartItem.config.yAxis,
-      category: chartItem.config.category,
-      title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
-      backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
-      borderColor: chartItem.config.borderColor || '#1E40AF',
-      colorScheme: chartItem.config.colorScheme
-    })
+      // Create and save charts, then add widgets
+      charts.value.forEach(chartItem => {
+        // Create the chart in the chart store
+        const savedChart = chartStore.createChart({
+          name: chartItem.config.name || `Chart ${Date.now()}`,
+          type: chartItem.config.type || 'bar',
+          dataSourceId: chartItem.config.dataSourceId || '',
+          xAxis: chartItem.config.xAxis,
+          yAxis: chartItem.config.yAxis,
+          category: chartItem.config.category,
+          title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
+          backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
+          borderColor: chartItem.config.borderColor || '#1E40AF',
+          colorScheme: chartItem.config.colorScheme,
+          ...(chartItem.config.differenceType !== undefined ? { differenceType: chartItem.config.differenceType === 'value' ? 'absolute' : chartItem.config.differenceType } : {})
+        })
 
-    // Add widget to dashboard
-    dashboardStore.addWidget(dashboard.id, savedChart.id)
+        // Add widget to dashboard
+        dashboardStore.addWidget(dashboard.id, savedChart.id)
 
-    // Update widget layout
-    const widget = dashboard.widgets[dashboard.widgets.length - 1]
-    if (widget) {
-      dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
-    }
-  })
+        // Update widget layout
+        const widget = dashboard.widgets[dashboard.widgets.length - 1]
+        if (widget) {
+          dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
+        }
+      })
 
       showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
     }
@@ -885,6 +899,16 @@ function handleToggleDashboardTabs(show: boolean) {
   showDashboardTabs.value = show
 }
 
+// Add watcher for dashboardCategory
+watch(dashboardCategory, (newVal, oldVal) => {
+  console.log('dashboardCategory changed from', oldVal, 'to', newVal)
+})
+
+function onUpdateDashboardInfo({ category, description }: { category: string; description: string }) {
+  dashboardCategory.value = category
+  dashboardDescription.value = description
+}
+
 onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
@@ -894,6 +918,7 @@ onMounted(async () => {
       currentDashboardId.value = dashboardId
       dashboardName.value = dashboard.name
       dashboardDescription.value = dashboard.description || ''
+      dashboardCategory.value = dashboard.category || ''
       // Restore selected data sources
       if (dashboard.dataSourceIds && dashboard.dataSourceIds.length > 0) {
         selectedDataSources.value = dataSourceStore.dataSources.filter(ds => dashboard.dataSourceIds!.includes(ds.id))

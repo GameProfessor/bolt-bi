@@ -197,7 +197,7 @@
                   Owner
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Widgets
+                  Category
                 </th>
                 <th scope="col" class="relative px-6 py-3">
                   <span class="sr-only">Actions</span>
@@ -244,7 +244,7 @@
                   {{ dashboard.owner }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ dashboard.widgets.length }}
+                  {{ dashboard.category || '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end space-x-2">
@@ -611,7 +611,9 @@ const enhancedDashboards = computed(() => {
     ...dashboard,
     type: 'my' as 'my' | 'shared',
     owner: 'me',
-    description: dashboard.description || ''
+    description: dashboard.description || '',
+    category: dashboard.category || '',
+    dataSourceIds: dashboard.dataSourceIds || []
   }))
 })
 

@@ -210,6 +210,7 @@ export interface Dashboard {
   widgets: DashboardWidget[]
   createdAt: Date
   dataSourceIds?: string[]
+  category?: string
 }
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -240,14 +241,15 @@ export const useDashboardStore = defineStore('dashboard', () => {
     localStorage.setItem('bi-dashboards', JSON.stringify(dashboards.value))
   }
 
-  const createDashboard = (name: string, description?: string, dataSourceIds?: string[]) => {
+  const createDashboard = (name: string, description?: string, dataSourceIds?: string[], category?: string) => {
     const dashboard: Dashboard = {
       id: Date.now().toString(),
       name,
       description,
       widgets: [],
       createdAt: new Date(),
-      dataSourceIds: dataSourceIds || []
+      dataSourceIds: dataSourceIds || [],
+      category
     }
     dashboards.value.push(dashboard)
     saveToStorage()

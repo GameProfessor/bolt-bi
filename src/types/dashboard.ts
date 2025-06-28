@@ -34,6 +34,7 @@ export interface Dashboard {
   tags?: string[]
   layout?: DashboardLayout
   theme?: DashboardTheme
+  category?: string
 }
 
 export interface DashboardLayout {

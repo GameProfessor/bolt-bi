@@ -33,6 +33,7 @@
               Category
             </label>
             <select
+              id="dashboardCategory"
               v-model="dashboardCategory"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             >
@@ -449,7 +450,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { 
   Cog6ToothIcon, 
@@ -472,6 +473,8 @@ const props = defineProps<{
   expandedDataSources: string[]
   isFieldInUse: (fieldName: string, dataSourceId: string) => boolean
   width: number
+  category?: string
+  description?: string
 }>()
 
 const emit = defineEmits<{
@@ -496,13 +499,17 @@ const tabs = [
 ]
 
 // Overview tab state
-const dashboardCategory = ref('')
-const dashboardDescription = ref('')
+const dashboardCategory = ref(props.category || '')
+const dashboardDescription = ref(props.description || '')
+// Keep local refs in sync with props
+watch(() => props.category, (val) => { dashboardCategory.value = val || '' })
+watch(() => props.description, (val) => { dashboardDescription.value = val || '' })
 const saveAsTemplate = ref(false)
 const showDashboardTabs = ref(true)
 
 // Watch for changes and emit to parent
 const emitDashboardInfo = () => {
+  console.log('emitDashboardInfo', dashboardCategory.value);
   emit('update-dashboard-info', {
     category: dashboardCategory.value,
     description: dashboardDescription.value,
@@ -510,11 +517,12 @@ const emitDashboardInfo = () => {
   })
 }
 
-// Watch for changes
-computed(() => {
-  emitDashboardInfo()
-  return null
-})
+watch(
+  [dashboardCategory, dashboardDescription, saveAsTemplate],
+  () => {
+    emitDashboardInfo();
+  }
+);
 
 // Data source manager modal state
 const showDataSourceManager = ref(false)
