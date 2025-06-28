@@ -730,7 +730,11 @@ const hideToast = () => {
 }
 
 const saveDashboard = () => {
-  if (!dashboardName.value || charts.value.length === 0) return
+  if (!dashboardName.value) return
+
+  // Check if there are any charts in any tab
+  const hasCharts = dashboardTabs.value.some(tab => tab.charts.length > 0)
+  if (!hasCharts) return
 
   try {
     // Save selected data source IDs
@@ -755,9 +759,69 @@ const saveDashboard = () => {
           chartStore.deleteChart(widget.chartId)
         })
         dashboard.widgets = []
+        dashboard.tabs = []
 
-        // Create and save new charts, then add widgets
-        charts.value.forEach(chartItem => {
+        // Create and save charts from all tabs
+        const allWidgets: any[] = []
+        const allTabs: any[] = []
+
+        dashboardTabs.value.forEach(tab => {
+          const tabWidgets: any[] = []
+          
+          // Create and save charts for this tab
+          tab.charts.forEach(chartItem => {
+            // Create the chart in the chart store
+            const savedChart = chartStore.createChart({
+              name: chartItem.config.name || `Chart ${Date.now()}`,
+              type: chartItem.config.type || 'bar',
+              dataSourceId: chartItem.config.dataSourceId || '',
+              xAxis: chartItem.config.xAxis,
+              yAxis: chartItem.config.yAxis,
+              category: chartItem.config.category,
+              title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
+              backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
+              borderColor: chartItem.config.borderColor || '#1E40AF',
+              colorScheme: chartItem.config.colorScheme
+            })
+
+            // Add widget to dashboard
+            const widget = dashboardStore.addWidget(currentDashboardId.value!, savedChart.id)
+            
+            // Update widget layout
+            dashboardStore.updateWidgetLayout(currentDashboardId.value!, widget.id, chartItem.layout)
+            
+            // Track widget for this tab
+            tabWidgets.push(widget.id)
+            allWidgets.push(widget)
+          })
+
+          // Create tab entry
+          allTabs.push({
+            id: tab.id,
+            name: tab.name,
+            widgetIds: tabWidgets
+          })
+        })
+
+        // Update dashboard with all tabs
+        dashboard.tabs = allTabs
+
+        showToastNotification('success', 'Dashboard Updated', 'Your dashboard has been successfully updated.')
+      }
+    } else {
+      // Create new dashboard
+      console.log(`Creating new dashboard with name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
+      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
+      currentDashboardId.value = dashboard.id
+
+      // Create and save charts from all tabs
+      const allTabs: any[] = []
+
+      dashboardTabs.value.forEach(tab => {
+        const tabWidgets: any[] = []
+        
+        // Create and save charts for this tab
+        tab.charts.forEach(chartItem => {
           // Create the chart in the chart store
           const savedChart = chartStore.createChart({
             name: chartItem.config.name || `Chart ${Date.now()}`,
@@ -773,48 +837,25 @@ const saveDashboard = () => {
           })
 
           // Add widget to dashboard
-          dashboardStore.addWidget(currentDashboardId.value!, savedChart.id)
-
+          const widget = dashboardStore.addWidget(dashboard.id, savedChart.id)
+          
           // Update widget layout
-          const widget = dashboard.widgets[dashboard.widgets.length - 1]
-          if (widget) {
-            dashboardStore.updateWidgetLayout(currentDashboardId.value!, widget.id, chartItem.layout)
-          }
-        })
-
-        showToastNotification('success', 'Dashboard Updated', 'Your dashboard has been successfully updated.')
-      }
-    } else {
-      // Create new dashboard
-      console.log(`Creating new dashboard with ID: ${currentDashboardId.value}, name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
-      const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
-      currentDashboardId.value = dashboard.id
-
-      // Create and save charts, then add widgets
-      charts.value.forEach(chartItem => {
-        // Create the chart in the chart store
-        const savedChart = chartStore.createChart({
-          name: chartItem.config.name || `Chart ${Date.now()}`,
-          type: chartItem.config.type || 'bar',
-          dataSourceId: chartItem.config.dataSourceId || '',
-          xAxis: chartItem.config.xAxis,
-          yAxis: chartItem.config.yAxis,
-          category: chartItem.config.category,
-          title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
-          backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
-          borderColor: chartItem.config.borderColor || '#1E40AF',
-          colorScheme: chartItem.config.colorScheme
-        })
-
-        // Add widget to dashboard
-        dashboardStore.addWidget(dashboard.id, savedChart.id)
-
-        // Update widget layout
-        const widget = dashboard.widgets[dashboard.widgets.length - 1]
-        if (widget) {
           dashboardStore.updateWidgetLayout(dashboard.id, widget.id, chartItem.layout)
-        }
+          
+          // Track widget for this tab
+          tabWidgets.push(widget.id)
+        })
+
+        // Create tab entry
+        allTabs.push({
+          id: tab.id,
+          name: tab.name,
+          widgetIds: tabWidgets
+        })
       })
+
+      // Update dashboard with all tabs
+      dashboard.tabs = allTabs
 
       showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
     }
@@ -1124,22 +1165,65 @@ onMounted(async () => {
       if (dashboard.dataSourceIds && dashboard.dataSourceIds.length > 0) {
         selectedDataSources.value = dataSourceStore.dataSources.filter(ds => dashboard.dataSourceIds!.includes(ds.id))
       }
-      // Load charts for this dashboard
-      charts.value = dashboard.widgets.map(widget => {
-        const chart = chartStore.charts.find(c => c.id === widget.chartId)
-        return chart
-          ? {
-              id: chart.id,
-              config: { ...chart },
-              layout: {
-                x: widget.x,
-                y: widget.y,
-                w: widget.w,
-                h: widget.h
+      
+      // Load tabs and their charts
+      if (dashboard.tabs && dashboard.tabs.length > 0) {
+        // Restore tabs
+        dashboardTabs.value = dashboard.tabs.map(tab => ({
+          id: tab.id,
+          name: tab.name,
+          charts: [] // Will be populated below
+        }))
+        
+        // Set active tab to first tab
+        activeTabId.value = dashboardTabs.value[0].id
+        
+        // Load charts for each tab
+        dashboardTabs.value.forEach(tab => {
+          const tabData = dashboard.tabs.find(t => t.id === tab.id)
+          if (tabData) {
+            // Find widgets for this tab
+            const tabWidgets = dashboard.widgets.filter(widget => 
+              tabData.widgetIds.includes(widget.id)
+            )
+            
+            // Load charts for this tab
+            tab.charts = tabWidgets.map(widget => {
+              const chart = chartStore.charts.find(c => c.id === widget.chartId)
+              return chart
+                ? {
+                    id: chart.id,
+                    config: { ...chart },
+                    layout: {
+                      x: widget.x,
+                      y: widget.y,
+                      w: widget.w,
+                      h: widget.h
+                    }
+                  }
+                : null
+            }).filter(Boolean) as ChartItem[]
+          }
+        })
+      } else {
+        // Legacy: Load charts for single tab (backward compatibility)
+        charts.value = dashboard.widgets.map(widget => {
+          const chart = chartStore.charts.find(c => c.id === widget.chartId)
+          return chart
+            ? {
+                id: chart.id,
+                config: { ...chart },
+                layout: {
+                  x: widget.x,
+                  y: widget.y,
+                  w: widget.w,
+                  h: widget.h
+                }
               }
-            }
-          : null
-      }).filter(Boolean) as ChartItem[]
+            : null
+        }).filter(Boolean) as ChartItem[]
+      }
+      
       await nextTick()
       initializeGridStack()
     }

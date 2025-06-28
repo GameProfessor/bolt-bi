@@ -203,11 +203,18 @@ export interface DashboardWidget {
   h: number
 }
 
+export interface DashboardTab {
+  id: string
+  name: string
+  widgetIds: string[] // IDs of widgets that belong to this tab
+}
+
 export interface Dashboard {
   id: string
   name: string
   description?: string
   widgets: DashboardWidget[]
+  tabs: DashboardTab[]
   createdAt: Date
   dataSourceIds?: string[]
   category?: string
@@ -247,6 +254,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       name,
       description,
       widgets: [],
+      tabs: [],
       createdAt: new Date(),
       dataSourceIds: dataSourceIds || [],
       category
@@ -285,7 +293,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
       dashboard.widgets.push(widget)
       saveToStorage()
+      return widget
     }
+    throw new Error(`Dashboard with id ${dashboardId} not found`)
   }
 
   const removeWidget = (dashboardId: string, widgetId: string) => {
