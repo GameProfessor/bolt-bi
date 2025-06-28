@@ -4,9 +4,9 @@
       <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
       {{ error }}
     </div>
-    <div v-else-if="!hasValidData" class="flex items-center justify-center h-full text-gray-500 text-sm">
-      <ChartBarIcon class="h-8 w-8 mr-2" />
-      No data available
+    <div v-else-if="!hasValidData" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm">
+      <component :is="chartTypeIcon" class="h-12 w-12 mb-2 text-gray-400" />
+      <span class="text-gray-500">Chưa có dữ liệu</span>
     </div>
     <KPICard v-else-if="chart.type === 'card'" :chart="chart" class="w-full h-full" />
     <canvas v-else ref="canvasRef" class="w-full h-full"></canvas>
@@ -33,7 +33,13 @@ import {
   ChartConfiguration,
   ChartType
 } from 'chart.js'
-import { ExclamationTriangleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { 
+  ExclamationTriangleIcon, 
+  ChartBarIcon,
+  PresentationChartLineIcon,
+  ChartPieIcon,
+  CircleStackIcon
+} from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
 import type { ChartConfig } from '@/stores'
 import KPICard from './KPICard.vue'
@@ -65,6 +71,20 @@ const dataSourceStore = useDataSourceStore()
 const canvasRef = ref<HTMLCanvasElement>()
 const error = ref<string>('')
 let chartInstance: ChartJS | null = null
+
+// Chart type icons mapping
+const chartTypeIcons = {
+  bar: ChartBarIcon,
+  line: PresentationChartLineIcon,
+  pie: ChartPieIcon,
+  scatter: CircleStackIcon,
+  card: ChartBarIcon // Default for card type
+}
+
+const chartTypeIcon = computed(() => {
+  const chartType = props.chart.type || 'bar'
+  return chartTypeIcons[chartType as keyof typeof chartTypeIcons] || ChartBarIcon
+})
 
 const hasValidData = computed(() => {
   if (props.chart.data && Array.isArray(props.chart.data) && props.chart.data.length > 0) return true;

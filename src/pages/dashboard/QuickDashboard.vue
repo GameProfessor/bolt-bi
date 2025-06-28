@@ -103,7 +103,13 @@
       ></div>
 
       <!-- Main Dashboard Area -->
-      <div :class="['flex-1 p-3']" style="position:relative;">
+      <div 
+        :class="['flex-1 p-3']" 
+        style="position:relative;"
+        @drop="onChartTypeDrop"
+        @dragover.prevent
+        @dragenter.prevent
+      >
         <!-- Tabs UI -->
         <nav v-if="showDashboardTabs" class="flex gap-2 px-1 mt-0 mb-2" aria-label="Dashboard Tabs" style="align-items: flex-start;">
           <div class="flex gap-2">
@@ -167,6 +173,9 @@
                 <p class="text-sm text-gray-500">
                   Select a data source, choose a chart type, and drag fields to create your first chart.
                 </p>
+                <p class="text-sm text-gray-400 mt-2">
+                  Or drag a chart type from the left panel to create an empty chart.
+                </p>
               </div>
             </div>
             <!-- GridStack Container -->
@@ -196,7 +205,11 @@
                       </div>
                     </div>
                   </div>
-                  <div class="chart-content">
+                  <div 
+                    class="chart-content"
+                    @click="editChart(chart)"
+                    :class="{ 'cursor-pointer': !previewMode }"
+                  >
                     <ChartPreview :chart="chart.config" class="w-full h-full" />
                   </div>
                 </div>
@@ -291,7 +304,6 @@ interface ChartConfig {
   colorScheme?: string // for bar chart color scheme
   keyMetric?: string // for card chart
   previousMetric?: string // for card chart
-  differenceType?: 'percentage' | 'value' // for card chart
 }
 
 interface ChartItem {
@@ -420,7 +432,6 @@ interface ChartConfigLike {
   horizontal: boolean
   colorScheme: string
   dataSourceId: string
-  differenceType?: 'percentage' | 'absolute'
 }
 
 const chartConfig = reactive<ChartConfigLike>({
@@ -432,8 +443,7 @@ const chartConfig = reactive<ChartConfigLike>({
   borderColor: '#1d4ed8',
   horizontal: false,
   colorScheme: 'default',
-  dataSourceId: '',
-  differenceType: undefined
+  dataSourceId: ''
 })
 
 const chartTypes = [
@@ -580,8 +590,7 @@ const addOrUpdateChart = () => {
         borderColor: chartConfig.borderColor,
         horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
         colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-        createdAt: charts.value[idx].config.createdAt || new Date(),
-        ...(chartConfig.differenceType !== undefined ? { differenceType: chartConfig.differenceType === 'value' ? 'absolute' : chartConfig.differenceType } : {})
+        createdAt: charts.value[idx].config.createdAt || new Date()
       }
     }
     editingChartId.value = null
@@ -616,8 +625,7 @@ const addChart = () => {
       borderColor: chartConfig.borderColor,
       horizontal: selectedChartType.value === 'bar' ? chartConfig.horizontal : undefined,
       colorScheme: selectedChartType.value === 'bar' ? chartConfig.colorScheme : undefined,
-      createdAt: new Date(),
-      ...(chartConfig.differenceType !== undefined ? { differenceType: chartConfig.differenceType === 'value' ? 'absolute' : chartConfig.differenceType } : {})
+      createdAt: new Date()
     },
     layout: {
       x: 0,
@@ -744,8 +752,7 @@ const saveDashboard = () => {
             title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
             backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
             borderColor: chartItem.config.borderColor || '#1E40AF',
-            colorScheme: chartItem.config.colorScheme,
-            ...(chartItem.config.differenceType !== undefined ? { differenceType: chartItem.config.differenceType === 'value' ? 'absolute' : chartItem.config.differenceType } : {})
+            colorScheme: chartItem.config.colorScheme
           })
 
           // Add widget to dashboard
@@ -779,8 +786,7 @@ const saveDashboard = () => {
           title: chartItem.config.title || chartItem.config.name || `Chart ${Date.now()}`,
           backgroundColor: chartItem.config.backgroundColor || '#3B82F6',
           borderColor: chartItem.config.borderColor || '#1E40AF',
-          colorScheme: chartItem.config.colorScheme,
-          ...(chartItem.config.differenceType !== undefined ? { differenceType: chartItem.config.differenceType === 'value' ? 'absolute' : chartItem.config.differenceType } : {})
+          colorScheme: chartItem.config.colorScheme
         })
 
         // Add widget to dashboard
@@ -907,6 +913,75 @@ watch(dashboardCategory, (newVal, oldVal) => {
 function onUpdateDashboardInfo({ category, description }: { category: string; description: string }) {
   dashboardCategory.value = category
   dashboardDescription.value = description
+}
+
+const onChartTypeDrop = (event: DragEvent) => {
+  event.preventDefault()
+  if (!event.dataTransfer) return
+  
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('application/json'))
+    if (data.chartType) {
+      // Get mouse position relative to the dashboard area
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+      createEmptyChart(data.chartType, x, y)
+    }
+  } catch (error) {
+    console.error('Failed to parse dropped chart type data:', error)
+  }
+}
+
+const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) => {
+  const chartId = Date.now().toString()
+  
+  // Calculate grid position based on mouse coordinates
+  let gridX = 0
+  let gridY = 0
+  
+  if (mouseX !== undefined && mouseY !== undefined) {
+    // GridStack uses 12 columns, each cell is roughly 70px high with 10px margin
+    const cellWidth = (window.innerWidth - 240 - 260 - 48) / 12 // Approximate cell width (dashboard width minus sidebars and padding)
+    const cellHeight = 70 + 10 // cell height + margin
+    
+    gridX = Math.floor(mouseX / cellWidth)
+    gridY = Math.floor(mouseY / cellHeight)
+    
+    // Ensure the chart fits within the grid bounds
+    gridX = Math.max(0, Math.min(gridX, 12 - 6)) // 6 is the default chart width
+    gridY = Math.max(0, gridY)
+  }
+  
+  const newChart: ChartItem = {
+    id: chartId,
+    config: {
+      id: chartId,
+      name: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
+      type: chartType as ChartConfig['type'],
+      dataSourceId: '',
+      xAxis: chartType === 'bar' ? [] : '',
+      yAxis: '',
+      category: '',
+      title: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
+      backgroundColor: '#3b82f6',
+      borderColor: '#1d4ed8',
+      horizontal: false,
+      colorScheme: 'default',
+      createdAt: new Date()
+    },
+    layout: {
+      x: gridX,
+      y: gridY,
+      w: 4,
+      h: 3
+    }
+  }
+  
+  charts.value.push(newChart)
+  nextTick(() => {
+    initializeGridStack()
+  })
 }
 
 onMounted(async () => {

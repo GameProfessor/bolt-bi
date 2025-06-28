@@ -44,6 +44,7 @@ export interface ChartConfig {
   backgroundColor?: string
   borderColor?: string
   colorScheme?: string
+  horizontal?: boolean
   filters?: Record<string, any>
 }
 
