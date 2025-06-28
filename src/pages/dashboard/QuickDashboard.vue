@@ -87,6 +87,7 @@
         :editingChartId="editingChartId"
         :selectedDataSources="selectedDataSources"
         :width="chartTypeColWidth"
+        :alwaysShowProperties="true"
         @update:selectedChartType="selectedChartType = $event"
         @field-drop="onFieldDrop"
         @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
@@ -477,6 +478,13 @@ const selectedDataSource = computed(() => {
 
 const isChartConfigValid = computed(() => {
   if (!selectedChartType.value) return false
+  
+  // If no data source is selected, only require a title for basic configuration
+  if (!chartConfig.dataSourceId) {
+    return !!chartConfig.title
+  }
+  
+  // If data source is selected, validate based on chart type
   if (selectedChartType.value === 'pie') {
     return !!chartConfig.category
   } else if (selectedChartType.value === 'bar') {
@@ -588,7 +596,7 @@ const exportChart = (chart: ChartItem, type: 'pdf' | 'png') => {
 }
 
 const addOrUpdateChart = () => {
-  if (!isChartConfigValid.value || !chartConfig.dataSourceId) return
+  if (!isChartConfigValid.value) return
   if (editingChartId.value) {
     // Update existing chart
     const idx = charts.value.findIndex(c => c.id === editingChartId.value)
@@ -598,7 +606,7 @@ const addOrUpdateChart = () => {
         id: charts.value[idx].id,
         name: chartConfig.title || `Chart ${idx + 1}`,
         type: selectedChartType.value as ChartConfig['type'],
-        dataSourceId: chartConfig.dataSourceId,
+        dataSourceId: chartConfig.dataSourceId || '',
         xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
         yAxis: chartConfig.yAxis || undefined,
         category: chartConfig.category || undefined,
@@ -625,7 +633,7 @@ const cancelEdit = () => {
 }
 
 const addChart = () => {
-  if (!isChartConfigValid.value || !chartConfig.dataSourceId) return
+  if (!isChartConfigValid.value) return
   const chartId = Date.now().toString()
   const newChart: ChartItem = {
     id: chartId,
@@ -633,7 +641,7 @@ const addChart = () => {
       id: chartId,
       name: chartConfig.title || `Chart ${charts.value.length + 1}`,
       type: selectedChartType.value as ChartConfig['type'],
-      dataSourceId: chartConfig.dataSourceId,
+      dataSourceId: chartConfig.dataSourceId || '',
       xAxis: selectedChartType.value === 'bar' ? [...chartConfig.xAxis] : chartConfig.xAxis,
       yAxis: chartConfig.yAxis || undefined,
       category: chartConfig.category || undefined,
@@ -1146,6 +1154,29 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
   }
   
   charts.value.push(newChart)
+  
+  // Automatically select the chart type and show properties
+  selectedChartType.value = chartType as ChartConfig['type']
+  
+  // Set the chart config to match the new chart
+  chartConfig.title = newChart.config.title || ''
+  chartConfig.dataSourceId = newChart.config.dataSourceId || ''
+  chartConfig.backgroundColor = newChart.config.backgroundColor || '#3b82f6'
+  chartConfig.borderColor = newChart.config.borderColor || '#1d4ed8'
+  chartConfig.horizontal = newChart.config.horizontal || false
+  chartConfig.colorScheme = newChart.config.colorScheme || 'default'
+  
+  if (chartType === 'bar') {
+    chartConfig.xAxis = Array.isArray(newChart.config.xAxis) ? [...newChart.config.xAxis] : []
+  } else {
+    chartConfig.xAxis = typeof newChart.config.xAxis === 'string' ? newChart.config.xAxis : ''
+  }
+  chartConfig.yAxis = newChart.config.yAxis || ''
+  chartConfig.category = newChart.config.category || ''
+  
+  // Set editing mode to the newly created chart
+  editingChartId.value = chartId
+  
   nextTick(() => {
     initializeGridStack()
   })

@@ -28,10 +28,11 @@
     <!-- Chart Properties -->
     <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 overflow-y-auto">
       <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
-      <div v-if="selectedDataSources.length === 0 && !alwaysShowProperties" class="text-sm text-gray-500 text-center py-4">
-        Please select at least one data source to configure chart properties
-      </div>
-      <div v-else class="space-y-3">
+      <!-- <div v-if="selectedDataSources.length === 0" class="text-sm text-gray-500 text-center py-2 mb-3 bg-blue-50 rounded border border-blue-200">
+        <p class="text-xs text-blue-600">No data sources selected</p>
+        <p class="text-xs text-blue-500">Select data sources to configure chart data fields</p>
+      </div> -->
+      <div class="space-y-3">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
           <input
@@ -42,6 +43,7 @@
           />
         </div>
 
+        <!-- Data Source Fields Section - Always show drop areas -->
         <div v-if="selectedChartType === 'pie'">
           <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
           <div
@@ -115,6 +117,7 @@
           </div>
         </div>
 
+        <!-- Chart Configuration Options - Always show -->
         <div v-if="selectedChartType === 'bar'" class="flex items-center gap-2 mt-2">
           <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
           <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
