@@ -112,6 +112,7 @@
         v-if="!previewMode && showDataPanel && showChartPanel"
         class="resizer"
         @mousedown="startResizing('left')"
+        :class="{ dimmed: confirmDialog.show }"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
       ></div>
 
@@ -140,6 +141,7 @@
         v-if="!previewMode && showChartPanel"
         class="resizer"
         @mousedown="startResizing('chartType')"
+        :class="{ dimmed: confirmDialog.show }"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
       ></div>
 
@@ -298,6 +300,17 @@
       :message="toastMessage"
       @close="hideToast"
     />
+
+    <ConfirmDialog
+      :show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :type="confirmDialog.type"
+      :confirmText="confirmDialog.confirmText"
+      :cancelText="confirmDialog.cancelText"
+      @confirm="handleConfirmDialogConfirm"
+      @close="handleConfirmDialogClose"
+    />
   </div>
 </template>
 
@@ -334,6 +347,7 @@ import DataPanel from './components/DataPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import Toast from '@/components/ui/Toast.vue'
 import { useDashboardState } from './composables/useDashboardState'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -757,31 +771,95 @@ const editChart = (chart: DashboardChart) => {
   }
 }
 
-const removeChart = (chartId: string) => {
-  if (confirm('Are you sure you want to remove this chart?') && currentDashboardId.value) {
-    dashboardStore.removeChart(currentDashboardId.value, chartId)
-    
-    dashboardTabs.value.forEach(tab => {
-      tab.chartIds = tab.chartIds.filter(id => id !== chartId)
-    })
-    
-    nextTick(() => {
-      // Reinitialize GridStack for the current tab
-      if (activeTabId.value) {
-        initializeTabGridStack(activeTabId.value)
-      }
-    })
+// Confirm dialog state
+const confirmDialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'danger' as 'danger' | 'warning' | 'info',
+  confirmText: 'Confirm',
+  cancelText: 'Cancel',
+  onConfirm: () => {}
+})
+
+function showConfirmDialog({ title, message, type = 'danger', confirmText = 'Confirm', cancelText = 'Cancel', onConfirm }: {
+  title: string,
+  message: string,
+  type?: 'danger' | 'warning' | 'info',
+  confirmText?: string,
+  cancelText?: string,
+  onConfirm: () => void
+}) {
+  confirmDialog.value = {
+    show: true,
+    title,
+    message,
+    type,
+    confirmText,
+    cancelText,
+    onConfirm
   }
 }
 
-const cancelEdit = () => {
-  editingChartId.value = null
-  resetChartConfig()
+function handleConfirmDialogConfirm() {
+  confirmDialog.value.show = false
+  confirmDialog.value.onConfirm()
+}
+function handleConfirmDialogClose() {
+  confirmDialog.value.show = false
 }
 
-const exportChart = (chart: DashboardChart, type: 'pdf' | 'png') => {
-  openChartMenuId.value = null
-  alert(`Exporting chart '${chart.base.title}' as ${type.toUpperCase()} (stub)`)
+const removeChart = (chartId: string) => {
+  showConfirmDialog({
+    title: 'Remove Chart',
+    message: 'Are you sure you want to remove this chart?',
+    type: 'danger',
+    confirmText: 'Remove',
+    cancelText: 'Cancel',
+    onConfirm: () => {
+      if (currentDashboardId.value) {
+        dashboardStore.removeChart(currentDashboardId.value, chartId)
+        dashboardTabs.value.forEach(tab => {
+          tab.chartIds = tab.chartIds.filter(id => id !== chartId)
+        })
+        nextTick(() => {
+          if (activeTabId.value) {
+            if (tabGridStacks.value.has(activeTabId.value)) {
+              tabGridStacks.value.get(activeTabId.value)?.destroy(false)
+              tabGridStacks.value.delete(activeTabId.value)
+            }
+            initializeTabGridStack(activeTabId.value)
+          }
+        })
+      }
+    }
+  })
+}
+
+const removeTab = (tabId: string) => {
+  if (dashboardTabs.value.length === 1) return
+  const tab = dashboardTabs.value.find(t => t.id === tabId)
+  if (!tab) return
+  showConfirmDialog({
+    title: 'Remove Tab',
+    message: `Are you sure you want to remove the tab "${tab.name}" and all its charts? This cannot be undone.`,
+    type: 'danger',
+    confirmText: 'Remove',
+    cancelText: 'Cancel',
+    onConfirm: () => {
+      cleanupTabGridStack(tabId)
+      const idx = dashboardTabs.value.findIndex(t => t.id === tabId)
+      dashboardTabs.value.splice(idx, 1)
+      if (activeTabId.value === tabId) {
+        activeTabId.value = dashboardTabs.value[Math.max(0, idx - 1)].id
+        nextTick(() => {
+          if (activeTabId.value) {
+            initializeTabGridStack(activeTabId.value)
+          }
+        })
+      }
+    }
+  })
 }
 
 const toggleChartMenu = (id: string) => {
@@ -815,28 +893,6 @@ const addTab = () => {
     // Initialize GridStack for the new tab
     initializeTabGridStack(newTab.id)
   })
-}
-
-const removeTab = (tabId: string) => {
-  if (dashboardTabs.value.length === 1) return
-  const tab = dashboardTabs.value.find(t => t.id === tabId)
-  if (!tab) return
-  if (confirm(`Are you sure you want to remove the tab "${tab.name}" and all its charts? This cannot be undone.`)) {
-    // Clean up GridStack
-    cleanupTabGridStack(tabId)
-    
-    const idx = dashboardTabs.value.findIndex(t => t.id === tabId)
-    dashboardTabs.value.splice(idx, 1)
-    if (activeTabId.value === tabId) {
-      activeTabId.value = dashboardTabs.value[Math.max(0, idx - 1)].id
-      nextTick(() => {
-        // Reinitialize GridStack for the new active tab
-        if (activeTabId.value) {
-          initializeTabGridStack(activeTabId.value)
-        }
-      })
-    }
-  }
 }
 
 const startRenameTab = (tabId: string) => {
@@ -1271,6 +1327,16 @@ watch(() => dashboardTabs.value.map(tab => getChartsForTab(tab.id)), () => {
   })
 }, { deep: true })
 
+const cancelEdit = () => {
+  editingChartId.value = null
+  resetChartConfig()
+}
+
+const exportChart = (chart: DashboardChart, type: 'pdf' | 'png') => {
+  openChartMenuId.value = null
+  alert(`Exporting chart '${chart.base.title}' as ${type.toUpperCase()} (stub)`)
+}
+
 onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
@@ -1335,10 +1401,13 @@ onUnmounted(() => {
 }
 
 .resizer {
-  transition: background 0.2s;
+  transition: background 0.2s, opacity 0.2s;
 }
 .resizer:hover {
   background: #d1d5db;
+}
+.resizer.dimmed {
+  display: none !important;
 }
 
 /* Panel transitions */
