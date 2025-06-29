@@ -322,6 +322,8 @@ const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartType | ''>('')
 const gridStackContainer = ref<HTMLElement>()
 const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
+
+// Single GridStack instance that gets reinitialized when switching tabs
 let gridStack: GridStack | null = null
 
 // Chart configuration for editing
@@ -462,7 +464,10 @@ const addOrUpdateChart = () => {
     editingChartId.value = null
     resetChartConfig()
     setTimeout(() => {
-      nextTick(() => initializeGridStack())
+      nextTick(() => {
+        // Reinitialize GridStack for the current tab
+        initializeGridStack()
+      })
     }, 100)
     return
   }
@@ -555,7 +560,10 @@ const addChart = () => {
   
   resetChartConfig()
   setTimeout(() => {
-    nextTick(() => initializeGridStack())
+    nextTick(() => {
+      // Reinitialize GridStack for the current tab
+      initializeGridStack()
+    })
   }, 100)
 }
 
@@ -617,7 +625,10 @@ const removeChart = (chartId: string) => {
       tab.chartIds = tab.chartIds.filter(id => id !== chartId)
     })
     
-    nextTick(() => initializeGridStack())
+    nextTick(() => {
+      // Reinitialize GridStack for the current tab
+      initializeGridStack()
+    })
   }
 }
 
@@ -636,45 +647,54 @@ const toggleChartMenu = (id: string) => {
 }
 
 const initializeGridStack = () => {
-  if (!gridStackContainer.value || charts.value.length === 0) return
+  if (!gridStackContainer.value) return
 
   nextTick(() => {
-  try {
-    if (gridStack) {
-      gridStack.destroy(false)
-      gridStack = null
-    }
-
-    gridStack = GridStack.init({
-      cellHeight: 70,
-      margin: 10,
-      minRow: 1,
-      animate: true,
-      resizable: {
-        handles: 'e, se, s, sw, w'
-      },
-      draggable: {
-        handle: '.grid-stack-item-content',
-        scroll: false
+    try {
+      // Always destroy existing GridStack instance first
+      if (gridStack) {
+        gridStack.destroy(false)
+        gridStack = null
       }
-    }, gridStackContainer.value)
 
-    gridStack.on('change', (event, items) => {
-      items.forEach(item => {
+      // Create new GridStack instance
+      gridStack = GridStack.init({
+        cellHeight: 70,
+        margin: 10,
+        minRow: 1,
+        animate: true,
+        resizable: {
+          handles: 'e, se, s, sw, w'
+        },
+        draggable: {
+          handle: '.grid-stack-item-content',
+          scroll: false
+        }
+      }, gridStackContainer.value)
+
+      // Set up change event handler
+      gridStack.on('change', (event, items) => {
+        items.forEach(item => {
           if (currentDashboardId.value && item.id && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
             dashboardStore.updateChartLayout(currentDashboardId.value, item.id, {
-            x: item.x,
-            y: item.y,
-            w: item.w,
-            h: item.h
+              x: item.x,
+              y: item.y,
+              w: item.w,
+              h: item.h
             })
-        }
+          }
+        })
       })
-    })
-  } catch (error) {
-    console.error('Failed to initialize GridStack:', error)
-  }
+    } catch (error) {
+      console.error('Failed to initialize GridStack:', error)
+    }
   })
+}
+
+// Switch to a different tab's GridStack
+const switchToTabGridStack = (tabId: string) => {
+  // Simply reinitialize the GridStack for the new tab
+  initializeGridStack()
 }
 
 const isChartConfigValid = computed(() => {
@@ -700,7 +720,10 @@ const addTab = () => {
   const newTab = { id: nanoid(), name: `Tab ${dashboardTabs.value.length + 1}`, chartIds: [] }
   dashboardTabs.value.push(newTab)
   activeTabId.value = newTab.id
-  nextTick(() => initializeGridStack())
+  nextTick(() => {
+    // Initialize GridStack for the new tab
+    initializeGridStack()
+  })
 }
 
 const removeTab = (tabId: string) => {
@@ -708,11 +731,20 @@ const removeTab = (tabId: string) => {
   const tab = dashboardTabs.value.find(t => t.id === tabId)
   if (!tab) return
   if (confirm(`Are you sure you want to remove the tab "${tab.name}" and all its charts? This cannot be undone.`)) {
+    // Clean up GridStack
+    if (gridStack) {
+      gridStack.destroy(false)
+      gridStack = null
+    }
+    
     const idx = dashboardTabs.value.findIndex(t => t.id === tabId)
     dashboardTabs.value.splice(idx, 1)
     if (activeTabId.value === tabId) {
       activeTabId.value = dashboardTabs.value[Math.max(0, idx - 1)].id
-      nextTick(() => initializeGridStack())
+      nextTick(() => {
+        // Reinitialize GridStack for the new active tab
+        initializeGridStack()
+      })
     }
   }
 }
@@ -754,6 +786,25 @@ const charts = computed(() => {
   
   return dashboard.charts.filter(chart => activeTab.chartIds.includes(chart.id))
 })
+
+// Watch for tab changes and reinitialize GridStack
+watch(activeTabId, (newTabId) => {
+  if (newTabId) {
+    nextTick(() => {
+      initializeGridStack()
+    })
+  }
+})
+
+// Watch for charts changes and reinitialize GridStack if needed
+watch(charts, () => {
+  nextTick(() => {
+    // Reinitialize if we don't have a GridStack yet
+    if (!gridStack) {
+      initializeGridStack()
+    }
+  })
+}, { deep: true })
 
 const chartTypes = [
   { value: 'bar' as const, label: 'Bar', icon: ChartBarIcon },
@@ -1080,6 +1131,7 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
   
     setTimeout(() => {
       nextTick(() => {
+        // Reinitialize GridStack for the current tab
         initializeGridStack()
       })
     }, 100)
@@ -1119,7 +1171,11 @@ onMounted(async () => {
   if (dashboardId) {
     await loadDashboard(dashboardId)
     await nextTick()
-    initializeGridStack()
+    // Initialize GridStack for the current tab
+    const tabId = activeTabId.value
+    if (tabId) {
+      initializeGridStack()
+    }
   }
   document.addEventListener('click', handleClickOutside)
 })
@@ -1127,7 +1183,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (gridStack) {
     gridStack.destroy(false)
-    gridStack = null
   }
   document.removeEventListener('mousemove', onResizing)
   document.removeEventListener('mouseup', stopResizing)
