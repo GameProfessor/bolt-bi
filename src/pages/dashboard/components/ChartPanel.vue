@@ -5,7 +5,7 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Chart Type
       </label>
-      <div class="grid gap-y-1 gap-x-0" :style="`grid-template-columns: repeat(${chartTypeCols}, minmax(0, 1fr));`">
+      <div class="grid gap-2" :style="`grid-template-columns: repeat(${chartTypeCols}, minmax(0, 1fr));`">
         <div v-for="type in chartTypes" :key="type.value" class="relative group">
           <button
             @click="$emit('update:selectedChartType', type.value)"
