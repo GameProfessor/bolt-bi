@@ -86,7 +86,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         createdAt: new Date()
       }
       dashboard.charts.push(newChart)
-      saveToStorage()
       return newChart
     }
     throw new Error(`Dashboard with id ${dashboardId} not found`)
@@ -105,7 +104,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         }
         // Replace the chart in the array to trigger reactivity
         dashboard.charts[chartIndex] = updatedChart
-        saveToStorage()
         return updatedChart
       }
     }
@@ -121,8 +119,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       dashboard.tabs.forEach(tab => {
         tab.chartIds = tab.chartIds.filter(id => id !== chartId)
       })
-      
-      saveToStorage()
     }
   }
 
@@ -133,7 +129,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       if (chart) {
         chart.layout = layout
         chart.updatedAt = new Date()
-        saveToStorage()
       }
     }
   }
@@ -148,7 +143,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         chartIds: []
       }
       dashboard.tabs.push(newTab)
-      saveToStorage()
       return newTab
     }
   }
@@ -159,7 +153,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       const tab = dashboard.tabs.find(t => t.id === tabId)
       if (tab) {
         Object.assign(tab, updates)
-        saveToStorage()
       }
     }
   }
@@ -176,7 +169,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         
         // Remove the tab
         dashboard.tabs = dashboard.tabs.filter(t => t.id !== tabId)
-        saveToStorage()
       }
     }
   }
@@ -187,7 +179,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       const tab = dashboard.tabs.find(t => t.id === tabId)
       if (tab && !tab.chartIds.includes(chartId)) {
         tab.chartIds.push(chartId)
-        saveToStorage()
       }
     }
   }
@@ -198,7 +189,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       const tab = dashboard.tabs.find(t => t.id === tabId)
       if (tab) {
         tab.chartIds = tab.chartIds.filter(id => id !== chartId)
-        saveToStorage()
       }
     }
   }
@@ -221,6 +211,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     updateTab,
     removeTab,
     addChartToTab,
-    removeChartFromTab
+    removeChartFromTab,
+    loadFromStorage
   }
 })

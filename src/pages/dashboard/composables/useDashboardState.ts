@@ -36,9 +36,7 @@ export function useDashboardState() {
   const showDashboardTabs = ref(true)
 
   // Computed properties
-  const hasUnsavedChanges = computed(() => {
-    return selectedDataSources.value.length > 0 || currentDashboardId.value !== null
-  })
+  const hasUnsavedChanges = ref(false)
 
   // Methods
   const saveDashboard = () => {
@@ -78,6 +76,7 @@ export function useDashboardState() {
 
         showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
       }
+      hasUnsavedChanges.value = false
     } catch (error) {
       console.error('Error saving dashboard:', error)
       showToastNotification('error', 'Save Failed', 'There was an error saving your dashboard. Please try again.')
@@ -168,6 +167,11 @@ export function useDashboardState() {
     console.log('dashboardCategory changed from', oldVal, 'to', newVal)
   })
 
+  // Mark unsaved changes for chart and tab mutations
+  function markUnsaved() {
+    hasUnsavedChanges.value = true
+  }
+
   return {
     // State
     dashboardName,
@@ -198,6 +202,7 @@ export function useDashboardState() {
     toggleDataSource,
     updateSelectedDataSources,
     handleToggleDashboardTabs,
-    onUpdateDashboardInfo
+    onUpdateDashboardInfo,
+    markUnsaved
   }
 } 

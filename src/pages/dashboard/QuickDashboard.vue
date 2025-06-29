@@ -112,7 +112,7 @@
         v-if="!previewMode && showDataPanel && showChartPanel"
         class="resizer"
         @mousedown="startResizing('left')"
-        :class="{ dimmed: confirmDialog.show }"
+        :class="{ dimmed: confirmDialog.show || showLeaveConfirmDialog }"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
       ></div>
 
@@ -141,7 +141,7 @@
         v-if="!previewMode && showChartPanel"
         class="resizer"
         @mousedown="startResizing('chartType')"
-        :class="{ dimmed: confirmDialog.show }"
+        :class="{ dimmed: confirmDialog.show || showLeaveConfirmDialog }"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
       ></div>
 
@@ -302,21 +302,21 @@
     />
 
     <ConfirmDialog
-      :show="confirmDialog.show"
-      :title="confirmDialog.title"
-      :message="confirmDialog.message"
-      :type="confirmDialog.type"
-      :confirmText="confirmDialog.confirmText"
-      :cancelText="confirmDialog.cancelText"
-      @confirm="handleConfirmDialogConfirm"
-      @close="handleConfirmDialogClose"
+      :show="showLeaveConfirmDialog"
+      title="Leave Dashboard?"
+      message="You have unsaved changes. Are you sure you want to leave? Unsaved changes will be lost."
+      type="warning"
+      confirmText="Leave"
+      cancelText="Stay"
+      @confirm="handleLeaveConfirm"
+      @close="handleLeaveCancel"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave, RouteLocationNormalizedLoaded, NavigationGuardNext } from 'vue-router'
 import { nanoid } from 'nanoid'
 import {
   ArrowLeftIcon,
@@ -380,7 +380,8 @@ const {
   toggleDataSource,
   updateSelectedDataSources,
   handleToggleDashboardTabs,
-  onUpdateDashboardInfo
+  onUpdateDashboardInfo,
+  markUnsaved
 } = useDashboardState()
 
 const selectedDataSourceId = ref('')
@@ -441,6 +442,7 @@ const initializeTabGridStack = (tabId: string) => {
               w: item.w,
               h: item.h
             })
+            markUnsaved()
           }
         })
       })
@@ -574,24 +576,21 @@ const resetChartConfig = () => {
 
 const addOrUpdateChart = () => {
   if (!isChartConfigValid.value) return
-  
   if (editingChartId.value) {
     if (!currentDashboardId.value) return
-    
     const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
     if (dashboard) {
       const chart = dashboard.charts.find(c => c.id === editingChartId.value)
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-        title: chartConfig.title,
+            title: chartConfig.title,
             dataSourceId: chartConfig.dataSourceId,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
+            backgroundColor: chartConfig.backgroundColor,
+            borderColor: chartConfig.borderColor,
             colorScheme: chartConfig.colorScheme
           }
         }
-        
         switch (selectedChartType.value) {
           case 'bar':
             updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
@@ -609,17 +608,15 @@ const addOrUpdateChart = () => {
             updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
             break
         }
-        
         dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
+        markUnsaved()
       }
     }
     editingChartId.value = null
     resetChartConfig()
     setTimeout(() => {
       nextTick(() => {
-        // Reinitialize GridStack for the current tab
         if (activeTabId.value) {
-          // Destroy old instance if it exists
           if (tabGridStacks.value.has(activeTabId.value)) {
             tabGridStacks.value.get(activeTabId.value)?.destroy(false)
             tabGridStacks.value.delete(activeTabId.value)
@@ -630,7 +627,6 @@ const addOrUpdateChart = () => {
     }, 100)
     return
   }
-  
   addChart()
 }
 
@@ -643,13 +639,13 @@ const addChart = async () => {
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
-      title: chartConfig.title,
+        title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis,
         yAxis: chartConfig.yAxis,
         horizontal: chartConfig.horizontal,
-      backgroundColor: chartConfig.backgroundColor,
-      borderColor: chartConfig.borderColor,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
       })
       break
@@ -710,6 +706,7 @@ const addChart = async () => {
   if (activeTab) {
     activeTab.chartIds.push(savedChart.id)
   }
+  markUnsaved()
   resetChartConfig()
   await nextTick()
   if (activeTabId.value) {
@@ -817,11 +814,12 @@ const removeChart = (chartId: string) => {
     confirmText: 'Remove',
     cancelText: 'Cancel',
     onConfirm: () => {
-    if (currentDashboardId.value) {
+      if (currentDashboardId.value) {
         dashboardStore.removeChart(currentDashboardId.value, chartId)
         dashboardTabs.value.forEach(tab => {
           tab.chartIds = tab.chartIds.filter(id => id !== chartId)
         })
+        markUnsaved()
         nextTick(() => {
           if (activeTabId.value) {
             if (tabGridStacks.value.has(activeTabId.value)) {
@@ -850,6 +848,7 @@ const removeTab = (tabId: string) => {
       cleanupTabGridStack(tabId)
       const idx = dashboardTabs.value.findIndex(t => t.id === tabId)
       dashboardTabs.value.splice(idx, 1)
+      markUnsaved()
       if (activeTabId.value === tabId) {
         activeTabId.value = dashboardTabs.value[Math.max(0, idx - 1)].id
         nextTick(() => {
@@ -889,8 +888,8 @@ const addTab = () => {
   const newTab = { id: nanoid(), name: `Tab ${dashboardTabs.value.length + 1}`, chartIds: [] }
   dashboardTabs.value.push(newTab)
   activeTabId.value = newTab.id
+  markUnsaved()
   nextTick(() => {
-    // Initialize GridStack for the new tab
     initializeTabGridStack(newTab.id)
   })
 }
@@ -1337,14 +1336,58 @@ const exportChart = (chart: DashboardChart, type: 'pdf' | 'png') => {
   alert(`Exporting chart '${chart.base.title}' as ${type.toUpperCase()} (stub)`)
 }
 
+// Add state for navigation confirmation
+const pendingNavigation = ref<null | { next: NavigationGuardNext }> (null)
+const showLeaveConfirmDialog = ref(false)
+
+// Replace onBeforeRouteLeave logic
+onBeforeRouteLeave((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded, next: NavigationGuardNext) => {
+  if (hasUnsavedChanges.value) {
+    pendingNavigation.value = { next }
+    showLeaveConfirmDialog.value = true
+  } else {
+    // Reset dashboard state
+    currentDashboardId.value = null
+    dashboardName.value = ''
+    dashboardDescription.value = ''
+    dashboardCategory.value = ''
+    dashboardTabs.value = []
+    activeTabId.value = ''
+    next()
+  }
+})
+
+function handleLeaveConfirm() {
+  showLeaveConfirmDialog.value = false
+  if (pendingNavigation.value) {
+    // Reset dashboard state
+    currentDashboardId.value = null
+    dashboardName.value = ''
+    dashboardDescription.value = ''
+    dashboardCategory.value = ''
+    dashboardTabs.value = []
+    activeTabId.value = ''
+    pendingNavigation.value.next()
+    pendingNavigation.value = null
+  }
+}
+
+function handleLeaveCancel() {
+  showLeaveConfirmDialog.value = false
+  if (pendingNavigation.value) {
+    pendingNavigation.value.next(false)
+    pendingNavigation.value = null
+  }
+}
+
 onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
+    dashboardStore.loadFromStorage()
     await loadDashboard(dashboardId)
-      await nextTick()
-    // Initialize GridStack for all tabs
+    await nextTick()
     initializeAllTabGridStacks()
-    }
+  }
   document.addEventListener('click', handleClickOutside)
 })
 
@@ -1354,6 +1397,18 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopResizing)
   document.removeEventListener('click', handleClickOutside)
 })
+
+watch(
+  () => route.query.id,
+  async (dashboardId) => {
+    if (dashboardId) {
+      dashboardStore.loadFromStorage()
+      await loadDashboard(dashboardId as string)
+      await nextTick()
+      initializeAllTabGridStacks()
+    }
+  }
+)
 </script>
 
 <style scoped>
