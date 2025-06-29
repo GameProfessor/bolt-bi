@@ -600,11 +600,16 @@ const addOrUpdateChart = () => {
       }
     }
     editingChartId.value = null
-  resetChartConfig()
+    resetChartConfig()
     setTimeout(() => {
       nextTick(() => {
         // Reinitialize GridStack for the current tab
         if (activeTabId.value) {
+          // Destroy old instance if it exists
+          if (tabGridStacks.value.has(activeTabId.value)) {
+            tabGridStacks.value.get(activeTabId.value)?.destroy(false)
+            tabGridStacks.value.delete(activeTabId.value)
+          }
           initializeTabGridStack(activeTabId.value)
         }
       })
@@ -615,15 +620,12 @@ const addOrUpdateChart = () => {
   addChart()
 }
 
-const addChart = () => {
+const addChart = async () => {
   if (!isChartConfigValid.value) return
-  
   if (!currentDashboardId.value) {
     createTemporaryDashboard()
   }
-  
   let newChart: DashboardChart
-  
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
@@ -687,26 +689,22 @@ const addChart = () => {
       break
     default:
       return
-    }
-
+  }
   if (!currentDashboardId.value) return
-  
   const savedChart = dashboardStore.addChart(currentDashboardId.value, newChart)
-  
   const activeTab = dashboardTabs.value.find(t => t.id === activeTabId.value)
   if (activeTab) {
     activeTab.chartIds.push(savedChart.id)
   }
-  
   resetChartConfig()
-  setTimeout(() => {
-    nextTick(() => {
-      // Reinitialize GridStack for the current tab
-      if (activeTabId.value) {
-        initializeTabGridStack(activeTabId.value)
-      }
-    })
-  }, 100)
+  await nextTick()
+  if (activeTabId.value) {
+    if (tabGridStacks.value.has(activeTabId.value)) {
+      tabGridStacks.value.get(activeTabId.value)?.destroy(false)
+      tabGridStacks.value.delete(activeTabId.value)
+    }
+    initializeTabGridStack(activeTabId.value)
+  }
 }
 
 const editChart = (chart: DashboardChart) => {
@@ -1048,7 +1046,7 @@ const onDragOver = (event: DragEvent) => {
   }
 }
 
-const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) => {
+const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: number) => {
   if (!currentDashboardId.value) {
     const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
     currentDashboardId.value = tempDashboard.id
@@ -1088,9 +1086,9 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
     case 'bar':
       newChart = createBarChart({
         title: 'Bar Chart',
-      dataSourceId: '',
+        dataSourceId: '',
         xAxis: [],
-      yAxis: '',
+        yAxis: '',
         backgroundColor: '#3b82f6',
         borderColor: '#1d4ed8',
         colorScheme: 'default'
@@ -1111,10 +1109,10 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
       newChart = createPieChart({
         title: 'Pie Chart',
         dataSourceId: '',
-      category: '',
+        category: '',
         value: '',
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
+        backgroundColor: '#3b82f6',
+        borderColor: '#1d4ed8',
         colorScheme: 'default'
       })
       break
@@ -1202,14 +1200,14 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
   
     editingChartId.value = savedChart.id
   
-    setTimeout(() => {
-      nextTick(() => {
-        // Reinitialize GridStack for the current tab
-        if (activeTabId.value) {
-          initializeTabGridStack(activeTabId.value)
-        }
-      })
-    }, 100)
+    await nextTick()
+    if (activeTabId.value) {
+      if (tabGridStacks.value.has(activeTabId.value)) {
+        tabGridStacks.value.get(activeTabId.value)?.destroy(false)
+        tabGridStacks.value.delete(activeTabId.value)
+      }
+      initializeTabGridStack(activeTabId.value)
+    }
   } catch (error) {
     console.error('Error adding chart to dashboard:', error)
   }
