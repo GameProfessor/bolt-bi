@@ -466,7 +466,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useDataSourceStore } from '@/stores'
-import type { DataSourceColumn } from '@/types/dataSource'
+import type { DataSourceColumn } from '@/stores/modules/dataSource'
 
 const props = defineProps<{
   selectedDataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>

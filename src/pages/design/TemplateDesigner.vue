@@ -141,7 +141,7 @@ import {
   ShareIcon
 } from '@heroicons/vue/24/outline'
 import { GridStack } from 'gridstack'
-import ChartPanel from '@/components/charts/ChartPanel.vue'
+import ChartPanel from '../dashboard/components/ChartPanel.vue'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
 
 const router = useRouter()
