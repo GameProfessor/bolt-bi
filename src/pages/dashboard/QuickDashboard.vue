@@ -989,6 +989,38 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
     }
     
     chartConfig.dataSourceId = fieldData.dataSourceId
+
+    // Real-time update: if editing a chart, update it immediately
+    if (editingChartId.value && currentDashboardId.value) {
+      const updates: Partial<DashboardChart> = {
+        base: {
+          title: chartConfig.title,
+          dataSourceId: chartConfig.dataSourceId,
+          backgroundColor: chartConfig.backgroundColor,
+          borderColor: chartConfig.borderColor,
+          colorScheme: chartConfig.colorScheme
+        }
+      }
+      switch (selectedChartType.value) {
+        case 'bar':
+          updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
+          break
+        case 'line':
+          updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis, smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+          break
+        case 'pie':
+          updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
+          break
+        case 'scatter':
+          updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis } }
+          break
+        case 'card':
+          updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
+          break
+      }
+      dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
+      markUnsaved()
+    }
   } catch (error) {
     console.error('Failed to parse dropped field data:', error)
   }
