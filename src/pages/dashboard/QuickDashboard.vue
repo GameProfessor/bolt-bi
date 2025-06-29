@@ -234,55 +234,55 @@
               
               <!-- Empty state for this tab -->
               <div v-if="getChartsForTab(tab.id).length === 0" class="flex items-center justify-center h-full text-gray-500">
-                <div class="text-center">
-                  <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
-                  <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
-                  <p class="text-sm text-gray-500">
-                    Select a data source, choose a chart type, and drag fields to create your first chart.
-                  </p>
-                  <p class="text-sm text-gray-400 mt-2">
-                    Or drag a chart type from the left panel to create an empty chart.
-                  </p>
-                </div>
+              <div class="text-center">
+                <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
+                <p class="text-sm text-gray-500">
+                  Select a data source, choose a chart type, and drag fields to create your first chart.
+                </p>
+                <p class="text-sm text-gray-400 mt-2">
+                  Or drag a chart type from the left panel to create an empty chart.
+                </p>
               </div>
+            </div>
               
               <!-- GridStack Container for this tab -->
               <div v-else :ref="`gridStackContainer-${tab.id}`" class="grid-stack h-full">
-                <div
+              <div
                   v-for="chart in getChartsForTab(tab.id)"
-                  :key="chart.id"
-                  class="grid-stack-item"
-                  :gs-id="chart.id"
-                  :gs-x="chart.layout.x"
-                  :gs-y="chart.layout.y"
-                  :gs-w="chart.layout.w"
-                  :gs-h="chart.layout.h"
-                >
-                  <div class="grid-stack-item-content">
-                    <div class="chart-header flex justify-end items-center gap-2">
-                      <!-- 3-dot menu -->
+                :key="chart.id"
+                class="grid-stack-item"
+                :gs-id="chart.id"
+                :gs-x="chart.layout.x"
+                :gs-y="chart.layout.y"
+                :gs-w="chart.layout.w"
+                :gs-h="chart.layout.h"
+              >
+                <div class="grid-stack-item-content">
+                  <div class="chart-header flex justify-end items-center gap-2">
+                    <!-- 3-dot menu -->
                       <div class="relative chart-menu-container">
-                        <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-                        </button>
-                        <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
-                          <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
-                          <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
-                          <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
-                          <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
-                        </div>
+                      <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+                      </button>
+                      <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
+                        <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
+                        <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
+                        <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
+                        <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
                       </div>
                     </div>
-                    <div 
-                      class="chart-content"
-                      @click="editChart(chart)"
-                      :class="{ 'cursor-pointer': !previewMode }"
-                    >
+                  </div>
+                  <div 
+                    class="chart-content"
+                    @click="editChart(chart)"
+                    :class="{ 'cursor-pointer': !previewMode }"
+                  >
                       <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
-                    </div>
                   </div>
                 </div>
               </div>
+            </div>
             </div>
             
             <!-- Exit Preview Button -->
@@ -549,7 +549,7 @@ const handleClickOutside = (event: Event) => {
     const target = event.target as HTMLElement
     const isWithinChartMenu = target.closest('.chart-menu-container')
     if (!isWithinChartMenu) {
-      openChartMenuId.value = null
+  openChartMenuId.value = null
     }
   }
 }
@@ -584,10 +584,10 @@ const addOrUpdateChart = () => {
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-            title: chartConfig.title,
+        title: chartConfig.title,
             dataSourceId: chartConfig.dataSourceId,
-            backgroundColor: chartConfig.backgroundColor,
-            borderColor: chartConfig.borderColor,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
             colorScheme: chartConfig.colorScheme
           }
         }
@@ -643,13 +643,13 @@ const addChart = async () => {
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
-        title: chartConfig.title,
+      title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis,
         yAxis: chartConfig.yAxis,
         horizontal: chartConfig.horizontal,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
+      backgroundColor: chartConfig.backgroundColor,
+      borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
       })
       break
@@ -817,7 +817,7 @@ const removeChart = (chartId: string) => {
     confirmText: 'Remove',
     cancelText: 'Cancel',
     onConfirm: () => {
-      if (currentDashboardId.value) {
+    if (currentDashboardId.value) {
         dashboardStore.removeChart(currentDashboardId.value, chartId)
         dashboardTabs.value.forEach(tab => {
           tab.chartIds = tab.chartIds.filter(id => id !== chartId)
@@ -1142,9 +1142,9 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
     case 'bar':
       newChart = createBarChart({
         title: 'Bar Chart',
-        dataSourceId: '',
+      dataSourceId: '',
         xAxis: [],
-        yAxis: '',
+      yAxis: '',
         backgroundColor: '#3b82f6',
         borderColor: '#1d4ed8',
         colorScheme: 'default'
@@ -1165,10 +1165,10 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
       newChart = createPieChart({
         title: 'Pie Chart',
         dataSourceId: '',
-        category: '',
+      category: '',
         value: '',
-        backgroundColor: '#3b82f6',
-        borderColor: '#1d4ed8',
+      backgroundColor: '#3b82f6',
+      borderColor: '#1d4ed8',
         colorScheme: 'default'
       })
       break
@@ -1341,10 +1341,10 @@ onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
     await loadDashboard(dashboardId)
-    await nextTick()
+      await nextTick()
     // Initialize GridStack for all tabs
     initializeAllTabGridStacks()
-  }
+    }
   document.addEventListener('click', handleClickOutside)
 })
 

@@ -442,8 +442,8 @@ watch(() => chartData.value, () => {
 // Watch for changes in data source
 watch(() => dataSourceStore.dataSources, () => {
   if (chartData.value.type && hasValidData.value) {
-    createChart()
-  }
+        createChart()
+    }
 }, { deep: true })
 
 onMounted(() => {

@@ -56,10 +56,10 @@ export interface ChartApiResponse {
   dataSourceId: string
   config: Record<string, any>
   layout: {
-    x: number
-    y: number
-    w: number
-    h: number
+  x: number
+  y: number
+  w: number
+  h: number
   }
   data?: any[]
   createdAt: string

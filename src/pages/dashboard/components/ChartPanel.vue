@@ -5,20 +5,20 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Chart Type
       </label>
-      <div class="grid grid-cols-4 gap-2">
+      <div class="grid gap-y-1 gap-x-0" :style="`grid-template-columns: repeat(${chartTypeCols}, minmax(0, 1fr));`">
         <div v-for="type in chartTypes" :key="type.value" class="relative group">
           <button
             @click="$emit('update:selectedChartType', type.value)"
             :draggable="true"
             @dragstart="onChartTypeDragStart(type.value, $event)"
             :class="[
-              'w-full flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative',
+              chartTypeButtonClass,
               selectedChartType === type.value
                 ? 'border-primary-500 bg-primary-50 text-primary-700'
                 : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             ]"
           >
-            <component :is="type.icon" class="h-5 w-5" />
+            <component :is="type.icon" :class="chartTypeIconClass" />
           </button>
           <!-- Custom Tooltip -->
           <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
@@ -204,4 +204,17 @@ function onChartTypeDragStart(type: string, event: DragEvent) {
     event.dataTransfer.setData('application/json', JSON.stringify({ chartType: type }))
   }
 }
+
+// Dynamically determine columns based on width
+const chartTypeCols = computed(() => {
+  if (props.width < 240) return 3
+  if (props.width < 320) return 4
+  if (props.width < 420) return 5
+  if (props.width < 520) return 6
+  return 6
+})
+
+const chartTypeButtonClass =
+  'w-12 h-12 flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative bg-white'
+const chartTypeIconClass = 'h-5 w-5'
 </script> 
