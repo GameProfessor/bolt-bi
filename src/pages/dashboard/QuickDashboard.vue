@@ -20,6 +20,47 @@
             />
           </div>
           <div class="flex items-center gap-3 ml-auto">
+            <!-- Panel Toggle Buttons -->
+            <div class="flex items-center gap-1 mr-4">
+              <div class="relative group">
+                <button
+                  @click="showDataPanel = !showDataPanel"
+                  :class="[
+                    'p-2 rounded-md transition-colors duration-200',
+                    showDataPanel 
+                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                  ]"
+                >
+                  <CircleStackIcon class="h-4 w-4" />
+                </button>
+                <!-- Custom Tooltip -->
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
+                  {{ showDataPanel ? 'Hide Data Panel' : 'Show Data Panel' }}
+                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+              <div class="relative group">
+                <button
+                  @click="showChartPanel = !showChartPanel"
+                  :class="[
+                    'p-2 rounded-md transition-colors duration-200',
+                    showChartPanel 
+                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                  ]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                  </svg>
+                </button>
+                <!-- Custom Tooltip -->
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
+                  {{ showChartPanel ? 'Hide Chart Panel' : 'Show Chart Panel' }}
+                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
             <button
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               title="Share dashboard"
@@ -50,7 +91,7 @@
     <div class="flex h-[calc(100vh-4rem)]">
       <!-- Left Sidebar with Tabs -->
       <DataPanel
-        v-if="!previewMode"
+        v-if="!previewMode && showDataPanel"
         ref="dataPanelRef"
         :selectedDataSources="selectedDataSources"
         :expandedDataSources="expandedDataSources"
@@ -68,7 +109,7 @@
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
-        v-if="!previewMode"
+        v-if="!previewMode && showDataPanel && showChartPanel"
         class="resizer"
         @mousedown="startResizing('left')"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
@@ -76,7 +117,7 @@
 
       <!-- Chart Type & Properties Column -->
       <ChartPanel
-        v-if="!previewMode"
+        v-if="!previewMode && showChartPanel"
         :chartTypes="chartTypes"
         :selectedChartType="selectedChartType"
         :chartConfig="chartConfig"
@@ -96,7 +137,7 @@
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
       <div
-        v-if="!previewMode"
+        v-if="!previewMode && showChartPanel"
         class="resizer"
         @mousedown="startResizing('chartType')"
         :style="{ cursor: 'col-resize', width: '6px', background: '#e5e7eb', zIndex: 20 }"
@@ -331,6 +372,10 @@ const {
 const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartType | ''>('')
 const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
+
+// Panel visibility state
+const showDataPanel = ref(true)
+const showChartPanel = ref(true)
 
 // Multiple GridStack instances - one per tab
 const tabGridStacks = ref<Map<string, GridStack>>(new Map())
@@ -935,7 +980,12 @@ const updateDragPreviewPosition = (event: DragEvent) => {
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
   
-  const cellWidth = (window.innerWidth - 240 - 260 - 48) / 12
+  // Calculate available width based on visible panels
+  let availableWidth = window.innerWidth - 48 // Account for padding
+  if (showDataPanel.value) availableWidth -= leftSidebarWidth.value
+  if (showChartPanel.value) availableWidth -= chartTypeColWidth.value
+  
+  const cellWidth = availableWidth / 12
   const cellHeight = 70 + 10
   const previewWidth = 4 * cellWidth - 24
   const previewHeight = 3 * cellHeight - 24
@@ -1008,7 +1058,12 @@ const createEmptyChart = (chartType: string, mouseX?: number, mouseY?: number) =
   let gridY = 0
   
   if (mouseX !== undefined && mouseY !== undefined) {
-    const cellWidth = (window.innerWidth - 240 - 260 - 48) / 12
+    // Calculate available width based on visible panels
+    let availableWidth = window.innerWidth - 48 // Account for padding
+    if (showDataPanel.value) availableWidth -= leftSidebarWidth.value
+    if (showChartPanel.value) availableWidth -= chartTypeColWidth.value
+    
+    const cellWidth = availableWidth / 12
     const cellHeight = 70 + 10
     
     const chartWidth = 4
@@ -1286,5 +1341,26 @@ onUnmounted(() => {
 }
 .resizer:hover {
   background: #d1d5db;
+}
+
+/* Panel transitions */
+.tab-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Smooth transitions for panel visibility */
+.DataPanel-enter-active,
+.DataPanel-leave-active,
+.ChartPanel-enter-active,
+.ChartPanel-leave-active {
+  transition: all 0.3s ease-in-out;
+}
+
+.DataPanel-enter-from,
+.DataPanel-leave-to,
+.ChartPanel-enter-from,
+.ChartPanel-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 </style>

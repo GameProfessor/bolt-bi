@@ -6,33 +6,27 @@
         Chart Type
       </label>
       <div class="grid grid-cols-4 gap-2">
-        <button
-          v-for="type in chartTypes"
-          :key="type.value"
-          @click="$emit('update:selectedChartType', type.value)"
-          :draggable="true"
-          @dragstart="onChartTypeDragStart(type.value, $event)"
-          @mouseenter="showTooltip = type.label; tooltipTarget = $event.target as HTMLElement"
-          @mouseleave="showTooltip = ''"
-          :class="[
-            'flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative',
-            selectedChartType === type.value
-              ? 'border-primary-500 bg-primary-50 text-primary-700'
-              : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
-          ]"
-        >
-          <component :is="type.icon" class="h-5 w-5" />
-        </button>
+        <div v-for="type in chartTypes" :key="type.value" class="relative group">
+          <button
+            @click="$emit('update:selectedChartType', type.value)"
+            :draggable="true"
+            @dragstart="onChartTypeDragStart(type.value, $event)"
+            :class="[
+              'w-full flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative',
+              selectedChartType === type.value
+                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
+            ]"
+          >
+            <component :is="type.icon" class="h-5 w-5" />
+          </button>
+          <!-- Custom Tooltip -->
+          <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
+            {{ type.label }}
+            <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Custom Tooltip -->
-    <div
-      v-if="showTooltip"
-      class="fixed z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg pointer-events-none"
-      :style="tooltipStyle"
-    >
-      {{ showTooltip }}
     </div>
 
     <!-- Chart Properties -->
@@ -204,22 +198,6 @@ defineEmits([
   'add-or-update-chart',
   'cancel-edit'
 ])
-
-// Tooltip state
-const showTooltip = ref('')
-const tooltipTarget = ref<HTMLElement | null>(null)
-
-// Computed tooltip style
-const tooltipStyle = computed(() => {
-  if (!tooltipTarget.value) return {}
-  
-  const rect = tooltipTarget.value.getBoundingClientRect()
-  return {
-    left: rect.left + rect.width / 2 + 'px',
-    top: rect.top - 30 + 'px',
-    transform: 'translateX(-50%)'
-  }
-})
 
 function onChartTypeDragStart(type: string, event: DragEvent) {
   if (event.dataTransfer) {

@@ -3,21 +3,25 @@
     <!-- Tab Navigation -->
     <div class="border-b border-gray-200 p-3">
       <nav class="flex gap-2" aria-label="Tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          :class="[
-            'flex-1 py-2.5 px-3 text-center font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 rounded-lg shadow-sm border',
-            activeTab === tab.id
-              ? 'border-primary-200 text-primary-700 bg-primary-50 shadow-md'
-              : 'border-gray-200 text-gray-600 bg-white hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
-          ]"
-          :title="tab.name"
-        >
-          <component :is="tab.icon" class="h-5 w-5" />
-          <!--<span class="text-xs font-medium">{{ tab.name }}</span>-->
-        </button>
+        <div v-for="tab in tabs" :key="tab.id" class="relative group flex-1">
+          <button
+            @click="activeTab = tab.id"
+            :class="[
+              'w-full py-2.5 px-3 text-center font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 rounded-lg shadow-sm border',
+              activeTab === tab.id
+                ? 'border-primary-200 text-primary-700 bg-primary-50 shadow-md'
+                : 'border-gray-200 text-gray-600 bg-white hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+            ]"
+          >
+            <component :is="tab.icon" class="h-5 w-5" />
+            <!--<span class="text-xs font-medium">{{ tab.name }}</span>-->
+          </button>
+          <!-- Custom Tooltip -->
+          <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
+            {{ tab.name }}
+            <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
       </nav>
     </div>
 
