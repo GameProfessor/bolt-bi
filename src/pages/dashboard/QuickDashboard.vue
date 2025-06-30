@@ -94,23 +94,25 @@
 
     <div class="flex h-[calc(100vh-4rem)]">
       <!-- Left Sidebar with Tabs -->
-      <DataPanel
-        v-if="!previewMode && showDataPanel"
-        ref="dataPanelRef"
-        :selectedDataSources="selectedDataSources"
-        :expandedDataSources="expandedDataSources"
-        :isFieldInUse="isFieldInUse"
-        :width="leftSidebarWidth"
-        :category="dashboardCategory"
-        :description="dashboardDescription"
-        :showDashboardTabs="showDashboardTabs"
-        @open-manager="openDataSourceManager"
-        @toggle-expand="toggleDataSource"
-        @field-drag="onFieldDragStart"
-        @update-selected-data-sources="updateSelectedDataSources"
-        @toggle-dashboard-tabs="handleToggleDashboardTabs"
-        @update-dashboard-info="onUpdateDashboardInfo"
-      />
+      <transition name="fade-slide-panel">
+        <DataPanel
+          v-if="!previewMode && showDataPanel"
+          ref="dataPanelRef"
+          :selectedDataSources="selectedDataSources"
+          :expandedDataSources="expandedDataSources"
+          :isFieldInUse="isFieldInUse"
+          :width="leftSidebarWidth"
+          :category="dashboardCategory"
+          :description="dashboardDescription"
+          :showDashboardTabs="showDashboardTabs"
+          @open-manager="openDataSourceManager"
+          @toggle-expand="toggleDataSource"
+          @field-drag="onFieldDragStart"
+          @update-selected-data-sources="updateSelectedDataSources"
+          @toggle-dashboard-tabs="handleToggleDashboardTabs"
+          @update-dashboard-info="onUpdateDashboardInfo"
+        />
+      </transition>
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
@@ -122,25 +124,27 @@
       ></div>
 
       <!-- Chart Type & Properties Column -->
-      <ChartPanel
-        v-if="!previewMode && showChartPanel"
-        :chartTypes="chartTypes"
-        :selectedChartType="selectedChartType"
-        :chartConfig="chartConfig"
-        :colorSchemes="colorSchemes"
-        :colorPalettes="colorPalettes"
-        :isChartConfigValid="isChartConfigValid"
-        :editingChartId="editingChartId"
-        :selectedDataSources="selectedDataSources"
-        :width="chartTypeColWidth"
-        :alwaysShowProperties="true"
-        @update:selectedChartType="selectedChartType = $event"
-        @field-drop="onFieldDrop"
-        @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
-        @add-or-update-chart="addOrUpdateChart"
-        @cancel-edit="cancelEdit"
-        @chart-type-drag-start="onChartTypeDragStart"
-      />
+      <transition name="fade-slide-panel">
+        <ChartPanel
+          v-if="!previewMode && showChartPanel"
+          :chartTypes="chartTypes"
+          :selectedChartType="selectedChartType"
+          :chartConfig="chartConfig"
+          :colorSchemes="colorSchemes"
+          :colorPalettes="colorPalettes"
+          :isChartConfigValid="isChartConfigValid"
+          :editingChartId="editingChartId"
+          :selectedDataSources="selectedDataSources"
+          :width="chartTypeColWidth"
+          :alwaysShowProperties="true"
+          @update:selectedChartType="selectedChartType = $event"
+          @field-drop="onFieldDrop"
+          @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
+          @add-or-update-chart="addOrUpdateChart"
+          @cancel-edit="cancelEdit"
+          @chart-type-drag-start="onChartTypeDragStart"
+        />
+      </transition>
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
       <div
@@ -1562,5 +1566,17 @@ watch(
 .ChartPanel-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+
+.fade-slide-panel-enter-active, .fade-slide-panel-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.fade-slide-panel-enter-from, .fade-slide-panel-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+.fade-slide-panel-leave-from, .fade-slide-panel-enter-to {
+  opacity: 1;
+  transform: translateX(0);
 }
 </style>
