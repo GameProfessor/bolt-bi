@@ -1,8 +1,8 @@
 <template>
-  <div class="h-full bg-white rounded-lg shadow-sm overflow-hidden">
+ 
     <div class="h-full flex flex-col p-4">
-      <div v-if="chart.title" class="mb-3">
-        <h3 class="text-sm font-medium text-gray-900 truncate">{{ chart.title }}</h3>
+      <div v-if="chart.base.title" class="mb-3">
+        <h3 class="text-sm font-medium text-gray-900 truncate">{{ chart.base.title }}</h3>
       </div>
       
       <div v-if="error" class="flex items-center justify-center h-full text-red-500 text-sm">
@@ -22,12 +22,12 @@
             {{ formatValue(keyMetricValue) }}
           </div>
           <div class="text-xs text-gray-500 uppercase tracking-wide">
-            {{ chart.keyMetric }}
+            {{ chart.properties.card?.keyMetric }}
           </div>
         </div>
         
         <!-- Difference -->
-        <div v-if="chart.previousMetric && previousMetricValue !== null" class="text-center">
+        <div v-if="chart.properties.card?.previousMetric && previousMetricValue !== null" class="text-center">
           <div class="flex items-center justify-center">
             <span
               class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
@@ -44,12 +44,12 @@
             </span>
           </div>
           <div class="text-xs text-gray-500 mt-1">
-            vs {{ formatValue(previousMetricValue) }} ({{ chart.previousMetric }})
+            vs {{ formatValue(previousMetricValue) }} ({{ chart.properties.card?.previousMetric }})
           </div>
         </div>
       </div>
     </div>
-  </div>
+
 </template>
 
 <script setup lang="ts">
@@ -62,93 +62,95 @@ import {
   MinusIcon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
-import type { ChartConfig } from '@/stores'
+import type { DashboardChart } from '@/types/dashboard'
 
 interface Props {
-  chart: Partial<ChartConfig>
+  chart: DashboardChart
 }
 
 const props = defineProps<Props>()
 const dataSourceStore = useDataSourceStore()
 
 const hasValidData = computed(() => {
-  if (!props.chart.dataSourceId || !props.chart.keyMetric) return false
-  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
+  if (!props.chart.base.dataSourceId || !props.chart.properties.card?.keyMetric) return false
+  const dataSource = dataSourceStore.getDataSourceById(props.chart.base.dataSourceId)
   return !!(dataSource && dataSource.rows.length > 0)
 })
 
 const error = computed(() => {
-  if (!props.chart.dataSourceId) return 'No data source selected'
-  if (!props.chart.keyMetric) return 'No key metric selected'
-  
-  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId)
+  if (!props.chart.base.dataSourceId) return 'No data source selected'
+  if (!props.chart.properties.card?.keyMetric) return 'No key metric selected'
+  const dataSource = dataSourceStore.getDataSourceById(props.chart.base.dataSourceId)
   if (!dataSource) return 'Data source not found'
-  
-  const keyColumn = dataSource.columns.find(c => c.name === props.chart.keyMetric)
+  const keyColumn = dataSource.columns.find(c => c.name === props.chart.properties.card?.keyMetric)
   if (!keyColumn) return 'Key metric column not found'
-  
-  if (keyColumn.type !== 'number') return 'Key metric must be a numeric field'
-  
-  if (props.chart.previousMetric) {
-    const prevColumn = dataSource.columns.find(c => c.name === props.chart.previousMetric)
+  if (props.chart.properties.card?.previousMetric) {
+    const prevColumn = dataSource.columns.find(c => c.name === props.chart.properties.card?.previousMetric)
     if (!prevColumn) return 'Previous metric column not found'
-    if (prevColumn.type !== 'number') return 'Previous metric must be a numeric field'
   }
-  
   return ''
 })
 
 const keyMetricValue = computed(() => {
-  if (!hasValidData.value || error.value) return 0
-  
-  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)!
-  const keyColumn = dataSource.columns.find(c => c.name === props.chart.keyMetric)!
-  
-  // Sum all values in the key metric column
-  return keyColumn.values.reduce((sum, value) => {
-    const num = Number(value)
-    return sum + (isNaN(num) ? 0 : num)
-  }, 0)
+  if (!hasValidData.value || error.value) return ''
+  const dataSource = dataSourceStore.getDataSourceById(props.chart.base.dataSourceId!)!
+  const keyColumn = dataSource.columns.find(c => c.name === props.chart.properties.card?.keyMetric)!
+  // If the column is numeric, sum all values; otherwise, join as string
+  if (keyColumn.type === 'number') {
+    return keyColumn.values.reduce((sum, value) => {
+      const num = Number(value)
+      return sum + (isNaN(num) ? 0 : num)
+    }, 0)
+  } else {
+    // For string or other types, join all values with comma (or just show the first value)
+    return keyColumn.values.length > 0 ? keyColumn.values[0] : ''
+  }
 })
 
 const previousMetricValue = computed(() => {
-  if (!hasValidData.value || error.value || !props.chart.previousMetric) return null
-  
-  const dataSource = dataSourceStore.getDataSourceById(props.chart.dataSourceId!)!
-  const prevColumn = dataSource.columns.find(c => c.name === props.chart.previousMetric)
-  
+  if (!hasValidData.value || error.value || !props.chart.properties.card?.previousMetric) return null
+  const dataSource = dataSourceStore.getDataSourceById(props.chart.base.dataSourceId!)!
+  const prevColumn = dataSource.columns.find(c => c.name === props.chart.properties.card?.previousMetric)
   if (!prevColumn) return null
-  
-  // Sum all values in the previous metric column
-  return prevColumn.values.reduce((sum, value) => {
-    const num = Number(value)
-    return sum + (isNaN(num) ? 0 : num)
-  }, 0)
+  if (prevColumn.type === 'number') {
+    return prevColumn.values.reduce((sum, value) => {
+      const num = Number(value)
+      return sum + (isNaN(num) ? 0 : num)
+    }, 0)
+  } else {
+    return prevColumn.values.length > 0 ? prevColumn.values[0] : null
+  }
 })
 
 const difference = computed(() => {
   if (previousMetricValue.value === null) return 0
-  
-  if (props.chart.differenceType === 'percentage') {
-    if (previousMetricValue.value === 0) return 0
-    return ((keyMetricValue.value - previousMetricValue.value) / Math.abs(previousMetricValue.value)) * 100
-  } else {
-    return keyMetricValue.value - previousMetricValue.value
+  // Only calculate difference if both are numbers
+  if (typeof keyMetricValue.value === 'number' && typeof previousMetricValue.value === 'number') {
+    if (props.chart.properties.card?.differenceType === 'percentage') {
+      if (previousMetricValue.value === 0) return 0
+      return ((keyMetricValue.value - previousMetricValue.value) / Math.abs(previousMetricValue.value)) * 100
+    } else {
+      return keyMetricValue.value - previousMetricValue.value
+    }
   }
+  return 0
 })
 
-const formatValue = (value: number) => {
-  if (Math.abs(value) >= 1000000) {
-    return (value / 1000000).toFixed(1) + 'M'
-  } else if (Math.abs(value) >= 1000) {
-    return (value / 1000).toFixed(1) + 'K'
-  } else {
-    return value.toLocaleString()
+const formatValue = (value: any) => {
+  if (typeof value === 'number') {
+    if (Math.abs(value) >= 1000000) {
+      return (value / 1000000).toFixed(1) + 'M'
+    } else if (Math.abs(value) >= 1000) {
+      return (value / 1000).toFixed(1) + 'K'
+    } else {
+      return value.toLocaleString()
+    }
   }
+  return value
 }
 
 const formatDifference = (diff: number) => {
-  if (props.chart.differenceType === 'percentage') {
+  if (props.chart.properties.card?.differenceType === 'percentage') {
     return Math.abs(diff).toFixed(1) + '%'
   } else {
     return formatValue(Math.abs(diff))

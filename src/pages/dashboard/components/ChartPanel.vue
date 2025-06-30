@@ -47,8 +47,22 @@
           />
         </div>
 
-        <!-- Data Source Fields Section - Always show drop areas -->
-        <div v-if="selectedChartType === 'pie'">
+        <!-- Card (KPI) chart: Only show KPI drop area -->
+        <div v-if="selectedChartType === 'card'">
+          <label class="block text-xs font-medium text-gray-600 mb-1">KPI</label>
+          <div
+            @drop="$emit('field-drop', $event, 'keyMetric')"
+            @dragover.prevent
+            @dragenter.prevent
+            class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig.keyMetric }"
+          >
+            {{ chartConfig.keyMetric || 'Drop KPI field here (numbers only)' }}
+          </div>
+        </div>
+
+        <!-- Pie chart config -->
+        <div v-else-if="selectedChartType === 'pie'">
           <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
           <div
             @drop="$emit('field-drop', $event, 'category')"

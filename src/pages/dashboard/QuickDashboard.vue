@@ -584,10 +584,10 @@ const addOrUpdateChart = () => {
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-            title: chartConfig.title,
+        title: chartConfig.title,
             dataSourceId: chartConfig.dataSourceId,
-            backgroundColor: chartConfig.backgroundColor,
-            borderColor: chartConfig.borderColor,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
             colorScheme: chartConfig.colorScheme
           }
         }
@@ -639,13 +639,13 @@ const addChart = async () => {
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
-        title: chartConfig.title,
+      title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis,
         yAxis: chartConfig.yAxis,
         horizontal: chartConfig.horizontal,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
+      backgroundColor: chartConfig.backgroundColor,
+      borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
       })
       break
@@ -814,7 +814,7 @@ const removeChart = (chartId: string) => {
     confirmText: 'Remove',
     cancelText: 'Cancel',
     onConfirm: () => {
-      if (currentDashboardId.value) {
+    if (currentDashboardId.value) {
         dashboardStore.removeChart(currentDashboardId.value, chartId)
         dashboardTabs.value.forEach(tab => {
           tab.chartIds = tab.chartIds.filter(id => id !== chartId)
@@ -1329,7 +1329,7 @@ const openDataSourceManager = () => {
 // Watch for tab changes to ensure GridStack instances are initialized
 watch(activeTabId, (newTabId) => {
   if (newTabId && !tabGridStacks.value.has(newTabId)) {
-    nextTick(() => {
+  nextTick(() => {
       initializeTabGridStack(newTabId)
     })
   }
@@ -1349,7 +1349,7 @@ watch(dashboardTabs, (newTabs) => {
 // Watch for charts changes to reinitialize GridStack if needed
 watch(() => dashboardTabs.value.map(tab => getChartsForTab(tab.id)), () => {
   // Reinitialize GridStack for tabs that don't have instances yet
-  dashboardTabs.value.forEach(tab => {
+        dashboardTabs.value.forEach(tab => {
     if (!tabGridStacks.value.has(tab.id)) {
       nextTick(() => {
         initializeTabGridStack(tab.id)
@@ -1417,9 +1417,9 @@ onMounted(async () => {
   if (dashboardId) {
     dashboardStore.loadFromStorage()
     await loadDashboard(dashboardId)
-    await nextTick()
+      await nextTick()
     initializeAllTabGridStacks()
-  }
+    }
   document.addEventListener('click', handleClickOutside)
 })
 
