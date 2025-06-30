@@ -307,6 +307,19 @@
       @close="hideToast"
     />
 
+    <!-- Confirm Dialog for chart removal and other actions -->
+    <ConfirmDialog
+      :show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :type="confirmDialog.type"
+      :confirmText="confirmDialog.confirmText"
+      :cancelText="confirmDialog.cancelText"
+      @confirm="handleConfirmDialogConfirm"
+      @close="handleConfirmDialogClose"
+    />
+
+    <!-- Confirm Dialog for navigation leave -->
     <ConfirmDialog
       :show="showLeaveConfirmDialog"
       title="Leave Dashboard?"
@@ -1049,8 +1062,8 @@ const onDragEnter = (event: DragEvent) => {
   
   // Show preview if we have a dragged chart type
   if (draggedChartType.value) {
-    showDragPreview.value = true
-    updateDragPreviewPosition(event)
+      showDragPreview.value = true
+      updateDragPreviewPosition(event)
   } else {
     showDragPreview.value = true
     updateDragPreviewPosition(event)
@@ -1252,8 +1265,8 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
   
   // Update the layout with the calculated position, but keep the default w/h from the chart creation
   newChart.layout = { 
-    x: gridX, 
-    y: gridY, 
+      x: gridX,
+      y: gridY,
     w: newChart.layout.w, 
     h: newChart.layout.h 
   }
