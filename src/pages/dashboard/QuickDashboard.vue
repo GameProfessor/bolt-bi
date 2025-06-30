@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow-sm border-b border-gray-200 relative">
-      <!-- Panel Toggles: Absolutely positioned at the very left, stick just above the lower border of title bar -->
-      <div class="absolute left-0 bottom-1 flex items-center pl-4 z-10" style="height:40px;">
+      <!-- Panel Toggles: Hide in view mode -->
+      <div v-if="!viewMode" class="absolute left-0 bottom-1 flex items-center pl-4 z-10" style="height:40px;">
         <div class="flex items-center gap-1">
           <div class="relative group">
             <button
@@ -55,16 +55,21 @@
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
-            <input
-              id="dashboardName"
-              v-model="dashboardName"
-              type="text"
-              placeholder="Enter dashboard name"
-              class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-            />
+            <template v-if="!viewMode">
+              <input
+                id="dashboardName"
+                v-model="dashboardName"
+                type="text"
+                placeholder="Enter dashboard name"
+                class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
+              />
+            </template>
+            <template v-else>
+              <span class="text-xl font-semibold text-gray-900 px-1 py-0.5 w-64 truncate" style="background:transparent; border:none;">{{ dashboardName }}</span>
+            </template>
           </div>
           <!-- Right: Action Buttons -->
-          <div class="flex items-center gap-3 ml-auto">
+          <div v-if="!viewMode" class="flex items-center gap-3 ml-auto">
             <button
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               title="Share dashboard"
@@ -96,7 +101,7 @@
       <!-- Left Sidebar with Tabs -->
       <transition name="fade-slide-panel">
         <DataPanel
-          v-if="!previewMode && showDataPanel"
+          v-if="!previewMode && showDataPanel && !viewMode"
           ref="dataPanelRef"
           :selectedDataSources="selectedDataSources"
           :expandedDataSources="expandedDataSources"
@@ -116,7 +121,7 @@
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
       <div
-        v-if="!previewMode && showDataPanel && showChartPanel"
+        v-if="!previewMode && showDataPanel && showChartPanel && !viewMode"
         class="resizer"
         @mousedown="startResizing('left')"
         :class="{ dimmed: confirmDialog.show || showLeaveConfirmDialog }"
@@ -126,7 +131,7 @@
       <!-- Chart Type & Properties Column -->
       <transition name="fade-slide-panel">
         <ChartPanel
-          v-if="!previewMode && showChartPanel"
+          v-if="!previewMode && showChartPanel && !viewMode"
           :chartTypes="chartTypes"
           :selectedChartType="selectedChartType"
           :chartConfig="chartConfig"
@@ -148,7 +153,7 @@
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
       <div
-        v-if="!previewMode && showChartPanel"
+        v-if="!previewMode && showChartPanel && !viewMode"
         class="resizer"
         @mousedown="startResizing('chartType')"
         :class="{ dimmed: confirmDialog.show || showLeaveConfirmDialog }"
@@ -193,7 +198,7 @@
                 @mouseleave="tabHoverId = null"
               >
                 <input
-                  v-if="tab.id === editingTabId"
+                  v-if="tab.id === editingTabId && !viewMode"
                   v-model="editingTabName"
                   :id="`tab-edit-input-${tab.id}`"
                   @blur="finishRenameTab(tab.id)"
@@ -217,23 +222,23 @@
                 >
                   <span>{{ tab.name }}</span>
                   <PencilIcon
-                    v-if="tabHoverId === tab.id"
+                    v-if="tabHoverId === tab.id && !viewMode"
                     @click.stop="startRenameTab(tab.id)"
                     class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                   />
-            <button
-                    v-if="dashboardTabs.length > 1 && tabHoverId === tab.id"
+                  <button
+                    v-if="dashboardTabs.length > 1 && tabHoverId === tab.id && !viewMode"
                     @click.stop="removeTab(tab.id)"
                     class="ml-1 text-gray-400 hover:text-red-500 bg-transparent rounded-full p-0.5 transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                     style="z-index:20"
                   >
                     &times;
-            </button>
+                  </button>
                 </button>
-          </div>
+              </div>
             </transition-group>
-            <button @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
-        </div>
+            <button v-if="!viewMode" @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
+          </div>
         </nav>
         <div class="bg-white rounded-lg shadow-sm h-full">
           <div class="p-6 h-full">
@@ -268,6 +273,7 @@
                 :gs-y="chart.layout.y"
                 :gs-w="chart.layout.w"
                 :gs-h="chart.layout.h"
+                :gs-no-drag="viewMode"
               >
                 <div class="grid-stack-item-content">
                   <div class="chart-header flex justify-end items-center gap-2">
@@ -277,17 +283,17 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                       </button>
                       <div v-if="openChartMenuId === chart.id && !previewMode" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-30">
-                        <button @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
+                        <button v-if="!viewMode" @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
                         <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
                         <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
-                        <button @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
+                        <button v-if="!viewMode" @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
                       </div>
                     </div>
                   </div>
                   <div 
                     class="chart-content"
-                    @click="editChart(chart)"
-                    :class="{ 'cursor-pointer': !previewMode }"
+                    @click="!viewMode && editChart(chart)"
+                    :class="{ 'cursor-pointer': !previewMode && !viewMode }"
                   >
                       <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
                   </div>
@@ -412,9 +418,25 @@ const selectedDataSourceId = ref('')
 const selectedChartType = ref<ChartType | ''>('')
 const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
 
+// Add viewMode support
+const viewMode = computed(() => String(route.query.view) === '1')
+
+// Use viewMode to control UI
 // Panel visibility state
 const showDataPanel = ref(true)
 const showChartPanel = ref(true)
+watch(viewMode, (v) => {
+  if (v) {
+    showDataPanel.value = false
+    showChartPanel.value = false
+  }
+})
+onMounted(() => {
+  if (viewMode.value) {
+    showDataPanel.value = false
+    showChartPanel.value = false
+  }
+})
 
 // Multiple GridStack instances - one per tab
 const tabGridStacks = ref<Map<string, GridStack>>(new Map())
@@ -452,6 +474,12 @@ const initializeTabGridStack = (tabId: string) => {
           scroll: false
         }
       }, container)
+
+      // Disable move/resize in view mode
+      if (viewMode.value) {
+        gridStack.enableMove(false)
+        gridStack.enableResize(false)
+      }
 
       // Store the instance for this tab
       tabGridStacks.value.set(tabId, gridStack)
@@ -1471,6 +1499,10 @@ onMounted(async () => {
     initializeAllTabGridStacks()
     }
   document.addEventListener('click', handleClickOutside)
+  if (viewMode.value) {
+    showDataPanel.value = false
+    showChartPanel.value = false
+  }
 })
 
 onUnmounted(() => {

@@ -665,7 +665,7 @@ const createFromTemplate = (template: any) => {
 }
 
 const viewDashboard = (id: string) => {
-  router.push(`/dashboard/${id}`)
+  router.push(`/quick-dashboard?id=${id}&view=1`)
 }
 
 const editDashboard = (id: string) => {
