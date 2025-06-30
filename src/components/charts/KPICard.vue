@@ -2,7 +2,7 @@
  
     <div class="h-full flex flex-col p-4 bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-sm">
       <div v-if="chart.base.title" class="mb-3">
-        <h3 class="text-sm font-medium text-gray-900 truncate">{{ chart.base.title }}</h3>
+        <h3 class="text-sm font-medium text-gray-900 truncate text-center">{{ chart.base.title }}</h3>
       </div>
       
       <div v-if="error" class="flex items-center justify-center h-full text-red-500 text-sm">
