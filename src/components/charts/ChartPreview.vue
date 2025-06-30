@@ -257,56 +257,48 @@ const createChart = async () => {
     } else if (chartData.value.type === 'bar') {
       // Multi-dimension grouping for bar chart
       const xAxes = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis : chartData.value.xAxis ? [chartData.value.xAxis] : [];
-      const yAxis = chartData.value.yAxis
-      if (!yAxis || xAxes.length === 0) {
+      const yAxes = Array.isArray(chartData.value.yAxis) ? chartData.value.yAxis : chartData.value.yAxis ? [chartData.value.yAxis] : [];
+      if (yAxes.length === 0 || xAxes.length === 0) {
         error.value = 'X and Y axis required'
         return
       }
       // Group rows by all xAxes fields
-      if (xAxes.every((f: string) => typeof f === 'string')) {
-        const groupKey = (row: any) => {
-          let key = ''
-          for (let i = 0; i < xAxes.length; i++) {
-            if (i > 0) key += ' | '
-            const field: string = xAxes[i] as string
-            key += (row as Record<string, any>)[field]
-          }
-          return key
-        }
-        const grouped: Record<string, number> = {}
-        dataSource.rows.forEach(row => {
+      if (xAxes.every((f) => typeof f === 'string')) {
+        const groupKey = (row: Record<string, any>) => xAxes.map(field => row[field]).join(' | ')
+        const grouped: Record<string, Record<string, number>> = {};
+        dataSource.rows.forEach((row: Record<string, any>) => {
           const key = groupKey(row)
-          if (typeof yAxis === 'string') {
-            const yVal = Number(row[yAxis])
-            if (key && !isNaN(yVal)) {
-              grouped[key] = (grouped[key] || 0) + yVal
+          if (!grouped[key]) grouped[key] = {};
+          yAxes.forEach((yField: string) => {
+            const yVal = Number(row[yField])
+            if (!isNaN(yVal)) {
+              grouped[key][yField] = (grouped[key][yField] || 0) + yVal
             }
-          }
+          })
         })
         const labels = Object.keys(grouped)
-        const values = Object.values(grouped)
         if (labels.length === 0) {
           error.value = 'No valid data for chart'
           return
         }
-        // Use color scheme for bar colors
-        const barColors = getPalette(chartData.value.colorScheme || 'default', labels.length)
+        // Build datasets for each yAxis field
+        const datasets = yAxes.map((yField: string, idx: number) => ({
+          label: yField,
+          data: labels.map(label => grouped[label] && typeof grouped[label][yField] === 'number' ? grouped[label][yField] : 0),
+          backgroundColor: getPalette(chartData.value.colorScheme || 'default', yAxes.length)[idx],
+          borderColor: chartData.value.borderColor || '#1d4ed8',
+          borderWidth: 1
+        }))
         chartDataConfig = {
           labels,
-          datasets: [{
-            label: yAxis,
-            data: values,
-            backgroundColor: barColors,
-            borderColor: chartData.value.borderColor || '#1d4ed8',
-            borderWidth: 1
-          }]
+          datasets
         }
         chartOptions.scales = {
           y: {
             beginAtZero: true,
             title: {
               display: !chartData.value.horizontal,
-              text: chartData.value.yAxis,
+              text: yAxes.join(', '),
               font: { size: 10 }
             },
             ticks: { font: { size: 9 } }

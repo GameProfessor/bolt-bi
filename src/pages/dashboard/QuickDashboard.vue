@@ -145,6 +145,7 @@
           @update:selectedChartType="selectedChartType = $event"
           @field-drop="onFieldDrop"
           @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
+          @remove-y-axis="(idx) => { if (Array.isArray(chartConfig.yAxis)) chartConfig.yAxis.splice(idx, 1) }"
           @add-or-update-chart="addOrUpdateChart"
           @cancel-edit="cancelEdit"
           @chart-type-drag-start="onChartTypeDragStart"
@@ -541,7 +542,7 @@ const chartConfig = reactive({
   colorScheme: 'default',
   // Bar chart specific
   xAxis: [] as string[],
-  yAxis: '',
+  yAxis: [] as string[],
   horizontal: false,
   // Pie chart specific
   category: '',
@@ -616,7 +617,7 @@ const resetChartConfig = () => {
   chartConfig.borderColor = '#1d4ed8'
   chartConfig.colorScheme = 'default'
   chartConfig.xAxis = []
-  chartConfig.yAxis = ''
+  chartConfig.yAxis = []
   chartConfig.horizontal = false
   chartConfig.smooth = false
   chartConfig.fillArea = false
@@ -648,13 +649,13 @@ const addOrUpdateChart = () => {
             updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
             break
           case 'line':
-            updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis, smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+            updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '', smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
             break
           case 'pie':
             updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
             break
           case 'scatter':
-            updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis } }
+            updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '' } }
             break
           case 'card':
             updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
@@ -706,7 +707,7 @@ const addChart = async () => {
         title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis || '',
+        yAxis: chartConfig.yAxis[0] || '',
         smooth: chartConfig.smooth,
         fillArea: chartConfig.fillArea,
         backgroundColor: chartConfig.backgroundColor,
@@ -730,7 +731,7 @@ const addChart = async () => {
         title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis || '',
+        yAxis: chartConfig.yAxis[0] || '',
         backgroundColor: chartConfig.backgroundColor,
         borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
@@ -785,14 +786,16 @@ const editChart = (chart: DashboardChart) => {
     case 'bar':
       if (chart.properties.bar) {
         chartConfig.xAxis = chart.properties.bar.xAxis
-        chartConfig.yAxis = chart.properties.bar.yAxis
+        chartConfig.yAxis = Array.isArray(chart.properties.bar.yAxis)
+          ? chart.properties.bar.yAxis
+          : [chart.properties.bar.yAxis].filter(Boolean)
         chartConfig.horizontal = chart.properties.bar.horizontal || false
       }
       break
     case 'line':
       if (chart.properties.line) {
         chartConfig.xAxis = [chart.properties.line.xAxis]
-        chartConfig.yAxis = chart.properties.line.yAxis
+        chartConfig.yAxis = [chart.properties.line.yAxis]
         chartConfig.smooth = chart.properties.line.smooth || false
         chartConfig.fillArea = chart.properties.line.fillArea || false
       }
@@ -806,7 +809,7 @@ const editChart = (chart: DashboardChart) => {
     case 'scatter':
       if (chart.properties.scatter) {
         chartConfig.xAxis = [chart.properties.scatter.xAxis]
-        chartConfig.yAxis = chart.properties.scatter.yAxis
+        chartConfig.yAxis = [chart.properties.scatter.yAxis]
       }
       break
     case 'card':
@@ -1030,8 +1033,10 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
       }
     } else if (target === 'xAxis') {
       chartConfig.xAxis = [fieldData.name]
-    } else if (target === 'yAxis') {
-      chartConfig.yAxis = fieldData.name
+    } else if (target === 'yAxis' && selectedChartType.value === 'bar') {
+      if (!chartConfig.yAxis.includes(fieldData.name)) {
+        chartConfig.yAxis.push(fieldData.name)
+      }
     } else if (target === 'category') {
       chartConfig.category = fieldData.name
     } else if (target === 'value') {
@@ -1058,13 +1063,13 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
           updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
           break
         case 'line':
-          updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis, smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+          updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '', smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
           break
         case 'pie':
           updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
           break
         case 'scatter':
-          updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis } }
+          updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '' } }
           break
         case 'card':
           updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
@@ -1239,56 +1244,62 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
   switch (chartType) {
     case 'bar':
       newChart = createBarChart({
-        title: 'Bar Chart',
-      dataSourceId: '',
-        xAxis: [],
-      yAxis: '',
-        backgroundColor: '#3b82f6',
-        borderColor: '#1d4ed8',
-        colorScheme: 'default'
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis,
+        yAxis: chartConfig.yAxis,
+        horizontal: chartConfig.horizontal,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
       })
       break
     case 'line':
       newChart = createLineChart({
-        title: 'Line Chart',
-        dataSourceId: '',
-        xAxis: '',
-        yAxis: '',
-        backgroundColor: '#3b82f6',
-        borderColor: '#1d4ed8',
-        colorScheme: 'default'
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis[0] || '',
+        yAxis: chartConfig.yAxis[0] || '',
+        smooth: chartConfig.smooth,
+        fillArea: chartConfig.fillArea,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
       })
       break
     case 'pie':
       newChart = createPieChart({
-        title: 'Pie Chart',
-        dataSourceId: '',
-      category: '',
-        value: '',
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
-        colorScheme: 'default'
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        category: chartConfig.category || '',
+        value: chartConfig.value || '',
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
       })
       break
     case 'scatter':
       newChart = createScatterChart({
-        title: 'Scatter Chart',
-        dataSourceId: '',
-        xAxis: '',
-        yAxis: '',
-        backgroundColor: '#3b82f6',
-        borderColor: '#1d4ed8',
-        colorScheme: 'default'
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        xAxis: chartConfig.xAxis[0] || '',
+        yAxis: chartConfig.yAxis[0] || '',
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
       })
       break
     case 'card':
       newChart = createCardChart({
-        title: 'KPI Card',
-        dataSourceId: '',
-        keyMetric: '',
-        backgroundColor: '#3b82f6',
-        borderColor: '#1d4ed8',
-        colorScheme: 'default'
+        title: chartConfig.title,
+        dataSourceId: chartConfig.dataSourceId,
+        keyMetric: chartConfig.keyMetric || '',
+        previousMetric: chartConfig.previousMetric,
+        differenceType: chartConfig.differenceType,
+        aggregation: chartConfig.aggregation,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
+        colorScheme: chartConfig.colorScheme
       })
       break
     default:
@@ -1324,14 +1335,16 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
       case 'bar':
         if (newChart.properties.bar) {
           chartConfig.xAxis = newChart.properties.bar.xAxis
-          chartConfig.yAxis = newChart.properties.bar.yAxis
+          chartConfig.yAxis = Array.isArray(newChart.properties.bar.yAxis)
+            ? newChart.properties.bar.yAxis
+            : [newChart.properties.bar.yAxis].filter(Boolean)
           chartConfig.horizontal = newChart.properties.bar.horizontal || false
         }
         break
       case 'line':
         if (newChart.properties.line) {
           chartConfig.xAxis = [newChart.properties.line.xAxis]
-          chartConfig.yAxis = newChart.properties.line.yAxis
+          chartConfig.yAxis = [newChart.properties.line.yAxis]
           chartConfig.smooth = newChart.properties.line.smooth || false
           chartConfig.fillArea = newChart.properties.line.fillArea || false
         }
@@ -1345,7 +1358,7 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
       case 'scatter':
         if (newChart.properties.scatter) {
           chartConfig.xAxis = [newChart.properties.scatter.xAxis]
-          chartConfig.yAxis = newChart.properties.scatter.yAxis
+          chartConfig.yAxis = [newChart.properties.scatter.yAxis]
         }
         break
       case 'card':
@@ -1383,10 +1396,10 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
   } else if (selectedChartType.value === 'bar') {
     return (
       chartConfig.xAxis.includes(fieldName) ||
-      chartConfig.yAxis === fieldName
+      chartConfig.yAxis.includes(fieldName)
     )
   } else if (selectedChartType.value === 'line' || selectedChartType.value === 'scatter') {
-    return chartConfig.xAxis.includes(fieldName) || chartConfig.yAxis === fieldName
+    return chartConfig.xAxis.includes(fieldName) || chartConfig.yAxis.includes(fieldName)
   } else if (selectedChartType.value === 'card') {
     return chartConfig.keyMetric === fieldName || chartConfig.previousMetric === fieldName
   }

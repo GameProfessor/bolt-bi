@@ -141,7 +141,7 @@ export interface ChartTypeProperties {
   // Bar chart specific
   bar?: {
     xAxis: string[]
-    yAxis: string
+    yAxis: string[]
     horizontal?: boolean
     stacked?: boolean
   }
@@ -252,7 +252,7 @@ export function createBarChart(config: {
   title: string
   dataSourceId: string
   xAxis: string[]
-  yAxis: string
+  yAxis: string[]
   horizontal?: boolean
   backgroundColor?: string
   borderColor?: string

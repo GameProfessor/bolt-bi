@@ -98,10 +98,16 @@
               @drop="$emit('field-drop', $event, 'yAxis')"
               @dragover.prevent
               @dragenter.prevent
-              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-              :class="{ 'border-primary-400 bg-primary-50': chartConfig.yAxis }"
+              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+              :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0 }"
             >
-              {{ chartConfig.yAxis || 'Drop Y-axis field here (numbers only)' }}
+              <template v-if="Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0">
+                <span v-for="(field, idx) in chartConfig.yAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                  {{ field }}
+                  <button @click.stop="$emit('remove-y-axis', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+                </span>
+              </template>
+              <span v-else>Drop Y-axis fields here (numbers only)</span>
             </div>
           </div>
         </div>
@@ -209,6 +215,7 @@ const emit = defineEmits([
   'update:selectedChartType',
   'field-drop',
   'remove-x-axis',
+  'remove-y-axis',
   'add-or-update-chart',
   'cancel-edit',
   'chart-type-drag-start'
