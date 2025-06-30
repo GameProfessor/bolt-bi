@@ -1,13 +1,57 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow-sm border-b border-gray-200 relative">
+      <!-- Panel Toggles: Absolutely positioned at the very left -->
+      <div class="absolute left-0 top-0 h-full flex items-center pl-4 z-10">
+        <div class="flex items-center gap-1">
+          <div class="relative group">
+            <button
+              @click="showDataPanel = !showDataPanel"
+              :class="[
+                'p-2 rounded-md transition-colors duration-200',
+                showDataPanel 
+                  ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+              ]"
+            >
+              <CircleStackIcon class="h-4 w-4" />
+            </button>
+            <!-- Custom Tooltip (right) -->
+            <div class="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+              {{ showDataPanel ? 'Hide Data Panel' : 'Show Data Panel' }}
+              <div class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+            </div>
+          </div>
+          <div class="relative group">
+            <button
+              @click="showChartPanel = !showChartPanel"
+              :class="[
+                'p-2 rounded-md transition-colors duration-200',
+                showChartPanel 
+                  ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+              ]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+            </button>
+            <!-- Custom Tooltip (right) -->
+            <div class="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+              {{ showChartPanel ? 'Hide Chart Panel' : 'Show Chart Panel' }}
+              <div class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style="padding-left:72px;">
         <div class="flex items-center h-16 justify-between">
-          <div class="flex items-center gap-2">
+          <!-- Left: Dashboard Name Input -->
+          <div class="flex items-center gap-3">
             <button
               @click="goBack"
-              class="mr-4 text-gray-400 hover:text-gray-600"
+              class="ml-2 mr-2 text-gray-400 hover:text-gray-600"
             >
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
@@ -19,48 +63,8 @@
               class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
             />
           </div>
+          <!-- Right: Action Buttons -->
           <div class="flex items-center gap-3 ml-auto">
-            <!-- Panel Toggle Buttons -->
-            <div class="flex items-center gap-1 mr-4">
-              <div class="relative group">
-                <button
-                  @click="showDataPanel = !showDataPanel"
-                  :class="[
-                    'p-2 rounded-md transition-colors duration-200',
-                    showDataPanel 
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                  ]"
-                >
-                  <CircleStackIcon class="h-4 w-4" />
-                </button>
-                <!-- Custom Tooltip -->
-                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
-                  {{ showDataPanel ? 'Hide Data Panel' : 'Show Data Panel' }}
-                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-              <div class="relative group">
-                <button
-                  @click="showChartPanel = !showChartPanel"
-                  :class="[
-                    'p-2 rounded-md transition-colors duration-200',
-                    showChartPanel 
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                  ]"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                  </svg>
-                </button>
-                <!-- Custom Tooltip -->
-                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap z-50">
-                  {{ showChartPanel ? 'Hide Chart Panel' : 'Show Chart Panel' }}
-                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            </div>
             <button
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               title="Share dashboard"
