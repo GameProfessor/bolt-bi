@@ -1,6 +1,6 @@
 <template>
  
-    <div class="h-full flex flex-col p-4">
+    <div class="h-full flex flex-col p-4 bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-sm">
       <div v-if="chart.base.title" class="mb-3">
         <h3 class="text-sm font-medium text-gray-900 truncate">{{ chart.base.title }}</h3>
       </div>
@@ -17,11 +17,11 @@
       
       <div v-else class="flex-1 flex flex-col justify-center">
         <!-- Key Metric -->
-        <div class="text-center mb-2">
-          <div class="text-2xl font-bold text-gray-900">
+        <div class="text-center mb-4">
+          <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-500">
             {{ formatValue(keyMetricValue) }}
           </div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide">
+          <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">
             {{ chart.properties.card?.keyMetric }}
           </div>
         </div>
@@ -30,11 +30,11 @@
         <div v-if="chart.properties.card?.previousMetric && previousMetricValue !== null" class="text-center">
           <div class="flex items-center justify-center">
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+              class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium shadow-sm"
               :class="{
-                'bg-green-100 text-green-800': difference > 0,
-                'bg-red-100 text-red-800': difference < 0,
-                'bg-gray-100 text-gray-800': difference === 0
+                'bg-green-100 text-green-800 border border-green-200': difference > 0,
+                'bg-red-100 text-red-800 border border-red-200': difference < 0,
+                'bg-gray-100 text-gray-800 border border-gray-200': difference === 0
               }"
             >
               <ArrowUpIcon v-if="difference > 0" class="h-3 w-3 mr-1" />
@@ -43,7 +43,7 @@
               {{ formatDifference(difference) }}
             </span>
           </div>
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 mt-2">
             vs {{ formatValue(previousMetricValue) }} ({{ chart.properties.card?.previousMetric }})
           </div>
         </div>
