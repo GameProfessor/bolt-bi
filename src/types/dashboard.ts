@@ -6,6 +6,15 @@
 import { nanoid } from 'nanoid'
 import type { ChartType } from './chart'
 
+export const CHART_TYPE_DEFAULT_LAYOUT: Record<string, { w: number; h: number }> = {
+  bar:     { w: 4, h: 3 },
+  line:    { w: 4, h: 3 },
+  pie:     { w: 3, h: 3 },
+  scatter: { w: 4, h: 3 },
+  card:    { w: 2, h: 3 },
+  // Add more types as needed
+}
+
 export interface Dashboard {
   id: string
   name: string
@@ -266,7 +275,7 @@ export function createBarChart(config: {
         horizontal: config.horizontal || false
       }
     },
-    layout: { x: 0, y: 0, w: 6, h: 4 },
+    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.bar },
     createdAt: new Date()
   }
 }
@@ -299,7 +308,7 @@ export function createPieChart(config: {
         donut: config.donut || false
       }
     },
-    layout: { x: 0, y: 0, w: 6, h: 4 },
+    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.pie },
     createdAt: new Date()
   }
 }
@@ -334,7 +343,7 @@ export function createLineChart(config: {
         fillArea: config.fillArea || false
       }
     },
-    layout: { x: 0, y: 0, w: 6, h: 4 },
+    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.line },
     createdAt: new Date()
   }
 }
@@ -367,7 +376,7 @@ export function createScatterChart(config: {
         size: config.size
       }
     },
-    layout: { x: 0, y: 0, w: 6, h: 4 },
+    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.scatter },
     createdAt: new Date()
   }
 }
@@ -402,7 +411,7 @@ export function createCardChart(config: {
         aggregation: config.aggregation || 'sum'
       }
     },
-    layout: { x: 0, y: 0, w: 3, h: 2 },
+    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.card },
     createdAt: new Date()
   }
 }

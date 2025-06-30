@@ -205,18 +205,24 @@ const props = defineProps<{
   alwaysShowProperties?: boolean
 }>()
 
-defineEmits([
+const emit = defineEmits([
   'update:selectedChartType',
   'field-drop',
   'remove-x-axis',
   'add-or-update-chart',
-  'cancel-edit'
+  'cancel-edit',
+  'chart-type-drag-start'
 ])
 
 function onChartTypeDragStart(type: string, event: DragEvent) {
   if (event.dataTransfer) {
-    event.dataTransfer.setData('application/json', JSON.stringify({ chartType: type }))
+    const data = JSON.stringify({ chartType: type })
+    // Set data in multiple formats to ensure it's available
+    event.dataTransfer.setData('application/json', data)
+    event.dataTransfer.setData('text/plain', data)
   }
+  // Emit the chart type being dragged
+  emit('chart-type-drag-start', type)
 }
 
 // Dynamically determine columns based on width

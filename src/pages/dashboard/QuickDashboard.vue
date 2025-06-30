@@ -134,6 +134,7 @@
         @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
         @add-or-update-chart="addOrUpdateChart"
         @cancel-edit="cancelEdit"
+        @chart-type-drag-start="onChartTypeDragStart"
       />
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
@@ -153,6 +154,7 @@
         @dragover="onDragOver"
         @dragenter.prevent="onDragEnter"
         @dragleave="onDragLeave"
+        @dragstart="onDashboardDragStart"
       >
         <!-- Drag Preview Shadow -->
         <div 
@@ -341,7 +343,7 @@ import { useDataSourceStore, useDashboardStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import type { DashboardChart, DashboardTab } from '@/types/dashboard'
 import type { ChartType } from '@/types/chart'
-import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart } from '@/types/dashboard'
+import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart, CHART_TYPE_DEFAULT_LAYOUT } from '@/types/dashboard'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
 import DataPanel from './components/DataPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
@@ -1034,20 +1036,25 @@ const dragPreviewStyle = ref({
   height: 0
 })
 
+// Track the currently dragged chart type
+const draggedChartType = ref<string | null>(null)
+
 const onDragEnter = (event: DragEvent) => {
   event.preventDefault()
   if (!event.dataTransfer) return
   
-  try {
-    const data = JSON.parse(event.dataTransfer.getData('application/json'))
-    if (data.chartType) {
-      showDragPreview.value = true
-      updateDragPreviewPosition(event)
-    }
-  } catch (error) {
+  // Show preview if we have a dragged chart type
+  if (draggedChartType.value) {
+    showDragPreview.value = true
+    updateDragPreviewPosition(event)
+  } else {
     showDragPreview.value = true
     updateDragPreviewPosition(event)
   }
+}
+
+const onDashboardDragStart = (event: DragEvent) => {
+  // This is just to capture any drag start events on the dashboard
 }
 
 const onDragLeave = (event: DragEvent) => {
@@ -1057,6 +1064,7 @@ const onDragLeave = (event: DragEvent) => {
   
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     showDragPreview.value = false
+    draggedChartType.value = null
   }
 }
 
@@ -1072,8 +1080,14 @@ const updateDragPreviewPosition = (event: DragEvent) => {
   
   const cellWidth = availableWidth / 12
   const cellHeight = 70 + 10
-  const previewWidth = 4 * cellWidth - 24
-  const previewHeight = 3 * cellHeight - 24
+
+  // Use the dragged chart type, fallback to selectedChartType if not available
+  const chartType = draggedChartType.value || selectedChartType.value
+
+  // Use layout mapping for preview size
+  const { w, h } = CHART_TYPE_DEFAULT_LAYOUT[chartType] || { w: 4, h: 3 }
+  const previewWidth = w * cellWidth - 24
+  const previewHeight = h * cellHeight - 24
   
   let previewLeft = x - (previewWidth / 2)
   let previewTop = y - (previewHeight / 2)
@@ -1124,6 +1138,9 @@ const onChartTypeDrop = (event: DragEvent) => {
   } catch (error) {
     console.error('Failed to parse dropped chart type data:', error)
   }
+  
+  // Clear the dragged chart type
+  draggedChartType.value = null
 }
 
 const onDragOver = (event: DragEvent) => {
@@ -1151,8 +1168,8 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
     const cellWidth = availableWidth / 12
     const cellHeight = 70 + 10
     
-    const chartWidth = 4
-    const chartHeight = 3
+    // Use the proper layout configuration for this chart type
+    const { w: chartWidth, h: chartHeight } = CHART_TYPE_DEFAULT_LAYOUT[chartType] || { w: 4, h: 3 }
     
     const chartCenterX = chartWidth / 2
     const chartCenterY = chartHeight / 2
@@ -1229,7 +1246,13 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
       return
   }
   
-  newChart.layout = { x: gridX, y: gridY, w: 4, h: 3 }
+  // Update the layout with the calculated position, but keep the default w/h from the chart creation
+  newChart.layout = { 
+    x: gridX, 
+    y: gridY, 
+    w: newChart.layout.w, 
+    h: newChart.layout.h 
+  }
   
   try {
     const savedChart = dashboardStore.addChart(currentDashboardId.value, newChart)
@@ -1410,6 +1433,11 @@ function handleLeaveCancel() {
     pendingNavigation.value.next(false)
     pendingNavigation.value = null
   }
+}
+
+const onChartTypeDragStart = (chartType: string) => {
+  // Store the dragged chart type when drag starts
+  draggedChartType.value = chartType
 }
 
 onMounted(async () => {
