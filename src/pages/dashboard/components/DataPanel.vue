@@ -93,7 +93,7 @@
       <!-- Data Sources Tab -->
       <div v-if="activeTab === 'data-sources'" class="flex-1">
         <div class="p-4 flex items-center justify-between">
-          <h3 class="text-sm font-medium text-gray-700">Data Sources</h3>
+          <h3 class="text-sm font-medium text-gray-700">Datasets</h3>
           <button
             @click="$emit('open-manager')"
             class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -262,7 +262,7 @@
                   </div>
                 </div>
 
-                <!-- Data Sources Table -->
+                <!-- Datasets Table -->
                 <div class="px-6 py-4">
                   <div class="overflow-hidden border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">

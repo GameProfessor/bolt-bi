@@ -3,9 +3,9 @@
     <div class="px-4 py-6 sm:px-0">
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-          <h1 class="text-2xl font-bold text-gray-900">Data Sources</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Datasets</h1>
           <p class="mt-2 text-sm text-gray-700">
-            Upload and manage CSV files to create data sources for your charts and dashboards.
+            Upload and manage CSV files to create datasets for your charts and dashboards.
           </p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -59,14 +59,14 @@
                 <input
                   v-model="searchQuery"
                   type="text"
-                  placeholder="Search data sources by name..."
+                  placeholder="Search datasets by name..."
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
             </div>
             <div class="flex items-center space-x-4">
               <span class="text-sm text-gray-700">
-                {{ filteredDataSources.length }} of {{ dataSourceStore.dataSources.length }} data sources
+                {{ filteredDataSources.length }} of {{ dataSourceStore.dataSources.length }} datasets
               </span>
             </div>
           </div>
@@ -77,7 +77,7 @@
           <div v-if="filteredDataSources.length === 0 && !dataSourceStore.loading" class="text-center py-12">
             <TableCellsIcon class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-sm font-medium text-gray-900">
-              {{ searchQuery ? 'No data sources found' : 'No data sources' }}
+              {{ searchQuery ? 'No datasets found' : 'No datasets' }}
             </h3>
             <p class="mt-1 text-sm text-gray-500">
               {{ searchQuery ? 'Try adjusting your search terms.' : 'Get started by uploading your first CSV file.' }}
@@ -280,7 +280,7 @@
                       Upload CSV File
                     </DialogTitle>
                     <p class="text-sm text-gray-500 mt-1">
-                      Add a new data source to your dashboard
+                      Add a new dataset to your dashboard
                     </p>
                   </div>
                   <button
@@ -299,7 +299,7 @@
                   <!-- Data Source Name -->
                   <div>
                     <label for="dataSourceName" class="block text-sm font-medium text-gray-700 mb-2">
-                      Data Source Name
+                      Dataset Name
                     </label>
                     <input
                       id="dataSourceName"
@@ -307,7 +307,7 @@
                       type="text"
                       required
                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                      placeholder="Enter a descriptive name for your data source"
+                      placeholder="Enter a descriptive name for your dataset"
                     />
                   </div>
 
@@ -322,7 +322,7 @@
                       v-model="uploadForm.description"
                       type="text"
                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                      placeholder="Describe what this data source contains..."
+                      placeholder="Describe what this dataset contains..."
                     />
                   </div>
 
@@ -581,8 +581,8 @@
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog
       :show="showDeleteDialog"
-      title="Delete Data Source"
-      message="Are you sure you want to delete this data source? This action cannot be undone."
+      title="Delete Dataset"
+      message="Are you sure you want to delete this dataset? This action cannot be undone."
       type="danger"
       confirm-text="Delete"
       cancel-text="Cancel"

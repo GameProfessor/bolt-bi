@@ -106,7 +106,7 @@ const navigationItems = [
     icon: ChartBarIcon
   },
   {
-    name: 'Data Sources',
+    name: 'Datasets',
     to: '/data-sources',
     routeName: 'DataSources',
     icon: TableCellsIcon
