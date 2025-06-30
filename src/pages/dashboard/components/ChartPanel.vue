@@ -47,8 +47,31 @@
           />
         </div>
 
+        <!-- Table chart: Show columns selection area -->
+        <div v-if="selectedChartType === 'table'">
+          <label class="block text-xs font-medium text-gray-600 mb-1">Table Columns</label>
+          <div
+            @drop="$emit('field-drop', $event, 'columns')"
+            @dragover.prevent
+            @dragenter.prevent
+            class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+            :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.columns) && chartConfig.columns.length > 0 }"
+          >
+            <template v-if="Array.isArray(chartConfig.columns) && chartConfig.columns.length > 0">
+              <span v-for="(field, idx) in chartConfig.columns" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                {{ field }}
+                <button @click.stop="$emit('remove-column', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+              </span>
+            </template>
+            <span v-else>Drop columns here</span>
+          </div>
+          <div class="mt-2 text-xs text-gray-500">
+            Drag and drop fields from the data panel to add columns to the table
+          </div>
+        </div>
+
         <!-- Card (KPI) chart: Only show KPI drop area -->
-        <div v-if="selectedChartType === 'card'">
+        <div v-else-if="selectedChartType === 'card'">
           <label class="block text-xs font-medium text-gray-600 mb-1">KPI</label>
           <div
             @drop="$emit('field-drop', $event, 'keyMetric')"
@@ -135,6 +158,41 @@
           </div>
         </div>
 
+        <!-- Table specific options -->
+        <div v-if="selectedChartType === 'table'" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Table Options</label>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <input type="checkbox" id="tableStriped" v-model="chartConfig.striped" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label for="tableStriped" class="ml-2 text-xs text-gray-700">Striped rows</label>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" id="tableBordered" v-model="chartConfig.bordered" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label for="tableBordered" class="ml-2 text-xs text-gray-700">Bordered cells</label>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" id="tableHover" v-model="chartConfig.hover" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label for="tableHover" class="ml-2 text-xs text-gray-700">Hover effect</label>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" id="tablePagination" v-model="chartConfig.pagination" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label for="tablePagination" class="ml-2 text-xs text-gray-700">Show pagination</label>
+              </div>
+            </div>
+          </div>
+          <div v-if="chartConfig.pagination">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Rows per page</label>
+            <select v-model="chartConfig.pageSize" class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+              <option value="5">5 rows</option>
+              <option value="10">10 rows</option>
+              <option value="25">25 rows</option>
+              <option value="50">50 rows</option>
+              <option value="100">100 rows</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Chart Configuration Options - Always show -->
         <div v-if="selectedChartType === 'bar'" class="flex items-center gap-2 mt-2">
           <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
@@ -209,6 +267,7 @@ const emit = defineEmits([
   'update:selectedChartType',
   'field-drop',
   'remove-x-axis',
+  'remove-column',
   'add-or-update-chart',
   'cancel-edit',
   'chart-type-drag-start'
@@ -237,4 +296,4 @@ const chartTypeCols = computed(() => {
 const chartTypeButtonClass =
   'w-12 h-12 flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative bg-white'
 const chartTypeIconClass = 'h-5 w-5'
-</script> 
+</script>

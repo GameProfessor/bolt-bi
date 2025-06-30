@@ -18,6 +18,7 @@ export type ChartType =
   | 'heatmap'
   | 'treemap'
   | 'card'
+  | 'table'
 
 export interface ChartData {
   labels: string[]
