@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow-sm border-b border-gray-200 relative">
-      <!-- Panel Toggles: Absolutely positioned at the very left -->
-      <div class="absolute left-0 top-0 h-full flex items-center pl-4 z-10">
+      <!-- Panel Toggles: Absolutely positioned at the very left, stick just above the lower border of title bar -->
+      <div class="absolute left-0 bottom-1 flex items-center pl-4 z-10" style="height:40px;">
         <div class="flex items-center gap-1">
           <div class="relative group">
             <button
@@ -11,8 +11,8 @@
               :class="[
                 'p-2 rounded-md transition-colors duration-200',
                 showDataPanel 
-                  ? 'bg-primary-100 text-primary-700 border border-primary-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                  : 'text-gray-400 bg-gray-100 border border-transparent hover:bg-gray-100'
               ]"
             >
               <CircleStackIcon class="h-4 w-4" />
@@ -29,8 +29,8 @@
               :class="[
                 'p-2 rounded-md transition-colors duration-200',
                 showChartPanel 
-                  ? 'bg-primary-100 text-primary-700 border border-primary-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+                : 'text-gray-400 bg-gray-100 border border-transparent hover:bg-gray-100'
               ]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
