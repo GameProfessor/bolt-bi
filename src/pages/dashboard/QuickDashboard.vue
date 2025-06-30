@@ -103,6 +103,7 @@
         :width="leftSidebarWidth"
         :category="dashboardCategory"
         :description="dashboardDescription"
+        :showDashboardTabs="showDashboardTabs"
         @open-manager="openDataSourceManager"
         @toggle-expand="toggleDataSource"
         @field-drag="onFieldDragStart"

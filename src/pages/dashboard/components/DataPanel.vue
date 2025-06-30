@@ -464,6 +464,7 @@ const props = defineProps<{
   width: number
   category?: string
   description?: string
+  showDashboardTabs: boolean
 }>()
 
 const emit = defineEmits<{
@@ -493,7 +494,8 @@ const dashboardDescription = ref(props.description || '')
 // Keep local refs in sync with props
 watch(() => props.category, (val) => { dashboardCategory.value = val || '' })
 watch(() => props.description, (val) => { dashboardDescription.value = val || '' })
-const showDashboardTabs = ref(true)
+const showDashboardTabs = ref(props.showDashboardTabs)
+watch(() => props.showDashboardTabs, (val) => { showDashboardTabs.value = val })
 
 // Watch for changes and emit to parent
 const emitDashboardInfo = () => {

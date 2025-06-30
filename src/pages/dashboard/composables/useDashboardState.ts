@@ -57,7 +57,8 @@ export function useDashboardState() {
             name: dashboardName.value,
             description: dashboardDescription.value,
             category: dashboardCategory.value,
-            dataSourceIds
+            dataSourceIds,
+            showDashboardTabs: showDashboardTabs.value
           })
 
           // Update tabs
@@ -73,6 +74,7 @@ export function useDashboardState() {
 
         // Update tabs
         dashboard.tabs = dashboardTabs.value
+        dashboard.showDashboardTabs = showDashboardTabs.value
 
         showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
       }
@@ -100,6 +102,13 @@ export function useDashboardState() {
       if (dashboard.tabs && dashboard.tabs.length > 0) {
         dashboardTabs.value = dashboard.tabs
         activeTabId.value = dashboardTabs.value[0].id
+      }
+
+      // Restore showDashboardTabs
+      if (typeof dashboard.showDashboardTabs === 'boolean') {
+        showDashboardTabs.value = dashboard.showDashboardTabs
+      } else {
+        showDashboardTabs.value = true
       }
     }
   }

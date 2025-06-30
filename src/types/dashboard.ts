@@ -29,6 +29,7 @@ export interface Dashboard {
   layout?: DashboardLayout
   theme?: DashboardTheme
   category?: string
+  showDashboardTabs?: boolean // Whether to show dashboard tabs UI
 }
 
 export interface DashboardLayout {
