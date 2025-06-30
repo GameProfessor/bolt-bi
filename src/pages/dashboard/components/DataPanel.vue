@@ -31,42 +31,44 @@
       <div v-if="activeTab === 'overview'" class="p-4">
         <div class="space-y-6">
 
-          <!-- Category Section -->
-          <div>
-            <label class="block text-sm font-medium text-gray-900 mb-2">
-              Category
-            </label>
-            <select
-              id="dashboardCategory"
-              v-model="dashboardCategory"
-              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            >
-              <option value="">Select category</option>
-              <option value="Sales">Sales</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Finance">Finance</option>
-              <option value="Operations">Operations</option>
-              <option value="HR">HR</option>
-              <option value="Customer">Customer</option>
-              <option value="Product">Product</option>
-              <option value="Analytics">Analytics</option>
-              <option value="Executive">Executive</option>
-              <option value="Other">Other</option>
-            </select>
+          <!-- Category & Description Section (Refined) -->
+          <div class="mb-6">
+            <div class="mb-4">
+              <label for="dashboardCategory" class="block text-sm font-medium text-gray-800 mb-1">
+                Category
+              </label>
+              <select
+                id="dashboardCategory"
+                v-model="dashboardCategory"
+                class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
+              >
+                <option value="">Select category</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Operations">Operations</option>
+                <option value="HR">HR</option>
+                <option value="Customer">Customer</option>
+                <option value="Product">Product</option>
+                <option value="Analytics">Analytics</option>
+                <option value="Executive">Executive</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="dashboardDescription" class="block text-sm font-medium text-gray-800 mb-1">
+                Description
+              </label>
+              <textarea
+                id="dashboardDescription"
+                v-model="dashboardDescription"
+                rows="3"
+                class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400 resize-none"
+                placeholder="Dashboard description"
+              />
+            </div>
           </div>
 
-          <!-- Description Section -->
-          <div>
-            <label class="block text-sm font-medium text-gray-900 mb-2">
-              Description
-            </label>
-            <textarea
-              v-model="dashboardDescription"
-              rows="4"
-              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-              placeholder="Dashboard description"
-            />
-          </div>
           <!-- Toggle Dashboard Tabs -->
           <div class="flex items-center justify-between mb-4">
             <span class="text-sm text-gray-900">Show dashboard tabs</span>
@@ -79,23 +81,6 @@
                   @change="emit('toggle-dashboard-tabs', showDashboardTabs)"
                   class="sr-only peer"
                   :aria-checked="showDashboardTabs"
-                />
-                <span class="block w-10 h-6 bg-gray-200 rounded-full shadow-inner transition peer-checked:bg-primary-500"></span>
-                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></span>
-              </span>
-            </label>
-          </div>
-          <!-- Save as Template Section -->
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-900">Save as template</span>
-            <label for="save-as-template" class="flex items-center cursor-pointer select-none">
-              <span class="relative">
-                <input
-                  id="save-as-template"
-                  type="checkbox"
-                  v-model="saveAsTemplate"
-                  class="sr-only peer"
-                  :aria-checked="saveAsTemplate"
                 />
                 <span class="block w-10 h-6 bg-gray-200 rounded-full shadow-inner transition peer-checked:bg-primary-500"></span>
                 <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4"></span>
@@ -508,7 +493,6 @@ const dashboardDescription = ref(props.description || '')
 // Keep local refs in sync with props
 watch(() => props.category, (val) => { dashboardCategory.value = val || '' })
 watch(() => props.description, (val) => { dashboardDescription.value = val || '' })
-const saveAsTemplate = ref(false)
 const showDashboardTabs = ref(true)
 
 // Watch for changes and emit to parent
@@ -517,12 +501,12 @@ const emitDashboardInfo = () => {
   emit('update-dashboard-info', {
     category: dashboardCategory.value,
     description: dashboardDescription.value,
-    saveAsTemplate: saveAsTemplate.value
+    saveAsTemplate: false
   })
 }
 
 watch(
-  [dashboardCategory, dashboardDescription, saveAsTemplate],
+  [dashboardCategory, dashboardDescription],
   () => {
     emitDashboardInfo();
   }
