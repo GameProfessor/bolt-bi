@@ -9,7 +9,6 @@
       <span class="text-gray-500">Chưa có dữ liệu</span>
     </div>
     <KPICard v-else-if="chart.type === 'card'" :chart="chart" class="w-full h-full" />
-    <TableView v-else-if="chart.type === 'table'" :chart="chart" class="w-full h-full" />
     <canvas v-else ref="canvasRef" class="w-full h-full"></canvas>
   </div>
 </template>
@@ -39,13 +38,11 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
-  CircleStackIcon,
-  TableCellsIcon
+  CircleStackIcon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
 import type { DashboardChart } from '@/types/dashboard'
 import KPICard from './KPICard.vue'
-import TableView from './TableView.vue'
 
 // Register Chart.js components
 ChartJS.register(
@@ -81,8 +78,7 @@ const chartTypeIcons = {
   line: PresentationChartLineIcon,
   pie: ChartPieIcon,
   scatter: CircleStackIcon,
-  card: ChartBarIcon, // Default for card type
-  table: TableCellsIcon // Icon for table type
+  card: ChartBarIcon // Default for card type
 }
 
 const chartTypeIcon = computed(() => {
@@ -110,9 +106,7 @@ const chartData = computed(() => {
     smooth: props.chart.properties.line?.smooth,
     fillArea: props.chart.properties.line?.fillArea,
     differenceType: props.chart.properties.card?.differenceType,
-    aggregation: props.chart.properties.card?.aggregation,
-    // Table specific properties
-    columns: props.chart.properties.table?.columns
+    aggregation: props.chart.properties.card?.aggregation
   }
 })
 
@@ -127,8 +121,6 @@ const hasValidData = computed(() => {
     return !!chartData.value.category
   } else if (chartData.value.type === 'bar') {
     return Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis.length > 0 && !!chartData.value.yAxis : !!chartData.value.xAxis && !!chartData.value.yAxis
-  } else if (chartData.value.type === 'table') {
-    return Array.isArray(chartData.value.columns) && chartData.value.columns.length > 0
   } else {
     return !!chartData.value.xAxis && !!chartData.value.yAxis
   }
@@ -169,7 +161,7 @@ function getPalette(scheme: string, count: number): string[] {
 
 const createChart = async () => {
   error.value = ''
-  if (!canvasRef.value || !hasValidData.value || chartData.value.type === 'card' || chartData.value.type === 'table') return
+  if (!canvasRef.value || !hasValidData.value || chartData.value.type === 'card') return
   try {
     const dataSource = dataSourceStore.getDataSourceById(chartData.value.dataSourceId!)
     if (!dataSource) {
@@ -455,7 +447,7 @@ watch(() => dataSourceStore.dataSources, () => {
 }, { deep: true })
 
 onMounted(() => {
-  if (hasValidData.value && props.chart.type !== 'card' && props.chart.type !== 'table') {
+  if (hasValidData.value && props.chart.type !== 'card') {
     nextTick(() => {
       createChart()
     })
