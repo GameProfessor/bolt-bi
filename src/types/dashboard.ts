@@ -12,7 +12,6 @@ export const CHART_TYPE_DEFAULT_LAYOUT: Record<string, { w: number; h: number }>
   pie:     { w: 3, h: 3 },
   scatter: { w: 4, h: 3 },
   card:    { w: 2, h: 3 },
-  table:   { w: 6, h: 4 }, // Default layout for table chart
   // Add more types as needed
 }
 
@@ -192,16 +191,6 @@ export interface ChartTypeProperties {
     differenceType?: 'absolute' | 'percentage'
     aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max'
   }
-
-  // Table specific
-  table?: {
-    columns: string[]
-    striped?: boolean
-    bordered?: boolean
-    hover?: boolean
-    pagination?: boolean
-    pageSize?: number
-  }
 }
 
 // Generic DashboardChart interface
@@ -256,10 +245,6 @@ export function isHeatmapChart(chart: DashboardChart): chart is DashboardChart &
 
 export function isCardChart(chart: DashboardChart): chart is DashboardChart & { properties: { card: NonNullable<ChartTypeProperties['card']> } } {
   return chart.type === 'card' && !!chart.properties.card
-}
-
-export function isTableChart(chart: DashboardChart): chart is DashboardChart & { properties: { table: NonNullable<ChartTypeProperties['table']> } } {
-  return chart.type === 'table' && !!chart.properties.table
 }
 
 // Type-safe chart creation helpers
@@ -432,43 +417,6 @@ export function createCardChart(config: {
   }
 }
 
-export function createTableChart(config: {
-  title: string
-  dataSourceId: string
-  columns: string[]
-  striped?: boolean
-  bordered?: boolean
-  hover?: boolean
-  pagination?: boolean
-  pageSize?: number
-  backgroundColor?: string
-  borderColor?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '',
-    type: 'table',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#FFFFFF',
-      borderColor: config.borderColor || '#E5E7EB'
-    },
-    properties: {
-      table: {
-        columns: config.columns,
-        striped: config.striped !== undefined ? config.striped : true,
-        bordered: config.bordered !== undefined ? config.bordered : false,
-        hover: config.hover !== undefined ? config.hover : true,
-        pagination: config.pagination !== undefined ? config.pagination : true,
-        pageSize: config.pageSize || 10
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.table },
-    createdAt: new Date()
-  }
-}
-
 // Generic chart creation function
 export function createChart(type: ChartType, config: any): DashboardChart {
   switch (type) {
@@ -482,8 +430,6 @@ export function createChart(type: ChartType, config: any): DashboardChart {
       return createScatterChart(config)
     case 'card':
       return createCardChart(config)
-    case 'table':
-      return createTableChart(config)
     default:
       throw new Error(`Unsupported chart type: ${type}`)
   }
