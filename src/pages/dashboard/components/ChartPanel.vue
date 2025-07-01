@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white border-r border-gray-200 flex flex-col" :style="{ minWidth: '200px', maxWidth: '400px', width: width + 'px' }">
+  <div class="bg-white border-r border-gray-200 flex flex-col min-h-0 h-full" :style="{ minWidth: '200px', maxWidth: '400px', width: width + 'px' }">
     <!-- Chart Type Selection -->
     <div class="p-4 border-b border-gray-200">
       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Chart Properties -->
-    <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 overflow-y-auto">
+    <div v-if="selectedChartType" class="p-4 border-t border-gray-200 flex-1 min-h-0 overflow-y-auto">
       <h3 class="text-sm font-medium text-gray-700 mb-3">Chart Properties</h3>
       <!-- <div v-if="selectedDataSources.length === 0" class="text-sm text-gray-500 text-center py-2 mb-3 bg-blue-50 rounded border border-blue-200">
         <p class="text-xs text-blue-600">No data sources selected</p>

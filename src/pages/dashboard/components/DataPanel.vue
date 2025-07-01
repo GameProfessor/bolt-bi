@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white border-r border-gray-200 flex flex-col" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
+  <div class="bg-white border-r border-gray-200 flex flex-col min-h-0 h-full" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
     <!-- Tab Navigation -->
     <div class="border-b border-gray-200 p-3">
       <nav class="flex gap-2" aria-label="Tabs">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Tab Content -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 min-h-0 overflow-y-auto">
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="p-4">
         <div class="space-y-6">

@@ -131,7 +131,7 @@
       </div>
     </div>
 
-    <div class="flex min-h-screen">
+    <div class="flex h-[calc(100vh-4rem)] min-h-0">
       <!-- Left Sidebar with Tabs -->
       <transition name="fade-slide-panel">
         <DataPanel
@@ -199,7 +199,7 @@
 
       <!-- Main Dashboard Area -->
       <div 
-        :class="['flex-1 p-3']" 
+        :class="['flex-1 h-full min-h-0 flex flex-col p-3']" 
         style="position:relative;"
         @drop="onChartTypeDrop"
         @dragover="onDragOver"
@@ -277,16 +277,15 @@
             <button v-if="!viewMode" @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
           </div>
         </nav>
-        <div class="bg-white rounded-lg shadow-sm min-h-screen">
-          <div class="p-6 h-full">
-            <!-- Tab-specific containers -->
-            <div v-for="tab in dashboardTabs" :key="tab.id" 
-                 v-show="activeTabId === tab.id"
-                 :data-tab-id="tab.id"
-                 class="tab-container">
-              
-              <!-- Empty state for this tab -->
-              <div v-if="getChartsForTab(tab.id).length === 0" class="flex items-center justify-center h-full text-gray-500">
+        <div class="flex-1 min-h-0 p-6 overflow-y-auto bg-white rounded-lg shadow-sm">
+          <!-- Tab-specific containers -->
+          <div v-for="tab in dashboardTabs" :key="tab.id" 
+               v-show="activeTabId === tab.id"
+               :data-tab-id="tab.id"
+               class="tab-container">
+            
+            <!-- Empty state for this tab -->
+            <div v-if="getChartsForTab(tab.id).length === 0" class="flex items-center justify-center min-h-40 text-gray-500">
               <div class="text-center">
                 <Squares2X2Icon class="mx-auto h-12 w-12 mb-4" />
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building Your Dashboard</h3>
@@ -299,10 +298,10 @@
               </div>
             </div>
               
-              <!-- GridStack Container for this tab -->
-              <div v-else :ref="`gridStackContainer-${tab.id}`" class="grid-stack">
+            <!-- GridStack Container for this tab -->
+            <div v-else :ref="`gridStackContainer-${tab.id}`" class="grid-stack">
               <div
-                  v-for="chart in getChartsForTab(tab.id)"
+                v-for="chart in getChartsForTab(tab.id)"
                 :key="chart.id"
                 class="grid-stack-item"
                 :gs-id="chart.id"
@@ -315,7 +314,7 @@
                 <div class="grid-stack-item-content">
                   <div class="chart-header flex justify-end items-center gap-2">
                     <!-- 3-dot menu -->
-                      <div class="relative chart-menu-container">
+                    <div class="relative chart-menu-container">
                       <button v-if="!previewMode" @click="toggleChartMenu(chart.id)" class="chart-menu-btn p-1 rounded-full hover:bg-gray-100 focus:outline-none">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                       </button>
@@ -333,11 +332,10 @@
                     @click="!viewMode && editChart(chart)"
                     :class="{ 'cursor-pointer': !previewMode && !viewMode }"
                   >
-                      <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
+                    <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
         </div>
@@ -638,7 +636,7 @@ const handleClickOutside = (event: Event) => {
     const target = event.target as HTMLElement
     const isWithinChartMenu = target.closest('.chart-menu-container')
     if (!isWithinChartMenu) {
-  openChartMenuId.value = null
+      openChartMenuId.value = null
     }
   }
 }
@@ -671,10 +669,10 @@ const addOrUpdateChart = () => {
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-        title: chartConfig.title,
+            title: chartConfig.title,
             dataSourceId: chartConfig.dataSourceId,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
+            backgroundColor: chartConfig.backgroundColor,
+            borderColor: chartConfig.borderColor,
             colorScheme: chartConfig.colorScheme
           }
         }
@@ -724,13 +722,13 @@ const addChart = async () => {
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
-      title: chartConfig.title,
+        title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis,
         yAxis: chartConfig.yAxis,
         horizontal: chartConfig.horizontal,
-      backgroundColor: chartConfig.backgroundColor,
-      borderColor: chartConfig.borderColor,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
       })
       break
@@ -901,7 +899,7 @@ const removeChart = (chartId: string) => {
     confirmText: 'Remove',
     cancelText: 'Cancel',
     onConfirm: () => {
-    if (currentDashboardId.value) {
+      if (currentDashboardId.value) {
         dashboardStore.removeChart(currentDashboardId.value, chartId)
         dashboardTabs.value.forEach(tab => {
           tab.chartIds = tab.chartIds.filter(id => id !== chartId)
@@ -1132,8 +1130,8 @@ const onDragEnter = (event: DragEvent) => {
   
   // Show preview if we have a dragged chart type
   if (draggedChartType.value) {
-      showDragPreview.value = true
-      updateDragPreviewPosition(event)
+    showDragPreview.value = true
+    updateDragPreviewPosition(event)
   } else {
     showDragPreview.value = true
     updateDragPreviewPosition(event)
@@ -1341,8 +1339,8 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
   
   // Update the layout with the calculated position, but keep the default w/h from the chart creation
   newChart.layout = { 
-      x: gridX,
-      y: gridY,
+    x: gridX,
+    y: gridY,
     w: newChart.layout.w, 
     h: newChart.layout.h 
   }
@@ -1447,7 +1445,7 @@ const openDataSourceManager = () => {
 // Watch for tab changes to ensure GridStack instances are initialized
 watch(activeTabId, (newTabId) => {
   if (newTabId && !tabGridStacks.value.has(newTabId)) {
-  nextTick(() => {
+    nextTick(() => {
       initializeTabGridStack(newTabId)
     })
   }
@@ -1467,7 +1465,7 @@ watch(dashboardTabs, (newTabs) => {
 // Watch for charts changes to reinitialize GridStack if needed
 watch(() => dashboardTabs.value.map(tab => getChartsForTab(tab.id)), () => {
   // Reinitialize GridStack for tabs that don't have instances yet
-        dashboardTabs.value.forEach(tab => {
+  dashboardTabs.value.forEach(tab => {
     if (!tabGridStacks.value.has(tab.id)) {
       nextTick(() => {
         initializeTabGridStack(tab.id)
@@ -1578,9 +1576,9 @@ onMounted(async () => {
   if (dashboardId) {
     dashboardStore.loadFromStorage()
     await loadDashboard(dashboardId)
-      await nextTick()
+    await nextTick()
     initializeAllTabGridStacks()
-    }
+  }
   document.addEventListener('click', handleClickOutside)
   if (viewMode.value) {
     showDataPanel.value = false
