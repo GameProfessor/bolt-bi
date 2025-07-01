@@ -495,8 +495,9 @@ const initializeTabGridStack = (tabId: string) => {
 
       // Create new GridStack instance for this tab
       const gridStack = GridStack.init({
-        cellHeight: 70,
-        margin: 10,
+        // column: 12,        // more columns = finer grid. default is 12
+        //cellHeight: 70,    // smaller cell height = finer vertical movement
+        margin: 0,
         minRow: 1,
         animate: true,
         resizable: {
