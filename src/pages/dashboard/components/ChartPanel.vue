@@ -38,11 +38,11 @@
       </div> -->
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title (Optional)</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
           <input
             v-model="chartConfig.title"
             type="text"
-            placeholder="Enter chart title (optional)"
+            placeholder="Enter chart title"
             class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
           />
         </div>
@@ -110,6 +110,44 @@
               <span v-else>Drop Y-axis fields here (numbers only)</span>
             </div>
           </div>
+          <div class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
+            <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="stackedBar" v-model="chartConfig.stacked" class="form-checkbox" />
+            <label for="stackedBar" class="text-xs font-medium text-gray-600">Stacked</label>
+          </div>
+          <div class="mt-2">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Sort X-Axis by</label>
+            <select
+              v-model="chartConfig.sortXAxisBy"
+              class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
+            >
+              <option value="">--</option>
+              <option v-for="field in chartConfig.xAxis" :key="field" :value="field">{{ field }}</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <input type="checkbox" id="sortDescending" v-model="chartConfig.sortDescending" class="form-checkbox" />
+            <label for="sortDescending" class="text-xs font-medium text-gray-600">Descending</label>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Filter</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Filter expression</label>
+            <input
+              v-model="chartConfig.filter"
+              type="text"
+              placeholder="eg (col_time > 10)  AND (col_data <10)"
+              class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
+            />
+            <div class="text-xs text-gray-500 mt-1">Use existing field names as variables. Example: (col_time &gt; 10)  AND (col_data &lt;10)</div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Legend</label>
+            <input type="checkbox" id="showLegend" v-model="chartConfig.showLegend" class="form-checkbox" />
+            <label for="showLegend" class="text-xs font-medium text-gray-600 ml-2">Show legend</label>
+          </div>
         </div>
 
         <div v-else>
@@ -142,14 +180,9 @@
         </div>
 
         <!-- Chart Configuration Options - Always show -->
-        <div v-if="selectedChartType === 'bar'" class="flex items-center gap-2 mt-2">
-          <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
-          <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
-        </div>
-
         <div v-if="selectedChartType === 'bar'" class="mt-2">
           <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
-          <select v-model="chartConfig.colorScheme" class="w-full rounded border-gray-300 text-sm">
+          <select v-model="chartConfig.colorScheme" class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400">
             <option v-for="scheme in colorSchemes" :key="scheme.value" :value="scheme.value">{{ scheme.label }}</option>
           </select>
           <!-- Color scheme preview -->
