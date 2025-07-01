@@ -107,7 +107,7 @@
       </div>
     </div>
 
-    <div class="flex h-[calc(100vh-4rem)]">
+    <div class="flex min-h-screen">
       <!-- Left Sidebar with Tabs -->
       <transition name="fade-slide-panel">
         <DataPanel
@@ -120,6 +120,7 @@
           :category="dashboardCategory"
           :description="dashboardDescription"
           :showDashboardTabs="showDashboardTabs"
+          :panelHeight="null"
           @open-manager="openDataSourceManager"
           @toggle-expand="toggleDataSource"
           @field-drag="onFieldDragStart"
@@ -151,6 +152,7 @@
           :editingChartId="editingChartId"
           :selectedDataSources="selectedDataSources"
           :width="chartTypeColWidth"
+          :panelHeight="null"
           :alwaysShowProperties="true"
           @update:selectedChartType="selectedChartType = $event"
           @field-drop="onFieldDrop"
@@ -251,13 +253,13 @@
             <button v-if="!viewMode" @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
           </div>
         </nav>
-        <div class="bg-white rounded-lg shadow-sm h-full">
+        <div class="bg-white rounded-lg shadow-sm min-h-screen">
           <div class="p-6 h-full">
             <!-- Tab-specific containers -->
             <div v-for="tab in dashboardTabs" :key="tab.id" 
                  v-show="activeTabId === tab.id"
                  :data-tab-id="tab.id"
-                 class="tab-container h-full">
+                 class="tab-container">
               
               <!-- Empty state for this tab -->
               <div v-if="getChartsForTab(tab.id).length === 0" class="flex items-center justify-center h-full text-gray-500">
@@ -274,7 +276,7 @@
             </div>
               
               <!-- GridStack Container for this tab -->
-              <div v-else :ref="`gridStackContainer-${tab.id}`" class="grid-stack h-full">
+              <div v-else :ref="`gridStackContainer-${tab.id}`" class="grid-stack">
               <div
                   v-for="chart in getChartsForTab(tab.id)"
                 :key="chart.id"
