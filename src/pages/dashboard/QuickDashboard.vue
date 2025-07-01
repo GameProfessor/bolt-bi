@@ -1063,11 +1063,15 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
         chartConfig.xAxis.push(fieldData.name)
       }
     } else if (target === 'xAxis') {
+      // For line/scatter, always set as single-element array
       chartConfig.xAxis = [fieldData.name]
     } else if (target === 'yAxis' && selectedChartType.value === 'bar') {
       if (!chartConfig.yAxis.includes(fieldData.name)) {
         chartConfig.yAxis.push(fieldData.name)
       }
+    } else if (target === 'yAxis') {
+      // For line/scatter, always set as single-element array
+      chartConfig.yAxis = [fieldData.name]
     } else if (target === 'category') {
       chartConfig.category = fieldData.name
     } else if (target === 'value') {
