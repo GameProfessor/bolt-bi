@@ -70,13 +70,13 @@ export const NAVIGATION_ITEMS = [
     icon: 'BoltIcon',
     requiresAuth: true
   },
-  {
-    name: ROUTE_NAMES.TEMPLATE_DESIGNER,
-    path: ROUTE_PATHS.TEMPLATE_DESIGNER,
-    label: 'Thiết kế mẫu',
-    icon: 'PaintBrushIcon',
-    requiresAuth: true
-  },
+  // {
+  //   name: ROUTE_NAMES.TEMPLATE_DESIGNER,
+  //   path: ROUTE_PATHS.TEMPLATE_DESIGNER,
+  //   label: 'Thiết kế mẫu',
+  //   icon: 'PaintBrushIcon',
+  //   requiresAuth: true
+  // },
   {
     name: ROUTE_NAMES.ANALYTICS,
     path: ROUTE_PATHS.ANALYTICS,

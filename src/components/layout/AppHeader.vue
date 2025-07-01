@@ -129,12 +129,12 @@ const navigationItems = [
     routeName: 'QuickDashboard',
     icon: BoltIcon
   },
-  {
-    name: 'Template Designer',
-    to: '/template-designer',
-    routeName: 'TemplateDesigner',
-    icon: PaintBrushIcon
-  }
+  // {
+  //   name: 'Template Designer',
+  //   to: '/template-designer',
+  //   routeName: 'TemplateDesigner',
+  //   icon: PaintBrushIcon
+  // },
 ]
 
 const toggleMobileMenu = () => {

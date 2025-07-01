@@ -86,15 +86,39 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
               Preview
             </button>
-            <button
-              v-if="!viewMode"
-              @click="saveDashboard"
-              :disabled="!dashboardName"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              <DocumentCheckIcon class="h-4 w-4 mr-2" />
-              Save Dashboard
-            </button>
+            <div v-if="!viewMode" class="relative group inline-block text-left align-middle">
+              <div class="flex shadow-sm rounded-md overflow-hidden">
+                <button
+                  @click="saveDashboard"
+                  :disabled="!dashboardName"
+                  class="inline-flex items-center px-4 py-2 text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 border-0 rounded-l-md"
+                  style="border-right: 1px solid rgba(255,255,255,0.15);"
+                >
+                  <DocumentCheckIcon class="h-4 w-4 mr-2" />
+                  Save Dashboard
+                </button>
+                <button
+                  @click="showSaveDropdown = !showSaveDropdown"
+                  :disabled="!dashboardName"
+                  :class="[
+                    'inline-flex items-center px-2 py-2 text-sm font-medium bg-primary-600 text-white focus:outline-none border-0 rounded-r-md',
+                    !dashboardName ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-700'
+                  ]"
+                  aria-haspopup="true"
+                  :aria-expanded="showSaveDropdown ? 'true' : 'false'"
+                  style="border-left: 1px solid rgba(255,255,255,0.15);"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+              </div>
+              <transition name="fade">
+                <div v-if="showSaveDropdown" class="absolute right-0 z-50 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div class="py-1">
+                    <button @click="saveAsTemplate" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Save as Template</button>
+                  </div>
+                </div>
+              </transition>
+            </div>
             <button
               v-if="viewMode && comingFromPreview"
               @click="exitPreviewMode"
@@ -257,7 +281,7 @@
           <div class="p-6 h-full">
             <!-- Tab-specific containers -->
             <div v-for="tab in dashboardTabs" :key="tab.id" 
-                 v-show="activeTabId === tab.id"
+                 vshow="activeTabId === tab.id"
                  :data-tab-id="tab.id"
                  class="tab-container">
               
@@ -1541,6 +1565,14 @@ const exitPreviewMode = () => {
     path: route.path,
     query: rest
   })
+}
+
+const showSaveDropdown = ref(false)
+
+function saveAsTemplate() {
+  showSaveDropdown.value = false
+  // TODO: Implement save as template logic
+  alert('Save as Template (not yet implemented)')
 }
 
 onMounted(async () => {
