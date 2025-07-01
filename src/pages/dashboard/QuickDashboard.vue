@@ -699,8 +699,6 @@ const addOrUpdateChart = () => {
         markUnsaved()
       }
     }
-    editingChartId.value = null
-    resetChartConfig()
     setTimeout(() => {
       nextTick(() => {
         if (activeTabId.value) {
