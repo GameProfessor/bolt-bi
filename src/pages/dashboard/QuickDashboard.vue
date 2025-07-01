@@ -289,7 +289,7 @@
                     @click="editChart(chart)"
                     :class="{ 'cursor-pointer': !previewMode }"
                   >
-                      <ChartPreview :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
+                      <ChartFactory :chart="chart" :key="`${chart.id}-${chart.updatedAt?.getTime() || chart.createdAt.getTime()}`" class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -366,7 +366,7 @@ import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import type { DashboardChart, DashboardTab } from '@/types/dashboard'
 import type { ChartType } from '@/types/chart'
 import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart, CHART_TYPE_DEFAULT_LAYOUT } from '@/types/dashboard'
-import ChartPreview from '@/components/charts/ChartPreview.vue'
+import ChartFactory from '@/components/charts/ChartFactory.vue'
 import DataPanel from './components/DataPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import Toast from '@/components/ui/Toast.vue'
