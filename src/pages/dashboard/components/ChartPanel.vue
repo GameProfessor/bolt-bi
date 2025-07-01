@@ -8,7 +8,7 @@
       <div class="grid gap-2" :style="`grid-template-columns: repeat(${chartTypeCols}, minmax(0, 1fr));`">
         <div v-for="type in chartTypes" :key="type.value" class="relative group">
           <button
-            @click="$emit('update:selectedChartType', type.value)"
+            @click="onChartTypeSelect(type.value)"
             :draggable="true"
             @dragstart="onChartTypeDragStart(type.value, $event)"
             :class="[
@@ -263,6 +263,16 @@ function onChartTypeDragStart(type: string, event: DragEvent) {
   }
   // Emit the chart type being dragged
   emit('chart-type-drag-start', type)
+}
+
+function onChartTypeSelect(type: string) {
+  if (props.editingChartId) {
+    // If editing, switch to add mode and reset chart config
+    emit('cancel-edit')
+    emit('update:selectedChartType', type)
+  } else {
+    emit('update:selectedChartType', type)
+  }
 }
 
 // Dynamically determine columns based on width
