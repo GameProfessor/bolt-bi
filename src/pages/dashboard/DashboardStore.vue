@@ -188,7 +188,7 @@
                   Description
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created Date
+                  Category
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
@@ -197,7 +197,7 @@
                   Owner
                 </th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
+                  Created Date
                 </th>
                 <th scope="col" class="relative px-6 py-3">
                   <span class="sr-only">Actions</span>
@@ -227,7 +227,7 @@
                   {{ dashboard.description || '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(dashboard.createdAt) }}
+                  {{ dashboard.category || '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span
@@ -244,7 +244,7 @@
                   {{ dashboard.owner }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ dashboard.category || '-' }}
+                  {{ formatDate(dashboard.createdAt) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end space-x-2">
