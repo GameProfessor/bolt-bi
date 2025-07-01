@@ -281,7 +281,7 @@
           <div class="p-6 h-full">
             <!-- Tab-specific containers -->
             <div v-for="tab in dashboardTabs" :key="tab.id" 
-                 vshow="activeTabId === tab.id"
+                 v-show="activeTabId === tab.id"
                  :data-tab-id="tab.id"
                  class="tab-container">
               
