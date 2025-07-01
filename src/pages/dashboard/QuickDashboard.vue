@@ -56,13 +56,13 @@
               <ArrowLeftIcon class="h-6 w-6" />
             </button>
             <template v-if="!viewMode">
-              <input
-                id="dashboardName"
-                v-model="dashboardName"
-                type="text"
-                placeholder="Enter dashboard name"
-                class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
-              />
+            <input
+              id="dashboardName"
+              v-model="dashboardName"
+              type="text"
+              placeholder="Enter dashboard name"
+              class="text-xl font-semibold text-gray-900 bg-transparent border-none focus:ring-0 focus:border-b-2 focus:border-primary-500 px-1 py-0.5 w-64"
+            />
             </template>
             <template v-else>
               <span class="text-xl font-semibold text-gray-900 px-1 py-0.5 w-64 truncate" style="background:transparent; border:none;">{{ dashboardName }}</span>
@@ -88,15 +88,15 @@
             </button>
             <div v-if="!viewMode" class="relative group inline-block text-left align-middle">
               <div class="flex shadow-sm rounded-md overflow-hidden">
-                <button
-                  @click="saveDashboard"
+            <button
+              @click="saveDashboard"
                   :disabled="!dashboardName"
                   class="inline-flex items-center px-4 py-2 text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 border-0 rounded-l-md"
                   style="border-right: 1px solid rgba(255,255,255,0.15);"
-                >
-                  <DocumentCheckIcon class="h-4 w-4 mr-2" />
-                  Save Dashboard
-                </button>
+            >
+              <DocumentCheckIcon class="h-4 w-4 mr-2" />
+              Save Dashboard
+            </button>
                 <button
                   @click="showSaveDropdown = !showSaveDropdown"
                   :disabled="!dashboardName"
@@ -110,7 +110,7 @@
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
-              </div>
+          </div>
               <transition name="fade">
                 <div v-if="showSaveDropdown" class="absolute right-0 z-50 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div class="py-1">
@@ -134,24 +134,24 @@
     <div class="flex h-[calc(100vh-4rem)] min-h-0">
       <!-- Left Sidebar with Tabs -->
       <transition name="fade-slide-panel">
-        <DataPanel
+      <DataPanel
           v-if="!previewMode && showDataPanel && !viewMode"
-          ref="dataPanelRef"
-          :selectedDataSources="selectedDataSources"
-          :expandedDataSources="expandedDataSources"
-          :isFieldInUse="isFieldInUse"
-          :width="leftSidebarWidth"
-          :category="dashboardCategory"
-          :description="dashboardDescription"
+        ref="dataPanelRef"
+        :selectedDataSources="selectedDataSources"
+        :expandedDataSources="expandedDataSources"
+        :isFieldInUse="isFieldInUse"
+        :width="leftSidebarWidth"
+        :category="dashboardCategory"
+        :description="dashboardDescription"
           :showDashboardTabs="showDashboardTabs"
           :panelHeight="null"
-          @open-manager="openDataSourceManager"
-          @toggle-expand="toggleDataSource"
-          @field-drag="onFieldDragStart"
-          @update-selected-data-sources="updateSelectedDataSources"
-          @toggle-dashboard-tabs="handleToggleDashboardTabs"
-          @update-dashboard-info="onUpdateDashboardInfo"
-        />
+        @open-manager="openDataSourceManager"
+        @toggle-expand="toggleDataSource"
+        @field-drag="onFieldDragStart"
+        @update-selected-data-sources="updateSelectedDataSources"
+        @toggle-dashboard-tabs="handleToggleDashboardTabs"
+        @update-dashboard-info="onUpdateDashboardInfo"
+      />
       </transition>
 
       <!-- Draggable Divider (between left sidebar and chart type col) -->
@@ -165,27 +165,27 @@
 
       <!-- Chart Type & Properties Column -->
       <transition name="fade-slide-panel">
-        <ChartPanel
+      <ChartPanel
           v-if="!previewMode && showChartPanel && !viewMode"
-          :chartTypes="chartTypes"
-          :selectedChartType="selectedChartType"
-          :chartConfig="chartConfig"
-          :colorSchemes="colorSchemes"
-          :colorPalettes="colorPalettes"
-          :isChartConfigValid="isChartConfigValid"
-          :editingChartId="editingChartId"
-          :selectedDataSources="selectedDataSources"
-          :width="chartTypeColWidth"
+        :chartTypes="chartTypes"
+        :selectedChartType="selectedChartType"
+        :chartConfig="chartConfig"
+        :colorSchemes="colorSchemes"
+        :colorPalettes="colorPalettes"
+        :isChartConfigValid="isChartConfigValid"
+        :editingChartId="editingChartId"
+        :selectedDataSources="selectedDataSources"
+        :width="chartTypeColWidth"
           :panelHeight="null"
-          :alwaysShowProperties="true"
-          @update:selectedChartType="selectedChartType = $event"
-          @field-drop="onFieldDrop"
-          @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
+        :alwaysShowProperties="true"
+        @update:selectedChartType="selectedChartType = $event"
+        @field-drop="onFieldDrop"
+        @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
           @remove-y-axis="(idx) => { if (Array.isArray(chartConfig.yAxis)) chartConfig.yAxis.splice(idx, 1) }"
-          @add-or-update-chart="addOrUpdateChart"
-          @cancel-edit="cancelEdit"
+        @add-or-update-chart="addOrUpdateChart"
+        @cancel-edit="cancelEdit"
           @chart-type-drag-start="onChartTypeDragStart"
-        />
+      />
       </transition>
 
       <!-- Draggable Divider (between chart type col and main dashboard) -->
@@ -263,19 +263,19 @@
                     @click.stop="startRenameTab(tab.id)"
                     class="h-4 w-4 ml-1 text-gray-400 hover:text-primary-600 cursor-pointer transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                   />
-                  <button
+            <button
                     v-if="dashboardTabs.length > 1 && tabHoverId === tab.id && !viewMode"
                     @click.stop="removeTab(tab.id)"
                     class="ml-1 text-gray-400 hover:text-red-500 bg-transparent rounded-full p-0.5 transition-opacity duration-150 opacity-80 group-hover:opacity-100"
                     style="z-index:20"
                   >
                     &times;
-                  </button>
+            </button>
                 </button>
-              </div>
+          </div>
             </transition-group>
             <button v-if="!viewMode" @click="addTab" class="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors duration-150 focus:outline-none border-none shadow-none">+</button>
-          </div>
+        </div>
         </nav>
         <div class="flex-1 min-h-0 p-6 overflow-y-auto bg-white rounded-lg shadow-sm">
           <!-- Tab-specific containers -->
@@ -636,7 +636,7 @@ const handleClickOutside = (event: Event) => {
     const target = event.target as HTMLElement
     const isWithinChartMenu = target.closest('.chart-menu-container')
     if (!isWithinChartMenu) {
-      openChartMenuId.value = null
+  openChartMenuId.value = null
     }
   }
 }
@@ -669,10 +669,10 @@ const addOrUpdateChart = () => {
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-            title: chartConfig.title,
+        title: chartConfig.title,
             dataSourceId: chartConfig.dataSourceId,
-            backgroundColor: chartConfig.backgroundColor,
-            borderColor: chartConfig.borderColor,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor,
             colorScheme: chartConfig.colorScheme
           }
         }
@@ -722,13 +722,13 @@ const addChart = async () => {
   switch (selectedChartType.value) {
     case 'bar':
       newChart = createBarChart({
-        title: chartConfig.title,
+      title: chartConfig.title,
         dataSourceId: chartConfig.dataSourceId,
         xAxis: chartConfig.xAxis,
         yAxis: chartConfig.yAxis,
         horizontal: chartConfig.horizontal,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
+      backgroundColor: chartConfig.backgroundColor,
+      borderColor: chartConfig.borderColor,
         colorScheme: chartConfig.colorScheme
       })
       break
@@ -899,7 +899,7 @@ const removeChart = (chartId: string) => {
     confirmText: 'Remove',
     cancelText: 'Cancel',
     onConfirm: () => {
-      if (currentDashboardId.value) {
+    if (currentDashboardId.value) {
         dashboardStore.removeChart(currentDashboardId.value, chartId)
         dashboardTabs.value.forEach(tab => {
           tab.chartIds = tab.chartIds.filter(id => id !== chartId)
@@ -1130,8 +1130,8 @@ const onDragEnter = (event: DragEvent) => {
   
   // Show preview if we have a dragged chart type
   if (draggedChartType.value) {
-    showDragPreview.value = true
-    updateDragPreviewPosition(event)
+      showDragPreview.value = true
+      updateDragPreviewPosition(event)
   } else {
     showDragPreview.value = true
     updateDragPreviewPosition(event)
@@ -1236,6 +1236,9 @@ const onDragOver = (event: DragEvent) => {
 }
 
 const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: number) => {
+  // Reset config to empty for new chart
+  resetChartConfig();
+  selectedChartType.value = chartType;
   if (!currentDashboardId.value) {
     const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
     currentDashboardId.value = tempDashboard.id
@@ -1339,8 +1342,8 @@ const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: num
   
   // Update the layout with the calculated position, but keep the default w/h from the chart creation
   newChart.layout = { 
-    x: gridX,
-    y: gridY,
+      x: gridX,
+      y: gridY,
     w: newChart.layout.w, 
     h: newChart.layout.h 
   }
@@ -1445,7 +1448,7 @@ const openDataSourceManager = () => {
 // Watch for tab changes to ensure GridStack instances are initialized
 watch(activeTabId, (newTabId) => {
   if (newTabId && !tabGridStacks.value.has(newTabId)) {
-    nextTick(() => {
+  nextTick(() => {
       initializeTabGridStack(newTabId)
     })
   }
@@ -1576,7 +1579,7 @@ onMounted(async () => {
   if (dashboardId) {
     dashboardStore.loadFromStorage()
     await loadDashboard(dashboardId)
-    await nextTick()
+      await nextTick()
     initializeAllTabGridStacks()
   }
   document.addEventListener('click', handleClickOutside)

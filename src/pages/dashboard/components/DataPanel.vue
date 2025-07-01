@@ -108,7 +108,7 @@
               @click="$emit('toggle-expand', ds.id)"
               class="w-full px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
             >
-              <span class="text-sm font-medium text-gray-900">{{ ds.name }}</span>
+              <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate text-left" :title="ds.name">{{ ds.name }}</span>
               <ChevronDownIcon
                 class="h-5 w-5 text-gray-500 transform transition-transform"
                 :class="{ 'rotate-180': expandedDataSources.includes(ds.id) }"
