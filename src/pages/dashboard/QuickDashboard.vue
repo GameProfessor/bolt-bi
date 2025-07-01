@@ -69,8 +69,9 @@
             </template>
           </div>
           <!-- Right: Action Buttons -->
-          <div v-if="!viewMode" class="flex items-center gap-3 ml-auto">
+          <div class="flex items-center gap-3 ml-auto">
             <button
+             v-if="!viewMode"
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               title="Share dashboard"
             >
@@ -78,19 +79,28 @@
               Share
             </button>
             <button
-              @click="previewMode = true"
+              v-if="!viewMode"
+              @click="goToPreviewMode"
               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z" /></svg>
               Preview
             </button>
             <button
+              v-if="!viewMode"
               @click="saveDashboard"
               :disabled="!dashboardName"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <DocumentCheckIcon class="h-4 w-4 mr-2" />
               Save Dashboard
+            </button>
+            <button
+              v-if="viewMode && comingFromPreview"
+              @click="exitPreviewMode"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+            >
+              Exit Preview
             </button>
           </div>
         </div>
@@ -302,9 +312,6 @@
               </div>
             </div>
             </div>
-            
-            <!-- Exit Preview Button -->
-            <button v-if="previewMode" @click="previewMode = false" class="absolute top-4 right-4 z-50 px-4 py-2 bg-white text-primary-700 border border-gray-300 rounded shadow hover:bg-gray-50">Exit Preview</button>
           </div>
         </div>
       </div>
@@ -1503,6 +1510,27 @@ const onChartTypeDragStart = (chartType: string) => {
   draggedChartType.value = chartType
 }
 
+const comingFromPreview = ref(false)
+
+const goToPreviewMode = () => {
+  comingFromPreview.value = true
+  router.replace({
+    path: route.path,
+    query: { ...route.query, view: '1' }
+  })
+}
+
+const exitPreviewMode = () => {
+  comingFromPreview.value = false
+  showDataPanel.value = true
+  showChartPanel.value = true
+  const { view, ...rest } = route.query
+  router.replace({
+    path: route.path,
+    query: rest
+  })
+}
+
 onMounted(async () => {
   const dashboardId = route.query.id as string | undefined
   if (dashboardId) {
@@ -1515,6 +1543,9 @@ onMounted(async () => {
   if (viewMode.value) {
     showDataPanel.value = false
     showChartPanel.value = false
+  }
+  if (String(route.query.view) !== '1') {
+    comingFromPreview.value = false
   }
 })
 
