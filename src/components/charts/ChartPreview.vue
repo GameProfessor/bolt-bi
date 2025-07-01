@@ -38,7 +38,8 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  Squares2X2Icon
 } from '@heroicons/vue/24/outline'
 import { useDataSourceStore } from '@/stores'
 import type { DashboardChart } from '@/types/dashboard'
@@ -78,7 +79,7 @@ const chartTypeIcons = {
   line: PresentationChartLineIcon,
   pie: ChartPieIcon,
   scatter: CircleStackIcon,
-  card: ChartBarIcon // Default for card type
+  card: Squares2X2Icon
 }
 
 const chartTypeIcon = computed(() => {

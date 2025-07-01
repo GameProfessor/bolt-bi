@@ -1016,7 +1016,7 @@ const chartTypes = [
   { value: 'line' as const, label: 'Line', icon: PresentationChartLineIcon },
   { value: 'pie' as const, label: 'Pie', icon: ChartPieIcon },
   { value: 'scatter' as const, label: 'Scatter', icon: CircleStackIcon },
-  { value: 'card' as const, label: 'Card', icon: Cog6ToothIcon }
+  { value: 'card' as const, label: 'Card', icon: Squares2X2Icon }
 ] as const
 
 const colorSchemes = [
