@@ -299,6 +299,7 @@
                         <button v-if="!viewMode" @click="editChart(chart)" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit</button>
                         <button @click="exportChart(chart, 'pdf')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export PDF</button>
                         <button @click="exportChart(chart, 'png')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to PNG</button>
+                        <button @click="exportChart(chart, 'csv')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Export to CSV</button>
                         <button v-if="!viewMode" @click="removeChart(chart.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Remove</button>
                       </div>
                     </div>
@@ -1458,8 +1459,17 @@ const cancelEdit = () => {
   resetChartConfig()
 }
 
-const exportChart = (chart: DashboardChart, type: 'pdf' | 'png') => {
+const exportChart = (chart: DashboardChart, type: 'pdf' | 'png' | 'csv') => {
   openChartMenuId.value = null
+  if (type === 'csv') {
+    // Find the ChartPreview component for this chart and call its exportCSV method
+    // We'll use an event bus or expose a method via ref if needed
+    // For now, emit an event or call a method (to be implemented in ChartPreview.vue)
+    // Example: $refs[`chartPreviewRef-${chart.id}`]?.exportCSV?.()
+    // For now, just alert as a stub
+    alert(`Exporting chart '${chart.base.title}' as CSV (stub)`)
+    return
+  }
   alert(`Exporting chart '${chart.base.title}' as ${type.toUpperCase()} (stub)`)
 }
 

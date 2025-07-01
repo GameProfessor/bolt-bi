@@ -328,10 +328,11 @@ const createChart = async () => {
 
       // Filter out null/undefined values and ensure numeric y-values
       const xAxisField = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis[0] : chartData.value.xAxis
+      const yAxisField = Array.isArray(chartData.value.yAxis) ? chartData.value.yAxis[0] : chartData.value.yAxis
       const validData = dataSource.rows
         .map((row) => ({
           x: row[xAxisField!],
-          y: Number(row[chartData.value.yAxis!])
+          y: Number(row[yAxisField!])
         }))
         .filter(item => item.x != null && item.x !== '' && !isNaN(item.y))
 
@@ -452,6 +453,100 @@ onUnmounted(() => {
     chartInstance = null
   }
 })
+
+// Export chart data to CSV
+function exportCSV() {
+  if (!hasValidData.value) {
+    alert('No data to export')
+    return
+  }
+  const dataSource = dataSourceStore.getDataSourceById(chartData.value.dataSourceId!)
+  if (!dataSource) {
+    alert('Data source not found')
+    return
+  }
+  let csv = ''
+  if (chartData.value.type === 'pie') {
+    // Pie: category and count
+    const categoryColumn = dataSource.columns.find(c => c.name === chartData.value.category)
+    if (!categoryColumn) return
+    const categoryCounts = {} as Record<string, number>
+    categoryColumn.values.forEach(value => {
+      if (value != null && value !== '') {
+        const key = String(value)
+        categoryCounts[key] = (categoryCounts[key] || 0) + 1
+      }
+    })
+    csv += 'Category,Count\n'
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+      csv += `"${cat}",${count}\n`
+    }
+  } else if (chartData.value.type === 'bar') {
+    // Bar: x labels and y values for each dataset
+    const xAxes = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis : chartData.value.xAxis ? [chartData.value.xAxis] : []
+    const yAxes = Array.isArray(chartData.value.yAxis) ? chartData.value.yAxis : chartData.value.yAxis ? [chartData.value.yAxis] : []
+    if (xAxes.length === 0 || yAxes.length === 0) return
+    // Group rows by all xAxes fields
+    const groupKey = (row: Record<string, any>) => xAxes.map(field => row[field]).join(' | ')
+    const grouped: Record<string, Record<string, number>> = {}
+    dataSource.rows.forEach((row: Record<string, any>) => {
+      const key = groupKey(row)
+      if (!grouped[key]) grouped[key] = {}
+      yAxes.forEach((yField: string) => {
+        const yVal = Number(row[yField])
+        if (!isNaN(yVal)) {
+          grouped[key][yField] = (grouped[key][yField] || 0) + yVal
+        }
+      })
+    })
+    // Header
+    csv += xAxes.join(' | ')
+    yAxes.forEach(y => { csv += `,${y}` })
+    csv += '\n'
+    // Rows
+    for (const label of Object.keys(grouped)) {
+      csv += `"${label}"`
+      yAxes.forEach(y => { csv += `,${grouped[label][y] ?? 0}` })
+      csv += '\n'
+    }
+  } else if (chartData.value.type === 'line' || chartData.value.type === 'scatter') {
+    // Line/Scatter: x and y values
+    const xField = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis[0] : chartData.value.xAxis
+    const yField = Array.isArray(chartData.value.yAxis) ? chartData.value.yAxis[0] : chartData.value.yAxis
+    if (!xField || !yField) return
+    csv += `${xField},${yField}\n`
+    dataSource.rows.forEach((row: Record<string, any>) => {
+      const x = row[xField]
+      const y = row[yField]
+      if (x != null && y != null && y !== '' && !isNaN(Number(y))) {
+        csv += `"${x}",${y}\n`
+      }
+    })
+  } else if (chartData.value.type === 'card') {
+    // KPI card: just export the key metric column
+    const keyMetric = chartData.value.keyMetric
+    if (!keyMetric) return
+    csv += `${keyMetric}\n`
+    dataSource.rows.forEach((row: Record<string, any>) => {
+      const val = row[keyMetric]
+      if (val != null && val !== '') {
+        csv += `${val}\n`
+      }
+    })
+  }
+  // Download CSV
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = (chartData.value.title || 'chart-data') + '.csv'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+defineExpose({ exportCSV })
 </script>
 
 <style scoped>

@@ -5,7 +5,7 @@ import { resolve } from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/biz-self-service/', // <-- set to your repo name
+  // base: '/biz-self-service/', // <-- set to your repo name
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
