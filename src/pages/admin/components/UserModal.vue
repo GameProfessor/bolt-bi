@@ -201,16 +201,16 @@
                         id="groups"
                         v-model="form.groupIds"
                         multiple
-                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white multiselect-groups"
-                        size="5"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white"
+                        size="4"
                       >
                         <option
                           v-for="group in groups"
                           :key="group.id"
                           :value="group.id"
-                          class="py-2 px-2 hover:bg-primary-50 focus:bg-primary-100"
+                          class="py-1"
                         >
-                          {{ group.name }}
+                          {{ group.name }} ({{ group.userIds.length }} members)
                         </option>
                       </select>
                       <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple groups</p>
@@ -331,64 +331,3 @@ const handleSubmit = () => {
   emit('save', userData)
 }
 </script>
-<style scoped>
-/* Enhanced multi-select styling */
-.multiselect-groups {
-  background-image: none;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
-}
-
-.multiselect-groups:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.multiselect-groups option {
-  padding: 8px 12px;
-  margin: 2px 0;
-  border-radius: 4px;
-  transition: all 0.15s ease-in-out;
-  background-color: transparent;
-  color: #374151;
-  font-weight: 500;
-}
-
-.multiselect-groups option:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.multiselect-groups option:checked {
-  background-color: #6366f1;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.multiselect-groups option:checked:hover {
-  background-color: #4f46e5;
-}
-
-/* Custom scrollbar for multi-select */
-.multiselect-groups::-webkit-scrollbar {
-  width: 6px;
-}
-
-.multiselect-groups::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-</style>
