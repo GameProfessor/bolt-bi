@@ -192,46 +192,99 @@
                       Groups
                     </h4>
                     
-                    <!-- Compact Group Search -->
+                    <!-- Multi-select Groups Dropdown -->
                     <div class="relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
-                      </div>
-                      <input
-                        v-model="groupSearchQuery"
-                        type="text"
-                        placeholder="Search groups..."
-                        class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
-                      />
-                    </div>
-
-                    <!-- Compact Groups List -->
-                    <div class="max-h-32 overflow-y-auto border border-gray-200 rounded-md bg-white">
-                      <div v-if="filteredGroups.length === 0" class="p-3 text-center text-gray-500 text-sm">
-                        {{ groupSearchQuery ? 'No groups found' : 'No groups available' }}
-                      </div>
-                      <label
-                        v-for="group in filteredGroups"
-                        :key="group.id"
-                        class="flex items-center p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      >
-                        <input
-                          type="checkbox"
-                          :value="group.id"
-                          v-model="form.groupIds"
-                          class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
-                        />
-                        <div class="ml-2 flex-1 min-w-0">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ group.name }}</div>
-                          <div class="text-xs text-gray-500 truncate">{{ group.userIds.length }} members</div>
-                        </div>
-                        <span
-                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ml-2"
-                          :class="group.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                        >
-                          {{ group.isActive ? 'Active' : 'Inactive' }}
-                        </span>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">
+                        Select Groups
                       </label>
+                      <div class="relative">
+                        <button
+                          type="button"
+                          @click="showGroupDropdown = !showGroupDropdown"
+                          class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                        >
+                          <span v-if="selectedGroupNames.length === 0" class="text-gray-500">
+                            Select groups...
+                          </span>
+                          <span v-else-if="selectedGroupNames.length === 1" class="text-gray-900">
+                            {{ selectedGroupNames[0] }}
+                          </span>
+                          <span v-else class="text-gray-900">
+                            {{ selectedGroupNames.length }} groups selected
+                          </span>
+                          <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <ChevronDownIcon class="h-4 w-4 text-gray-400" />
+                          </span>
+                        </button>
+
+                        <!-- Dropdown Panel -->
+                        <div
+                          v-if="showGroupDropdown"
+                          class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-48 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none text-sm"
+                        >
+                          <!-- Search Input -->
+                          <div class="sticky top-0 bg-white border-b border-gray-100 p-2">
+                            <div class="relative">
+                              <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
+                              </div>
+                              <input
+                                v-model="groupSearchQuery"
+                                type="text"
+                                placeholder="Search groups..."
+                                class="block w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                                @click.stop
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Group Options -->
+                          <div v-if="filteredGroups.length === 0" class="p-3 text-center text-gray-500 text-sm">
+                            {{ groupSearchQuery ? 'No groups found' : 'No groups available' }}
+                          </div>
+                          <label
+                            v-for="group in filteredGroups"
+                            :key="group.id"
+                            class="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                            @click.stop
+                          >
+                            <input
+                              type="checkbox"
+                              :value="group.id"
+                              v-model="form.groupIds"
+                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
+                            />
+                            <div class="ml-2 flex-1 min-w-0">
+                              <div class="text-sm font-medium text-gray-900 truncate">{{ group.name }}</div>
+                              <div class="text-xs text-gray-500 truncate">{{ group.userIds.length }} members</div>
+                            </div>
+                            <span
+                              class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ml-2"
+                              :class="group.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                            >
+                              {{ group.isActive ? 'Active' : 'Inactive' }}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Selected Groups Tags -->
+                      <div v-if="selectedGroupNames.length > 0" class="mt-2 flex flex-wrap gap-1">
+                        <span
+                          v-for="(groupName, index) in selectedGroupNames"
+                          :key="index"
+                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800"
+                        >
+                          {{ groupName }}
+                          <button
+                            type="button"
+                            @click="removeGroup(form.groupIds[index])"
+                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-primary-600 hover:bg-primary-200 hover:text-primary-800"
+                          >
+                            <XMarkIcon class="h-3 w-3" />
+                          </button>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </form>
@@ -274,7 +327,8 @@ import {
   UserGroupIcon, 
   MagnifyingGlassIcon,
   UserPlusIcon,
-  PencilIcon
+  PencilIcon,
+  ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 import type { User, UserGroup } from '@/types/user'
 
@@ -293,6 +347,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const groupSearchQuery = ref('')
+const showGroupDropdown = ref(false)
 
 const form = reactive({
   username: '',
@@ -317,6 +372,40 @@ const filteredGroups = computed(() => {
     group.name.toLowerCase().includes(query) ||
     (group.description && group.description.toLowerCase().includes(query))
   )
+})
+
+// Computed property for selected group names
+const selectedGroupNames = computed(() => {
+  return form.groupIds.map(groupId => {
+    const group = props.groups.find(g => g.id === groupId)
+    return group ? group.name : ''
+  }).filter(Boolean)
+})
+
+// Function to remove a group
+const removeGroup = (groupId: string) => {
+  const index = form.groupIds.indexOf(groupId)
+  if (index > -1) {
+    form.groupIds.splice(index, 1)
+  }
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: Event) => {
+  const target = event.target as Element
+  if (!target.closest('.relative')) {
+    showGroupDropdown.value = false
+  }
+}
+
+// Add event listener for clicking outside
+watch(() => props.show, (isShown) => {
+  if (isShown) {
+    document.addEventListener('click', handleClickOutside)
+  } else {
+    document.removeEventListener('click', handleClickOutside)
+    showGroupDropdown.value = false
+  }
 })
 
 // Watch for user prop changes to populate form
@@ -346,6 +435,7 @@ watch(() => props.user, (user) => {
   
   // Reset search when modal opens/closes
   groupSearchQuery.value = ''
+  showGroupDropdown.value = false
 }, { immediate: true })
 
 const handleSubmit = () => {
