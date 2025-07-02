@@ -3,6 +3,8 @@ import { allRoutes } from './modules'
 import { setupRouterGuards } from './guards'
 
 // Export router utilities and modules for use in components
+  settingsRoutes,
+  adminRoutes
 export * from './utils'
 export * from './guards'
 
@@ -22,6 +24,7 @@ export const router = createRouter({
       }
     }
     // Mặc định scroll lên top
+    ...adminRoutes,
     return { top: 0 }
   }
 })
