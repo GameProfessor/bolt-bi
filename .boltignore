@@ -1,0 +1,16 @@
+# Ignore large files to reduce token usage
+src/pages/dashboard/QuickDashboard.vue
+src/pages/dashboard/QuickDashboard.vue.backup
+
+# Ignore TypeScript files
+**/*.ts
+**/*.tsx
+
+# Exceptions - Keep important TypeScript files
+!src/main.ts
+!src/vite-env.d.ts
+!src/router/index.ts
+!src/stores/index.ts
+
+# Ignore test files
+tests/**/*
