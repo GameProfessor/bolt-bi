@@ -71,5 +71,120 @@
 </template>
 
 <script setup lang="ts">
-// Script content remains the same
+import { ref, onMounted } from 'vue'
+import { 
+  PlusIcon,
+  UserGroupIcon,
+  PencilIcon,
+  TrashIcon,
+  UsersIcon
+} from '@heroicons/vue/24/outline'
+import { useUserStore } from '@/stores/modules/user'
+import type { User, UserGroup } from '@/types/user'
+import UserModal from './components/UserModal.vue'
+import GroupModal from './components/GroupModal.vue'
+import GroupMemberModal from './components/GroupMemberModal.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+
+// Initialize the user store
+const userStore = useUserStore()
+
+// Modal states
+const showCreateUserModal = ref(false)
+const showEditUserModal = ref(false)
+const showCreateGroupModal = ref(false)
+const showEditGroupModal = ref(false)
+const showGroupMemberModal = ref(false)
+const showDeleteDialog = ref(false)
+
+// Editing states
+const editingUser = ref<User | null>(null)
+const editingGroup = ref<UserGroup | null>(null)
+const managingGroup = ref<UserGroup | null>(null)
+const deleteTarget = ref<{ type: 'user' | 'group', id: string } | null>(null)
+
+// Delete dialog computed properties
+const deleteDialogTitle = ref('')
+const deleteDialogMessage = ref('')
+
+// Modal handlers
+const closeUserModal = () => {
+  showCreateUserModal.value = false
+  showEditUserModal.value = false
+  editingUser.value = null
+}
+
+const closeGroupModal = () => {
+  showCreateGroupModal.value = false
+  showEditGroupModal.value = false
+  editingGroup.value = null
+}
+
+const closeGroupMemberModal = () => {
+  showGroupMemberModal.value = false
+  managingGroup.value = null
+}
+
+const saveUser = async (userData: Partial<User>) => {
+  try {
+    if (editingUser.value) {
+      await userStore.updateUser(editingUser.value.id, userData)
+    } else {
+      await userStore.createUser(userData as Omit<User, 'id' | 'createdAt' | 'updatedAt'>)
+    }
+    closeUserModal()
+  } catch (error) {
+    console.error('Error saving user:', error)
+  }
+}
+
+const saveGroup = async (groupData: Partial<UserGroup>) => {
+  try {
+    if (editingGroup.value) {
+      await userStore.updateGroup(editingGroup.value.id, groupData)
+    } else {
+      await userStore.createGroup(groupData as Omit<UserGroup, 'id' | 'createdAt' | 'updatedAt'>)
+    }
+    closeGroupModal()
+  } catch (error) {
+    console.error('Error saving group:', error)
+  }
+}
+
+const saveGroupMembers = async (memberIds: string[]) => {
+  try {
+    if (managingGroup.value) {
+      await userStore.updateGroupMembers(managingGroup.value.id, memberIds)
+    }
+    closeGroupMemberModal()
+  } catch (error) {
+    console.error('Error updating group members:', error)
+  }
+}
+
+const confirmDelete = async () => {
+  try {
+    if (deleteTarget.value) {
+      if (deleteTarget.value.type === 'user') {
+        await userStore.deleteUser(deleteTarget.value.id)
+      } else {
+        await userStore.deleteGroup(deleteTarget.value.id)
+      }
+    }
+    showDeleteDialog.value = false
+    deleteTarget.value = null
+  } catch (error) {
+    console.error('Error deleting:', error)
+  }
+}
+
+// Load data on mount
+onMounted(async () => {
+  try {
+    await userStore.loadUsers()
+    await userStore.loadGroups()
+  } catch (error) {
+    console.error('Error loading user data:', error)
+  }
+})
 </script>
