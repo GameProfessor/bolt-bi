@@ -112,6 +112,20 @@
                           placeholder="Phone number"
                         />
                       </div>
+                       <!-- Password (only for local users) -->
+                    <div v-if="form.type === 'local' && !user">
+                      <label for="password" class="block text-xs font-medium text-gray-700 mb-1">
+                        Password <span v-if="!user" class="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="password"
+                        v-model="form.password"
+                        type="password"
+                        :required="!user && form.type === 'local'"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm"
+                        :placeholder="user ? 'Leave blank to keep current' : 'Enter password'"
+                      />
+                    </div>
                     </div>
                   </div>
 
@@ -157,20 +171,7 @@
                       </div>
                     </div>
 
-                    <!-- Password (only for local users) -->
-                    <div v-if="form.type === 'local'">
-                      <label for="password" class="block text-xs font-medium text-gray-700 mb-1">
-                        Password <span v-if="!user" class="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="password"
-                        v-model="form.password"
-                        type="password"
-                        :required="!user && form.type === 'local'"
-                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm"
-                        :placeholder="user ? 'Leave blank to keep current' : 'Enter password'"
-                      />
-                    </div>
+                   
 
                     <!-- Status -->
                     <div>
@@ -191,29 +192,29 @@
                       <UserGroupIcon class="h-4 w-4 mr-2 text-green-600" />
                       Groups
                     </h4>
-                    
-                    <!-- Simple Multi-select Groups -->
                     <div>
                       <label for="groups" class="block text-xs font-medium text-gray-700 mb-1">
                         Select Groups
                       </label>
-                      <select
+                      <Multiselect
                         id="groups"
                         v-model="form.groupIds"
-                        multiple
-                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white multiselect-groups"
-                        size="5"
-                      >
-                        <option
-                          v-for="group in groups"
-                          :key="group.id"
-                          :value="group.id"
-                          class="py-2 px-2 hover:bg-primary-50 focus:bg-primary-100"
-                        >
-                          {{ group.name }}
-                        </option>
-                      </select>
-                      <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple groups</p>
+                        :options="groups"
+                        mode="tags"
+                        label="name"
+                        valueProp="id"
+                        placeholder="Select groups"
+                        searchable
+                        :append-to-body="false"
+                        :dropdownClass="'z-[10001]'"
+                        :classes="{
+    tag: 'bg-blue-100 text-blue-800 border border-blue-300 rounded-md px-2 py-1 text-sm flex items-center space-x-1',
+    tagRemove: 'hover:text-red-600 cursor-pointer ml-1',
+    option: 'text-sm px-3 py-2',            // reduce font size of options
+    search: 'text-xs placeholder-gray-400',
+  }"
+                      />
+                      <p class="mt-1 text-xs text-gray-500">Type to search and select multiple groups</p>
                     </div>
                   </div>
                 </form>
@@ -248,6 +249,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
+import Multiselect from '@vueform/multiselect'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { 
   XMarkIcon, 
@@ -331,64 +333,9 @@ const handleSubmit = () => {
   emit('save', userData)
 }
 </script>
+
 <style scoped>
-/* Enhanced multi-select styling */
-.multiselect-groups {
-  background-image: none;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
-}
-
-.multiselect-groups:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.multiselect-groups option {
-  padding: 8px 12px;
-  margin: 2px 0;
-  border-radius: 4px;
-  transition: all 0.15s ease-in-out;
-  background-color: transparent;
-  color: #374151;
-  font-weight: 500;
-}
-
-.multiselect-groups option:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.multiselect-groups option:checked {
-  background-color: #6366f1;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.multiselect-groups option:checked:hover {
-  background-color: #4f46e5;
-}
-
-/* Custom scrollbar for multi-select */
-.multiselect-groups::-webkit-scrollbar {
-  width: 6px;
-}
-
-.multiselect-groups::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+/* (No @import for multiselect theme here) */
 </style>
+
+<style src="@vueform/multiselect/themes/default.css"></style>
