@@ -185,54 +185,64 @@
                     </div>
                   </div>
 
-                  <!-- Groups Section - Compact with 2-row display -->
+                  <!-- Groups Section with Vue Select -->
                   <div class="space-y-3">
                     <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
                       <UserGroupIcon class="h-4 w-4 mr-2 text-green-600" />
                       Groups
                     </h4>
                     
-                    <!-- Selected Groups Display - Max 2 rows -->
-                    <div v-if="selectedGroups.length > 0" class="mb-2">
-                      <div class="flex flex-wrap gap-1 max-h-16 overflow-y-auto p-2 bg-gray-50 rounded-md border border-gray-200">
-                        <span
-                          v-for="group in selectedGroups"
-                          :key="group.id"
-                          class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200 hover:bg-primary-200 transition-colors duration-150"
-                        >
-                          {{ group.name }}
-                          <button
-                            type="button"
-                            @click="removeGroup(group.id)"
-                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary-300 focus:outline-none focus:bg-primary-300 transition-colors duration-150"
-                            title="Remove group"
-                          >
-                            <XMarkIcon class="h-3 w-3" />
-                          </button>
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <!-- Group Selection Dropdown -->
                     <div>
-                      <label for="groupSelect" class="block text-xs font-medium text-gray-700 mb-1">
-                        Add Groups
+                      <label for="groups" class="block text-xs font-medium text-gray-700 mb-1">
+                        Select Groups
                       </label>
-                      <select
-                        id="groupSelect"
-                        v-model="selectedGroupId"
-                        @change="addGroup"
-                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white"
+                      <VueSelect
+                        v-model="selectedGroups"
+                        :options="groupOptions"
+                        :multiple="true"
+                        :close-on-select="false"
+                        :clear-on-select="false"
+                        :preserve-search="true"
+                        placeholder="Search and select groups..."
+                        label="name"
+                        track-by="id"
+                        :searchable="true"
+                        :loading="false"
+                        :internal-search="true"
+                        :max-height="200"
+                        :show-no-results="true"
+                        :show-no-options="true"
+                        :allow-empty="true"
+                        :hide-selected="false"
+                        :limit="10"
+                        :limit-text="count => `and ${count} more`"
+                        class="vue-select-custom"
                       >
-                        <option value="">Select a group to add...</option>
-                        <option
-                          v-for="group in availableGroups"
-                          :key="group.id"
-                          :value="group.id"
-                        >
-                          {{ group.name }}
-                        </option>
-                      </select>
+                        <template #tag="{ option, remove }">
+                          <span class="vue-select__tag">
+                            <span>{{ option.name }}</span>
+                            <button
+                              @click="remove(option)"
+                              type="button"
+                              class="vue-select__tag-remove"
+                            >
+                              <span>×</span>
+                            </button>
+                          </span>
+                        </template>
+                        <template #option="{ option }">
+                          <div class="flex items-center justify-between w-full">
+                            <span class="font-medium">{{ option.name }}</span>
+                            <span class="text-xs text-gray-500">{{ option.userCount }} members</span>
+                          </div>
+                        </template>
+                        <template #no-result>
+                          <span class="text-gray-500 text-sm">No groups found</span>
+                        </template>
+                        <template #no-options>
+                          <span class="text-gray-500 text-sm">No groups available</span>
+                        </template>
+                      </VueSelect>
                       <p class="mt-1 text-xs text-gray-500">
                         {{ selectedGroups.length === 0 ? 'No groups selected' : `${selectedGroups.length} group(s) selected` }}
                       </p>
@@ -279,6 +289,8 @@ import {
   UserPlusIcon,
   PencilIcon
 } from '@heroicons/vue/24/outline'
+import VueSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 import type { User, UserGroup } from '@/types/user'
 
 interface Props {
@@ -295,7 +307,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const selectedGroupId = ref('')
+const selectedGroups = ref<UserGroup[]>([])
 
 const form = reactive({
   username: '',
@@ -310,28 +322,18 @@ const form = reactive({
 })
 
 // Computed properties for group management
-const selectedGroups = computed(() => {
-  return props.groups.filter(group => form.groupIds.includes(group.id))
+const groupOptions = computed(() => {
+  return props.groups.map(group => ({
+    id: group.id,
+    name: group.name,
+    userCount: group.userIds.length
+  }))
 })
 
-const availableGroups = computed(() => {
-  return props.groups.filter(group => !form.groupIds.includes(group.id))
-})
-
-// Group management methods
-const addGroup = () => {
-  if (selectedGroupId.value && !form.groupIds.includes(selectedGroupId.value)) {
-    form.groupIds.push(selectedGroupId.value)
-    selectedGroupId.value = ''
-  }
-}
-
-const removeGroup = (groupId: string) => {
-  const index = form.groupIds.indexOf(groupId)
-  if (index > -1) {
-    form.groupIds.splice(index, 1)
-  }
-}
+// Watch selectedGroups to update form.groupIds
+watch(selectedGroups, (newGroups) => {
+  form.groupIds = newGroups.map(group => group.id)
+}, { deep: true })
 
 // Watch for user prop changes to populate form
 watch(() => props.user, (user) => {
@@ -345,6 +347,9 @@ watch(() => props.user, (user) => {
     form.role = user.role
     form.groupIds = [...user.groupIds]
     form.isActive = user.isActive
+    
+    // Set selected groups for vue-select
+    selectedGroups.value = props.groups.filter(group => user.groupIds.includes(group.id))
   } else {
     // Reset form for new user
     form.username = ''
@@ -356,6 +361,7 @@ watch(() => props.user, (user) => {
     form.role = 'Dashboard Viewer'
     form.groupIds = []
     form.isActive = true
+    selectedGroups.value = []
   }
 }, { immediate: true })
 
@@ -379,3 +385,93 @@ const handleSubmit = () => {
   emit('save', userData)
 }
 </script>
+
+<style>
+/* Vue Select Custom Styling */
+.vue-select-custom .vs__dropdown-toggle {
+  @apply border border-gray-300 rounded-md shadow-sm;
+  min-height: 38px;
+  padding: 4px 8px;
+}
+
+.vue-select-custom .vs__dropdown-toggle:focus-within {
+  @apply border-primary-500 ring-1 ring-primary-200;
+}
+
+.vue-select-custom .vs__selected-options {
+  @apply flex flex-wrap gap-1;
+  padding: 2px;
+}
+
+.vue-select-custom .vs__search {
+  @apply text-sm;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.vue-select-custom .vs__search::placeholder {
+  @apply text-gray-500;
+}
+
+.vue-select-custom .vs__actions {
+  padding: 4px 8px;
+}
+
+.vue-select-custom .vs__clear {
+  @apply text-gray-400 hover:text-gray-600;
+}
+
+.vue-select-custom .vs__open-indicator {
+  @apply text-gray-400;
+}
+
+.vue-select-custom .vs__dropdown-menu {
+  @apply border border-gray-300 rounded-md shadow-lg;
+  z-index: 1000;
+}
+
+.vue-select-custom .vs__dropdown-option {
+  @apply px-3 py-2 text-sm;
+}
+
+.vue-select-custom .vs__dropdown-option--highlight {
+  @apply bg-primary-600 text-white;
+}
+
+.vue-select-custom .vs__dropdown-option--selected {
+  @apply bg-primary-100 text-primary-900;
+}
+
+.vue-select-custom .vs__tag {
+  @apply bg-primary-100 text-primary-800 border border-primary-200 rounded-md px-2 py-1 text-xs font-medium;
+  margin: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vue-select-custom .vs__tag-remove {
+  @apply text-primary-600 hover:text-primary-800;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+}
+
+.vue-select-custom .vs__tag-remove:hover {
+  @apply bg-primary-200 rounded-full;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vue-select-custom .vs__no-options,
+.vue-select-custom .vs__no-result {
+  @apply text-center py-3 text-gray-500 text-sm;
+}
+</style>
