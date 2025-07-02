@@ -25,28 +25,28 @@
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <DialogPanel class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <!-- Compact Header -->
-              <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3">
+              <!-- Header -->
+              <div class="flex items-center justify-between mb-6 px-4 pt-5">
                 <div class="flex items-center justify-between">
                   <div>
-                    <DialogTitle as="h3" class="text-lg font-semibold text-white">
+                    <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
                       {{ user ? 'Edit User' : 'Create User' }}
                     </DialogTitle>
-                    <p class="text-primary-100 text-xs mt-0.5">
-                      {{ user ? 'Update user information' : 'Add new user to system' }}
+                    <p class="text-sm text-gray-500 mt-1">
+                      {{ user ? 'Update user information and permissions' : 'Add a new user to the system' }}
                     </p>
                   </div>
-                  <button
-                    @click="$emit('close')"
-                    class="text-primary-200 hover:text-white transition-colors duration-200 rounded-full p-1 hover:bg-primary-500"
-                  >
-                    <XMarkIcon class="h-5 w-5" />
-                  </button>
                 </div>
+                <button
+                  @click="$emit('close')"
+                  class="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon class="h-6 w-6" />
+                </button>
               </div>
 
               <!-- Compact Form Content -->
-              <div class="px-4 py-4 max-h-[70vh] overflow-y-auto">
+              <div class="px-4 pb-4 max-h-[70vh] overflow-y-auto">
                 <form @submit.prevent="handleSubmit" class="space-y-4">
                   <!-- Basic Information - Inline Layout -->
                   <div class="space-y-3">
