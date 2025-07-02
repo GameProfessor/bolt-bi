@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-          <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
+          <h1 class="text-2xl font-bold text-gray-900">User & Group Management</h1>
           <p class="mt-2 text-sm text-gray-700">
             Manage users and user groups for the BI Dashboard system.
           </p>
@@ -125,9 +125,6 @@
                     Type
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Groups
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -152,8 +149,8 @@
                         </div>
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ user.fullName || user.username }}</div>
-                        <div class="text-sm text-gray-500">{{ user.email || user.username }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                        <div class="text-sm text-gray-500">{{ user.fullName || user.username }}</div>
                       </div>
                     </div>
                   </td>
@@ -172,17 +169,6 @@
                     >
                       {{ user.type.toUpperCase() }}
                     </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex flex-wrap gap-1">
-                      <span
-                        v-for="group in getUserGroups(user.id)"
-                        :key="group.id"
-                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
-                      >
-                        {{ group.name }}
-                      </span>
-                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span

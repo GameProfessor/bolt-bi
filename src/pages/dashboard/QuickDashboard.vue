@@ -1167,9 +1167,7 @@ const updateDragPreviewPosition = (event: DragEvent) => {
     const grid = tabGridStacks.value.get(activeTabId.value)
     if (grid && typeof grid.getCellHeight === 'function') {
       cellHeight = grid.getCellHeight()
-    } else if (grid && grid.opts && grid.opts.cellHeight) {
-      cellHeight = typeof grid.opts.cellHeight === 'function' ? grid.opts.cellHeight() : grid.opts.cellHeight
-    }
+    } 
   }
 
   // Use the dragged chart type, fallback to selectedChartType if not available
