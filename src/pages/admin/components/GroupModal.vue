@@ -46,71 +46,104 @@
               <!-- Form -->
               <div class="px-4 pb-4 max-h-[70vh] overflow-y-auto">
                 <form @submit.prevent="handleSubmit" class="space-y-4">
-                <!-- Group Name -->
-                <div>
-                  <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                    Group Name <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    v-model="form.name"
-                    type="text"
-                    required
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    placeholder="Enter group name"
-                  />
-                </div>
-
-                <!-- Description -->
-                <div>
-                  <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    v-model="form.description"
-                    rows="3"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    placeholder="Enter group description"
-                  />
-                </div>
-
-                <!-- Users -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Group Members
-                  </label>
-                  <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
-                    <label
-                      v-for="user in users"
-                      :key="user.id"
-                      class="flex items-center"
-                    >
+                  <!-- Basic Information -->
+                  <div class="space-y-3">
+                    <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
+                      <UserGroupIcon class="h-4 w-4 mr-2 text-primary-600" />
+                      Group Information
+                    </h4>
+                    
+                    <!-- Group Name -->
+                    <div>
+                      <label for="name" class="block text-xs font-medium text-gray-700 mb-1">
+                        Group Name <span class="text-red-500">*</span>
+                      </label>
                       <input
-                        type="checkbox"
-                        :value="user.id"
-                        v-model="form.userIds"
-                        class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                        id="name"
+                        v-model="form.name"
+                        type="text"
+                        required
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm"
+                        placeholder="Enter group name"
                       />
-                      <span class="ml-2 text-sm text-gray-700">
-                        {{ user.fullName || user.username }}
-                        <span class="text-gray-500">({{ user.role }})</span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
+                    </div>
 
-                <!-- Status -->
-                <div>
-                  <label class="flex items-center">
-                    <input
-                      v-model="form.isActive"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                    />
-                    <span class="ml-2 text-sm text-gray-700">Active group</span>
-                  </label>
-                </div>
+                    <!-- Description -->
+                    <div>
+                      <label for="description" class="block text-xs font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        id="description"
+                        v-model="form.description"
+                        rows="3"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm resize-none"
+                        placeholder="Enter group description"
+                      />
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                      <label class="flex items-center">
+                        <input
+                          v-model="form.isActive"
+                          type="checkbox"
+                          class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">Active group</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Group Members Section -->
+                  <div class="space-y-3">
+                    <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
+                      <UserIcon class="h-4 w-4 mr-2 text-green-600" />
+                      Group Members
+                    </h4>
+                    
+                    <!-- Compact User Search -->
+                    <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        v-model="userSearchQuery"
+                        type="text"
+                        placeholder="Search users..."
+                        class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                      />
+                    </div>
+
+                    <!-- Compact Users List -->
+                    <div class="max-h-32 overflow-y-auto border border-gray-200 rounded-md bg-white">
+                      <div v-if="filteredUsers.length === 0" class="p-3 text-center text-gray-500 text-sm">
+                        {{ userSearchQuery ? 'No users found' : 'No users available' }}
+                      </div>
+                      <label
+                        v-for="user in filteredUsers"
+                        :key="user.id"
+                        class="flex items-center p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="user.id"
+                          v-model="form.userIds"
+                          class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
+                        />
+                        <div class="ml-2 flex-1 min-w-0">
+                          <div class="text-sm font-medium text-gray-900 truncate">{{ user.fullName || user.username }}</div>
+                          <div class="text-xs text-gray-500 truncate">{{ user.role }} • {{ user.email || user.username }}</div>
+                        </div>
+                        <span
+                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ml-2"
+                          :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                        >
+                          {{ user.isActive ? 'Active' : 'Inactive' }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
 
                 </form>
               </div>
@@ -141,9 +174,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { 
+  XMarkIcon, 
+  UserGroupIcon, 
+  UserIcon, 
+  MagnifyingGlassIcon 
+} from '@heroicons/vue/24/outline'
 import type { User, UserGroup } from '@/types/user'
 
 interface Props {
@@ -160,11 +198,28 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+const userSearchQuery = ref('')
+
 const form = reactive({
   name: '',
   description: '',
   userIds: [] as string[],
   isActive: true
+})
+
+// Filtered users based on search query
+const filteredUsers = computed(() => {
+  if (!userSearchQuery.value) {
+    return props.users
+  }
+  
+  const query = userSearchQuery.value.toLowerCase()
+  return props.users.filter(user =>
+    user.username.toLowerCase().includes(query) ||
+    (user.fullName && user.fullName.toLowerCase().includes(query)) ||
+    (user.email && user.email.toLowerCase().includes(query)) ||
+    user.role.toLowerCase().includes(query)
+  )
 })
 
 // Watch for group prop changes to populate form
@@ -181,6 +236,9 @@ watch(() => props.group, (group) => {
     form.userIds = []
     form.isActive = true
   }
+  
+  // Reset search when modal opens/closes
+  userSearchQuery.value = ''
 }, { immediate: true })
 
 const handleSubmit = () => {
