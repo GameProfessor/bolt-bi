@@ -88,6 +88,9 @@ import {
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/vue/24/outline'
+import {
+  DocumentTextIcon
+} from '@heroicons/vue/24/outline'
 
 
 import NotificationBell from '@/components/common/NotificationBell.vue'
