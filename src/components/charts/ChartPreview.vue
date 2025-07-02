@@ -8,10 +8,6 @@
       <Squares2X2Icon class="h-12 w-12 mb-2 text-gray-400" />
       <span class="text-gray-500">No chart data</span>
     </div>
-    <div v-else-if="!chartComponent" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm">
-      <ExclamationTriangleIcon class="h-8 w-8 mb-2 text-gray-400" />
-      <span class="text-gray-500">Chart component not available</span>
-    </div>
     <component 
       v-else
       :is="chartComponent" 
