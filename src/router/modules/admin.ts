@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const adminRoutes: RouteRecordRaw[] = [
   {
     path: '/admin',
+    name: 'Admin',
     redirect: '/admin/users'
   },
   {
@@ -14,7 +15,9 @@ const adminRoutes: RouteRecordRaw[] = [
       description: 'Manage users and user groups',
       layout: 'default',
       requiresAuth: true,
-      requiresPermission: 'user.manage'
+      requiresPermission: 'user.manage',
+      showInNavigation: true,
+      module: 'admin'
     }
   }
 ]

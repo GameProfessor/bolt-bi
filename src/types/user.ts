@@ -1,17 +1,18 @@
 export interface User {
   id: string
   username: string
-  fullName?: string
-  email?: string
+  password?: string // Optional for SSO users
   phone?: string
+  email?: string
+  fullName?: string
   type: 'local' | 'sso'
-  password?: string // Only for local users
   role: 'Admin' | 'Dashboard Designer' | 'Dashboard Viewer'
   groupIds: string[]
   isActive: boolean
+  lastLogin?: Date
   createdAt: Date
   updatedAt?: Date
-  lastLogin?: Date
+  createdBy?: string
 }
 
 export interface UserGroup {
@@ -23,15 +24,16 @@ export interface UserGroup {
   isActive: boolean
   createdAt: Date
   updatedAt?: Date
+  createdBy?: string
 }
 
 export interface CreateUserRequest {
   username: string
-  fullName?: string
-  email?: string
-  phone?: string
-  type: 'local' | 'sso'
   password?: string
+  phone?: string
+  email?: string
+  fullName?: string
+  type: 'local' | 'sso'
   role: 'Admin' | 'Dashboard Designer' | 'Dashboard Viewer'
   groupIds?: string[]
   isActive?: boolean
@@ -39,10 +41,10 @@ export interface CreateUserRequest {
 
 export interface UpdateUserRequest {
   username?: string
-  fullName?: string
-  email?: string
-  phone?: string
   password?: string
+  phone?: string
+  email?: string
+  fullName?: string
   role?: 'Admin' | 'Dashboard Designer' | 'Dashboard Viewer'
   groupIds?: string[]
   isActive?: boolean
@@ -51,7 +53,7 @@ export interface UpdateUserRequest {
 export interface CreateGroupRequest {
   name: string
   description?: string
-  permissions: string[]
+  permissions?: string[]
   userIds?: string[]
   isActive?: boolean
 }
