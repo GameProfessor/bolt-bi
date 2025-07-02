@@ -13,6 +13,7 @@ export { useDashboardStore } from './modules/dashboard'
 export { useDataSourceStore } from './modules/dataSource'
 export { useAppStore } from './modules/app'
 export { useUserStore } from './modules/user'
+export { useAccessLogStore } from './modules/accessLog'
 
 // Re-export types from types directory
 export type {

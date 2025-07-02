@@ -12,6 +12,9 @@ export * from './chart'
 // Data Source types
 export * from './dataSource'
 
+// Access Log types
+export * from './accessLog'
+
 // Common types
 export interface User {
   id: string

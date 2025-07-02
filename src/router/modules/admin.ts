@@ -19,6 +19,16 @@ const adminRoutes: RouteRecordRaw[] = [
       showInNavigation: true,
       module: 'admin'
     }
+  },
+  {
+    path: '/admin/access-logs',
+    name: 'AccessLogs',
+    component: () => import('@/pages/admin/AccessLogs.vue'),
+    meta: {
+      title: 'Access Logs',
+      requiresAuth: true,
+      requiresPermission: 'admin'
+    }
   }
 ]
 
