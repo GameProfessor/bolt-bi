@@ -24,9 +24,9 @@
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <DialogPanel class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
               <!-- Header -->
-              <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center justify-between mb-6 px-4 pt-5">
                 <div>
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
                     {{ group ? 'Edit Group' : 'Create Group' }}
@@ -44,7 +44,8 @@
               </div>
 
               <!-- Form -->
-              <form @submit.prevent="handleSubmit" class="space-y-4">
+              <div class="px-4 pb-4 max-h-[70vh] overflow-y-auto">
+                <form @submit.prevent="handleSubmit" class="space-y-4">
                 <!-- Group Name -->
                 <div>
                   <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
@@ -111,23 +112,26 @@
                   </label>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    @click="$emit('close')"
-                    class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  >
-                    {{ group ? 'Update Group' : 'Create Group' }}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex justify-end space-x-3 px-4 py-3 bg-gray-50 border-t border-gray-200">
+                <button
+                  type="button"
+                  @click="$emit('close')"
+                  class="inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  @click="handleSubmit"
+                  class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 shadow-sm"
+                >
+                  {{ group ? 'Update Group' : 'Create Group' }}
+                </button>
+              </div>
             </DialogPanel>
           </TransitionChild>
         </div>
