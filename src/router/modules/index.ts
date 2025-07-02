@@ -13,6 +13,7 @@ export const allRoutes: RouteRecordRaw[] = [
   ...dashboardRoutes,
   ...dataRoutes,
   ...designRoutes,
+  ...adminRoutes,
   ...settingsRoutes,
   ...errorRoutes // Error routes phải đặt cuối cùng
 ]

@@ -32,7 +32,7 @@
                     {{ group ? 'Edit Group' : 'Create Group' }}
                   </DialogTitle>
                   <p class="text-sm text-gray-500 mt-1">
-                    {{ group ? 'Update group information and permissions' : 'Add a new user group to the system' }}
+                    {{ group ? 'Update group information' : 'Add a new user group to the system' }}
                   </p>
                 </div>
                 <button
@@ -72,31 +72,6 @@
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                     placeholder="Enter group description"
                   />
-                </div>
-
-                <!-- Permissions -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Permissions
-                  </label>
-                  <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
-                    <label
-                      v-for="permission in availablePermissions"
-                      :key="permission.value"
-                      class="flex items-start"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="permission.value"
-                        v-model="form.permissions"
-                        class="mt-1 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                      />
-                      <div class="ml-2">
-                        <span class="text-sm font-medium text-gray-700">{{ permission.label }}</span>
-                        <p class="text-xs text-gray-500">{{ permission.description }}</p>
-                      </div>
-                    </label>
-                  </div>
                 </div>
 
                 <!-- Users -->
@@ -181,68 +156,9 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const availablePermissions = [
-  {
-    value: 'all',
-    label: 'All Permissions',
-    description: 'Full system access (Admin only)'
-  },
-  {
-    value: 'dashboard.view',
-    label: 'View Dashboards',
-    description: 'Can view existing dashboards'
-  },
-  {
-    value: 'dashboard.create',
-    label: 'Create Dashboards',
-    description: 'Can create new dashboards'
-  },
-  {
-    value: 'dashboard.edit',
-    label: 'Edit Dashboards',
-    description: 'Can modify existing dashboards'
-  },
-  {
-    value: 'dashboard.delete',
-    label: 'Delete Dashboards',
-    description: 'Can delete dashboards'
-  },
-  {
-    value: 'data.view',
-    label: 'View Data Sources',
-    description: 'Can view data sources'
-  },
-  {
-    value: 'data.create',
-    label: 'Create Data Sources',
-    description: 'Can upload and create data sources'
-  },
-  {
-    value: 'data.edit',
-    label: 'Edit Data Sources',
-    description: 'Can modify data sources'
-  },
-  {
-    value: 'data.delete',
-    label: 'Delete Data Sources',
-    description: 'Can delete data sources'
-  },
-  {
-    value: 'user.view',
-    label: 'View Users',
-    description: 'Can view user information'
-  },
-  {
-    value: 'user.manage',
-    label: 'Manage Users',
-    description: 'Can create, edit, and delete users'
-  }
-]
-
 const form = reactive({
   name: '',
   description: '',
-  permissions: [] as string[],
   userIds: [] as string[],
   isActive: true
 })
@@ -252,14 +168,12 @@ watch(() => props.group, (group) => {
   if (group) {
     form.name = group.name
     form.description = group.description || ''
-    form.permissions = [...group.permissions]
     form.userIds = [...group.userIds]
     form.isActive = group.isActive
   } else {
     // Reset form for new group
     form.name = ''
     form.description = ''
-    form.permissions = []
     form.userIds = []
     form.isActive = true
   }
@@ -269,7 +183,6 @@ const handleSubmit = () => {
   const groupData = {
     name: form.name,
     description: form.description || undefined,
-    permissions: form.permissions,
     userIds: form.userIds,
     isActive: form.isActive
   }

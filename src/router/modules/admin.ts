@@ -15,7 +15,7 @@ const adminRoutes: RouteRecordRaw[] = [
       description: 'Manage users and user groups',
       layout: 'default',
       requiresAuth: true,
-      requiresPermission: 'user.manage',
+      requiresPermission: 'canManageUsers',
       showInNavigation: true,
       module: 'admin'
     }

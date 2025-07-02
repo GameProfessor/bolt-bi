@@ -20,6 +20,7 @@ export interface UserPermissions {
   canEditDesign: boolean
   canViewSettings: boolean
   canEditSettings: boolean
+  canManageUsers: boolean
 }
 
 /**
@@ -60,7 +61,8 @@ export function getUserPermissions(): UserPermissions {
     canViewDesign: true,
     canEditDesign: true,
     canViewSettings: true,
-    canEditSettings: true
+    canEditSettings: true,
+    canManageUsers: true
   }
 }
 

@@ -19,7 +19,6 @@ export interface UserGroup {
   id: string
   name: string
   description?: string
-  permissions: string[]
   userIds: string[]
   isActive: boolean
   createdAt: Date
@@ -53,7 +52,6 @@ export interface UpdateUserRequest {
 export interface CreateGroupRequest {
   name: string
   description?: string
-  permissions?: string[]
   userIds?: string[]
   isActive?: boolean
 }
@@ -61,7 +59,6 @@ export interface CreateGroupRequest {
 export interface UpdateGroupRequest {
   name?: string
   description?: string
-  permissions?: string[]
   userIds?: string[]
   isActive?: boolean
 }

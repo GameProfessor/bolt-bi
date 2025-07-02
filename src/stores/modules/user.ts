@@ -64,9 +64,8 @@ export const useUserStore = defineStore('user', () => {
       groups.value = [
         {
           id: '1',
-          name: 'Administrators',
-          description: 'Full system access',
-          permissions: ['all'],
+          name: 'Hà Nội',
+          description: 'Nhân viên Hà Nội',      
           userIds: ['1'],
           isActive: true,
           createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -74,9 +73,8 @@ export const useUserStore = defineStore('user', () => {
         },
         {
           id: '2',
-          name: 'Dashboard Designers',
-          description: 'Can create and edit dashboards',
-          permissions: ['dashboard.create', 'dashboard.edit', 'dashboard.view', 'data.view'],
+          name: 'Hồ Chí Minh',
+          description: 'Nhân viên HCM',          
           userIds: ['2'],
           isActive: true,
           createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
@@ -84,9 +82,8 @@ export const useUserStore = defineStore('user', () => {
         },
         {
           id: '3',
-          name: 'Dashboard Viewers',
-          description: 'Can only view dashboards',
-          permissions: ['dashboard.view'],
+          name: 'Đà Nẵng',
+          description: 'Nhân viên Đà Nẵng',        
           userIds: ['3'],
           isActive: true,
           createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
@@ -237,7 +234,6 @@ export const useUserStore = defineStore('user', () => {
         id: nanoid(),
         name: groupData.name,
         description: groupData.description,
-        permissions: groupData.permissions || [],
         userIds: groupData.userIds || [],
         isActive: groupData.isActive ?? true,
         createdAt: new Date(),

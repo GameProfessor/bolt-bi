@@ -346,9 +346,13 @@
               </div>
               
               <div class="mt-4">
+                <p class="text-sm font-medium text-gray-700">Members</p>
+                <p class="text-sm text-gray-500">{{ group.userIds.length }} members</p>
+              </div>
+              <div class="mt-4">
+                <p class="text-sm font-medium text-gray-700">Description</p>
                 <p class="text-sm text-gray-600">{{ group.description || 'No description' }}</p>
               </div>
-              
               <div class="mt-4">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-gray-700">Status</span>
@@ -357,25 +361,6 @@
                     :class="group.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
                   >
                     {{ group.isActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </div>
-              </div>
-              
-              <div class="mt-4">
-                <span class="text-sm font-medium text-gray-700">Permissions</span>
-                <div class="mt-2 flex flex-wrap gap-1">
-                  <span
-                    v-for="permission in group.permissions.slice(0, 3)"
-                    :key="permission"
-                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {{ permission }}
-                  </span>
-                  <span
-                    v-if="group.permissions.length > 3"
-                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
-                  >
-                    +{{ group.permissions.length - 3 }} more
                   </span>
                 </div>
               </div>

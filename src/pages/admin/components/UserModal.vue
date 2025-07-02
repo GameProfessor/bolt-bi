@@ -32,7 +32,7 @@
                     {{ user ? 'Edit User' : 'Create User' }}
                   </DialogTitle>
                   <p class="text-sm text-gray-500 mt-1">
-                    {{ user ? 'Update user information and permissions' : 'Add a new user to the system' }}
+                    {{ user ? 'Update user information' : 'Add a new user to the system' }}
                   </p>
                 </div>
                 <button
