@@ -128,12 +128,6 @@ const navigationItems = [
     routeName: 'QuickDashboard',
     icon: BoltIcon
   },
-  {
-    name: 'User Management',
-    to: '/admin/users',
-    routeName: 'UserManagement',
-    icon: UserIcon
-  },
   // {
   //   name: 'Template Designer',
   //   to: '/template-designer',
