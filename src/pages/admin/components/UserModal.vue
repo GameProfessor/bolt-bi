@@ -185,67 +185,35 @@
                     </div>
                   </div>
 
-                  <!-- Groups Section with Vue Select -->
+                  <!-- Groups Section - Compact -->
                   <div class="space-y-3">
                     <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
                       <UserGroupIcon class="h-4 w-4 mr-2 text-green-600" />
                       Groups
                     </h4>
                     
+                    <!-- Simple Multi-select Groups -->
                     <div>
                       <label for="groups" class="block text-xs font-medium text-gray-700 mb-1">
                         Select Groups
                       </label>
-                      <VueSelect
-                        v-model="selectedGroups"
-                        :options="groupOptions"
-                        :multiple="true"
-                        :close-on-select="false"
-                        :clear-on-select="false"
-                        :preserve-search="true"
-                        placeholder="Search and select groups..."
-                        label="name"
-                        track-by="id"
-                        :searchable="true"
-                        :loading="false"
-                        :internal-search="true"
-                        :max-height="200"
-                        :show-no-results="true"
-                        :show-no-options="true"
-                        :allow-empty="true"
-                        :hide-selected="false"
-                        :limit="10"
-                        :limit-text="count => `and ${count} more`"
-                        class="vue-select-custom"
+                      <select
+                        id="groups"
+                        v-model="form.groupIds"
+                        multiple
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white multiselect-groups"
+                        size="5"
                       >
-                        <template #tag="{ option, remove }">
-                          <span class="vue-select__tag">
-                            <span>{{ option.name }}</span>
-                            <button
-                              @click="remove(option)"
-                              type="button"
-                              class="vue-select__tag-remove"
-                            >
-                              <span>×</span>
-                            </button>
-                          </span>
-                        </template>
-                        <template #option="{ option }">
-                          <div class="flex items-center justify-between w-full">
-                            <span class="font-medium">{{ option.name }}</span>
-                            <span class="text-xs text-gray-500">{{ option.userCount }} members</span>
-                          </div>
-                        </template>
-                        <template #no-result>
-                          <span class="text-gray-500 text-sm">No groups found</span>
-                        </template>
-                        <template #no-options>
-                          <span class="text-gray-500 text-sm">No groups available</span>
-                        </template>
-                      </VueSelect>
-                      <p class="mt-1 text-xs text-gray-500">
-                        {{ selectedGroups.length === 0 ? 'No groups selected' : `${selectedGroups.length} group(s) selected` }}
-                      </p>
+                        <option
+                          v-for="group in groups"
+                          :key="group.id"
+                          :value="group.id"
+                          class="py-2 px-2 hover:bg-primary-50 focus:bg-primary-100"
+                        >
+                          {{ group.name }}
+                        </option>
+                      </select>
+                      <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple groups</p>
                     </div>
                   </div>
                 </form>
@@ -289,8 +257,6 @@ import {
   UserPlusIcon,
   PencilIcon
 } from '@heroicons/vue/24/outline'
-import VueSelect from 'vue-select'
-import 'vue-select/dist/vue-select.css'
 import type { User, UserGroup } from '@/types/user'
 
 interface Props {
@@ -307,8 +273,6 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const selectedGroups = ref<UserGroup[]>([])
-
 const form = reactive({
   username: '',
   fullName: '',
@@ -320,20 +284,6 @@ const form = reactive({
   groupIds: [] as string[],
   isActive: true
 })
-
-// Computed properties for group management
-const groupOptions = computed(() => {
-  return props.groups.map(group => ({
-    id: group.id,
-    name: group.name,
-    userCount: group.userIds.length
-  }))
-})
-
-// Watch selectedGroups to update form.groupIds
-watch(selectedGroups, (newGroups) => {
-  form.groupIds = newGroups.map(group => group.id)
-}, { deep: true })
 
 // Watch for user prop changes to populate form
 watch(() => props.user, (user) => {
@@ -347,9 +297,6 @@ watch(() => props.user, (user) => {
     form.role = user.role
     form.groupIds = [...user.groupIds]
     form.isActive = user.isActive
-    
-    // Set selected groups for vue-select
-    selectedGroups.value = props.groups.filter(group => user.groupIds.includes(group.id))
   } else {
     // Reset form for new user
     form.username = ''
@@ -361,7 +308,6 @@ watch(() => props.user, (user) => {
     form.role = 'Dashboard Viewer'
     form.groupIds = []
     form.isActive = true
-    selectedGroups.value = []
   }
 }, { immediate: true })
 
@@ -385,93 +331,64 @@ const handleSubmit = () => {
   emit('save', userData)
 }
 </script>
-
-<style>
-/* Vue Select Custom Styling */
-.vue-select-custom .vs__dropdown-toggle {
-  @apply border border-gray-300 rounded-md shadow-sm;
-  min-height: 38px;
-  padding: 4px 8px;
+<style scoped>
+/* Enhanced multi-select styling */
+.multiselect-groups {
+  background-image: none;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
 }
 
-.vue-select-custom .vs__dropdown-toggle:focus-within {
-  @apply border-primary-500 ring-1 ring-primary-200;
+.multiselect-groups:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.vue-select-custom .vs__selected-options {
-  @apply flex flex-wrap gap-1;
-  padding: 2px;
+.multiselect-groups option {
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+  background-color: transparent;
+  color: #374151;
+  font-weight: 500;
 }
 
-.vue-select-custom .vs__search {
-  @apply text-sm;
-  margin: 0;
-  padding: 4px 0;
+.multiselect-groups option:hover {
+  background-color: #eff6ff;
+  color: #1d4ed8;
 }
 
-.vue-select-custom .vs__search::placeholder {
-  @apply text-gray-500;
+.multiselect-groups option:checked {
+  background-color: #6366f1;
+  color: #ffffff;
+  font-weight: 600;
 }
 
-.vue-select-custom .vs__actions {
-  padding: 4px 8px;
+.multiselect-groups option:checked:hover {
+  background-color: #4f46e5;
 }
 
-.vue-select-custom .vs__clear {
-  @apply text-gray-400 hover:text-gray-600;
+/* Custom scrollbar for multi-select */
+.multiselect-groups::-webkit-scrollbar {
+  width: 6px;
 }
 
-.vue-select-custom .vs__open-indicator {
-  @apply text-gray-400;
+.multiselect-groups::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
 }
 
-.vue-select-custom .vs__dropdown-menu {
-  @apply border border-gray-300 rounded-md shadow-lg;
-  z-index: 1000;
+.multiselect-groups::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
 }
 
-.vue-select-custom .vs__dropdown-option {
-  @apply px-3 py-2 text-sm;
-}
-
-.vue-select-custom .vs__dropdown-option--highlight {
-  @apply bg-primary-600 text-white;
-}
-
-.vue-select-custom .vs__dropdown-option--selected {
-  @apply bg-primary-100 text-primary-900;
-}
-
-.vue-select-custom .vs__tag {
-  @apply bg-primary-100 text-primary-800 border border-primary-200 rounded-md px-2 py-1 text-xs font-medium;
-  margin: 1px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.vue-select-custom .vs__tag-remove {
-  @apply text-primary-600 hover:text-primary-800;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  padding: 0;
-  margin: 0;
-}
-
-.vue-select-custom .vs__tag-remove:hover {
-  @apply bg-primary-200 rounded-full;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vue-select-custom .vs__no-options,
-.vue-select-custom .vs__no-result {
-  @apply text-center py-3 text-gray-500 text-sm;
+.multiselect-groups::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 </style>
