@@ -83,6 +83,7 @@ import {
   TableCellsIcon,
   BuildingStorefrontIcon,
   BoltIcon,
+  UserIcon,
 
   Bars3Icon,
   XMarkIcon

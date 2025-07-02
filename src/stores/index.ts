@@ -12,6 +12,7 @@ export const pinia = createPinia()
 export { useDashboardStore } from './modules/dashboard'
 export { useDataSourceStore } from './modules/dataSource'
 export { useAppStore } from './modules/app'
+export { useUserStore } from './modules/user'
 
 // Re-export types from types directory
 export type {

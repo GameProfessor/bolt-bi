@@ -4,6 +4,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import dashboardRoutes from './dashboard'
 import dataRoutes from './data'
 import designRoutes from './design'
+import adminRoutes from './admin'
 import settingsRoutes from './settings'
 import errorRoutes from './error'
 
@@ -21,6 +22,7 @@ export {
   dashboardRoutes,
   dataRoutes,
   designRoutes,
+  adminRoutes,
   settingsRoutes,
   errorRoutes
 }
