@@ -181,8 +181,8 @@ const confirmDelete = async () => {
 // Load data on mount
 onMounted(async () => {
   try {
-    await userStore.loadUsers()
-    await userStore.loadGroups()
+    await userStore.fetchUsers()
+    await userStore.fetchGroups()
   } catch (error) {
     console.error('Error loading user data:', error)
   }
