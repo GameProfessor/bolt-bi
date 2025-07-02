@@ -1271,8 +1271,8 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
     const mouseGridX = mouseX / cellWidth
     const mouseGridY = mouseY / cellHeight
     
-    gridX = Math.round(mouseGridX - chartCenterX)
-    gridY = Math.round(mouseGridY - chartCenterY)
+    gridX = Math.floor(mouseGridX - chartCenterX)
+    gridY = Math.floor(mouseGridY - chartCenterY)
     
     gridX = Math.max(0, Math.min(gridX, 12 - chartWidth))
     gridY = Math.max(0, gridY)
