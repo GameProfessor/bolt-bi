@@ -81,7 +81,7 @@ export const parseJSON = (jsonText: string): {
  */
 export const inferFields = (
   data: any[],
-  hasHeader: boolean = true
+  _hasHeader: boolean = true
 ): DataField[] => {
   if (data.length === 0) return []
   

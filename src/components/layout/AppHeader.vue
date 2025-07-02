@@ -83,17 +83,15 @@ import {
   TableCellsIcon,
   BuildingStorefrontIcon,
   BoltIcon,
-  PresentationChartLineIcon,
-  PaintBrushIcon,
+
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/vue/24/outline'
 
-import NavLink from '@/components/layout/NavLink.vue'
-import MobileNavLink from '@/components/layout/MobileNavLink.vue'
+
 import NotificationBell from '@/components/common/NotificationBell.vue'
 import UserMenu from '@/components/common/UserMenu.vue'
-import { getFlatNavigation } from '@/router'
+
 
 const showMobileMenu = ref(false)
 

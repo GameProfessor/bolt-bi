@@ -52,23 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { ChartBarIcon } from '@heroicons/vue/24/outline'
 import { useAppStore } from '@/stores'
 
 const appStore = useAppStore()
 
-const selectedLanguage = ref('vi')
+
 const isLoading = computed(() => appStore.isLoading)
 
-const currentYear = new Date().getFullYear()
-const version = '1.0.0'
-const lastUpdate = '2024-12-27'
 
-const changeLanguage = () => {
-  // Implement language change logic
-  console.log('Language changed to:', selectedLanguage.value)
-}
 
 onMounted(() => {
   // Set page theme for auth pages

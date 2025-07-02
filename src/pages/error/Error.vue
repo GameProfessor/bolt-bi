@@ -73,11 +73,11 @@ import {
   HomeIcon,
   InformationCircleIcon 
 } from '@heroicons/vue/24/outline'
-import { useAppStore } from '@/stores'
+
 
 const router = useRouter()
 const route = useRoute()
-const appStore = useAppStore()
+
 
 const isDevelopment = import.meta.env.DEV
 const errorDetails = ref<{ message: string; stack: string } | null>(null)

@@ -78,7 +78,7 @@ export function hasPermission(permission: keyof UserPermissions): boolean {
  */
 export function authGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const meta = to.meta as RouteMeta
@@ -101,7 +101,7 @@ export function authGuard(
  */
 export function permissionGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const meta = to.meta as RouteMeta
@@ -124,7 +124,7 @@ export function permissionGuard(
  */
 export function titleGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const meta = to.meta as RouteMeta
@@ -152,8 +152,8 @@ export function titleGuard(
  * Hiển thị loading state khi chuyển route
  */
 export function loadingGuard(
-  to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const appStore = useAppStore()
@@ -174,7 +174,7 @@ export function loadingGuard(
  */
 export function dataValidationGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   // Kiểm tra các route cần data validation
@@ -204,7 +204,7 @@ export function dataValidationGuard(
  * Lưu lại navigation history
  */
 export function navigationHistoryGuard(
-  to: RouteLocationNormalized,
+  _to: RouteLocationNormalized,
   from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
@@ -227,7 +227,7 @@ export function navigationHistoryGuard(
  */
 export function errorHandlerGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   try {
@@ -250,7 +250,7 @@ export function errorHandlerGuard(
  */
 export function developmentGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const isDevelopment = import.meta.env.DEV

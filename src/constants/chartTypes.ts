@@ -70,6 +70,11 @@ export const CHART_TYPES: Record<ChartType, { label: string; icon: string; descr
     label: 'Treemap',
     icon: 'ChartTreemapIcon',
     description: 'Biểu đồ cây phân cấp'
+  },
+  card: {
+    label: 'KPI Card',
+    icon: 'Squares2X2Icon',
+    description: 'Thẻ hiển thị chỉ số KPI'
   }
 }
 

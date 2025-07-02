@@ -7,7 +7,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { 
   User, 
-  AppState, 
+
   Notification,
   UserPreferences 
 } from '@/types'

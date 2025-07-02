@@ -110,7 +110,7 @@
                     </div>
                   </div>
                   <div class="chart-content">
-                    <ChartPreview :chart="chart.config" class="w-full h-full" />
+                    <ChartPreview :chart="createDashboardChart(chart.config)" class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -130,8 +130,7 @@ import { useRouter } from 'vue-router'
 import { nanoid } from 'nanoid'
 import {
   ArrowLeftIcon,
-  PlusIcon,
-  XMarkIcon,
+
   Squares2X2Icon,
   DocumentCheckIcon,
   ChartBarIcon,
@@ -452,7 +451,7 @@ function initializeGridStack() {
         scroll: false
       }
     }, gridStackContainer.value)
-    gridStack.on('change', (event, items) => {
+    gridStack.on('change', (_event, items) => {
       items.forEach(item => {
         const chart = charts.value.find(c => c.id === item.id)
         if (chart && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
@@ -504,6 +503,27 @@ function onDashboardDrop(event: DragEvent) {
     })
   } catch (e) {
     // Ignore
+  }
+}
+
+// Helper function to create DashboardChart from config
+const createDashboardChart = (config: any) => {
+  return {
+    id: 'preview-chart',
+    dashboardId: 'preview',
+    type: config.type,
+    base: {
+      title: config.title || 'Preview Chart',
+      dataSourceId: config.dataSourceId || 'preview-datasource'
+    },
+    properties: config,
+    layout: {
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 4
+    },
+    createdAt: new Date()
   }
 }
 

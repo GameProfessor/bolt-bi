@@ -11,7 +11,7 @@ import type {
   DashboardExportOptions,
   DashboardShareSettings 
 } from '@/types/dashboard'
-import type { ApiResponse } from '@/api/types'
+
 
 export class DashboardService {
   /**

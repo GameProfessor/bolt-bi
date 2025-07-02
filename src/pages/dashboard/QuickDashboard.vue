@@ -383,26 +383,18 @@ import { useRouter, useRoute, onBeforeRouteLeave, RouteLocationNormalizedLoaded,
 import { nanoid } from 'nanoid'
 import {
   ArrowLeftIcon,
-  PlusIcon,
-  XMarkIcon,
   Squares2X2Icon,
   DocumentCheckIcon,
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
   CircleStackIcon,
-  Cog6ToothIcon,
-  ChevronDownIcon,
-  CheckIcon,
-  PencilIcon,
-  TrashIcon,
-  ShareIcon
+  PencilIcon
 } from '@heroicons/vue/24/outline'
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { GridStack } from 'gridstack'
-import { useDataSourceStore, useDashboardStore } from '@/stores'
+import { useDashboardStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
-import type { DashboardChart, DashboardTab } from '@/types/dashboard'
+import type { DashboardChart } from '@/types/dashboard'
 import type { ChartType } from '@/types/chart'
 import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart, CHART_TYPE_DEFAULT_LAYOUT } from '@/types/dashboard'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
@@ -414,7 +406,6 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
-const dataSourceStore = useDataSourceStore()
 const dashboardStore = useDashboardStore()
 
 // Use the dashboard state composable
@@ -437,7 +428,7 @@ const {
   saveDashboard,
   loadDashboard,
   createTemporaryDashboard,
-  showToastNotification,
+
   hideToast,
   goBack,
   toggleDataSource,
@@ -447,7 +438,7 @@ const {
   markUnsaved
 } = useDashboardState()
 
-const selectedDataSourceId = ref('')
+
 const selectedChartType = ref<ChartType | ''>('')
 const dataPanelRef = ref<InstanceType<typeof DataPanel>>()
 
@@ -519,7 +510,7 @@ const initializeTabGridStack = (tabId: string) => {
       tabGridStacks.value.set(tabId, gridStack)
 
       // Set up change event handler
-      gridStack.on('change', (event, items) => {
+      gridStack.on('change', (_event, items) => {
         items.forEach(item => {
           if (currentDashboardId.value && item.id && item.x !== undefined && item.y !== undefined && item.w !== undefined && item.h !== undefined) {
             dashboardStore.updateChartLayout(currentDashboardId.value, item.id, {
@@ -558,7 +549,7 @@ const cleanupTabGridStack = (tabId: string) => {
 
 // Clean up all GridStack instances
 const cleanupAllGridStacks = () => {
-  tabGridStacks.value.forEach((gridStack, tabId) => {
+  tabGridStacks.value.forEach((gridStack, _tabId) => {
     if (gridStack) {
       gridStack.destroy(false)
     }
@@ -1143,7 +1134,7 @@ const onDragEnter = (event: DragEvent) => {
   }
 }
 
-const onDashboardDragStart = (event: DragEvent) => {
+const onDashboardDragStart = (_event: DragEvent) => {
   // This is just to capture any drag start events on the dashboard
 }
 
@@ -1240,7 +1231,7 @@ const onDragOver = (event: DragEvent) => {
   }
 }
 
-const createEmptyChart = async (chartType: string, mouseX?: number, mouseY?: number) => {
+const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: number) => {
   // Reset config to empty for new chart
   resetChartConfig();
   selectedChartType.value = chartType;
@@ -1506,7 +1497,7 @@ const pendingNavigation = ref<null | { next: NavigationGuardNext }> (null)
 const showLeaveConfirmDialog = ref(false)
 
 // Replace onBeforeRouteLeave logic
-onBeforeRouteLeave((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded, next: NavigationGuardNext) => {
+onBeforeRouteLeave((_to: RouteLocationNormalizedLoaded, _from: RouteLocationNormalizedLoaded, next: NavigationGuardNext) => {
   if (hasUnsavedChanges.value) {
     pendingNavigation.value = { next }
     showLeaveConfirmDialog.value = true

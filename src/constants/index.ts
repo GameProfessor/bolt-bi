@@ -19,7 +19,9 @@ export const STORAGE_KEYS = {
   DATA_SOURCES: 'bi_data_sources',
   CHARTS: 'bi_charts',
   THEME: 'bi_theme',
-  LANGUAGE: 'bi_language'
+  LANGUAGE: 'bi_language',
+  DASHBOARD_LAYOUT: 'bi_dashboard_layout',
+  RECENT_ITEMS: 'bi_recent_items'
 } as const
 
 // API constants

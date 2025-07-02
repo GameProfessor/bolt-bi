@@ -229,7 +229,7 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { DataSourceColumn } from '@/stores'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
   chartTypes: ReadonlyArray<{ value: string; label: string; icon: any }>

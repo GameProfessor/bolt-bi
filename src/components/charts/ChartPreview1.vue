@@ -30,7 +30,7 @@ import {
   LineController,
   PieController,
   ScatterController,
-  ChartConfiguration,
+
   ChartType
 } from 'chart.js'
 import { 

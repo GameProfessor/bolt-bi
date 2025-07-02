@@ -9,7 +9,7 @@ import type {
   DataSource, 
   DataSourceConfig, 
   DataPreview,
-  DataSourceConnection,
+
   DataSourceTemplate
 } from '@/types/dataSource'
 
@@ -140,7 +140,7 @@ export class DataSourceService {
   /**
    * Upload file cho data source
    */
-  async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<string> {
+  async uploadFile(file: File, _onProgress?: (progress: number) => void): Promise<string> {
     try {
       const formData = new FormData()
       formData.append('file', file)

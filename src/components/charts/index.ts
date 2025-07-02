@@ -4,7 +4,6 @@
  */
 
 // Export main components
-export { default as ChartFactory } from './ChartFactory.vue'
 export { default as ChartPreview } from './ChartPreview.vue'
 export { default as KPICard } from './KPICard.vue'
 

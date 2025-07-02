@@ -87,7 +87,7 @@ const props = withDefaults(defineProps<Props>(), {
   cancelText: 'Cancel'
 })
 
-const emit = defineEmits<{
+defineEmits<{
   close: []
   confirm: []
 }>()

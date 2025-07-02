@@ -8,7 +8,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { nanoid } from 'nanoid'
 import type { Dashboard, DashboardChart, DashboardTab } from '@/types/dashboard'
-import { createChart } from '@/types/dashboard'
+
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const dashboards = ref<Dashboard[]>([])

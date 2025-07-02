@@ -305,7 +305,7 @@ export const useDataSourceStore = defineStore('dataSource', () => {
           saveToStorage()
           loading.value = false
         },
-        error: (error) => {
+        error: (error: any) => {
           error.value = `Failed to parse CSV: ${error.message}`
           loading.value = false
         }

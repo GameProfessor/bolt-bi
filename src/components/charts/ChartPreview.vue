@@ -39,13 +39,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const error = computed(() => {
-  if (!props.chart) return ''
-  if (!props.chart.type) return 'Chart type not specified'
-  if (!chartComponentMap[props.chart.type]) return `Unsupported chart type: ${props.chart.type}`
-  return ''
-})
-
 // Chart component mapping
 const chartComponentMap = {
   bar: BarChart,
@@ -55,9 +48,19 @@ const chartComponentMap = {
   card: CardChart
 } as const
 
+type SupportedChartType = keyof typeof chartComponentMap
+
+const error = computed(() => {
+  if (!props.chart) return ''
+  if (!props.chart.type) return 'Chart type not specified'
+  if (!(props.chart.type in chartComponentMap)) return `Unsupported chart type: ${props.chart.type}`
+  return ''
+})
+
 const chartComponent = computed(() => {
   if (!props.chart || error.value) return null
-  return chartComponentMap[props.chart.type as keyof typeof chartComponentMap] || null
+  const chartType = props.chart.type as SupportedChartType
+  return chartComponentMap[chartType] || null
 })
 </script>
 

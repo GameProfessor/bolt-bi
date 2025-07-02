@@ -314,7 +314,7 @@ export const formatSQL = (sql: string): string => {
  */
 export const formatCode = (
   code: string,
-  language: string = 'javascript'
+  _language: string = 'javascript'
 ): string => {
   // This is a basic formatter - in a real app you'd use a proper syntax highlighter
   return code

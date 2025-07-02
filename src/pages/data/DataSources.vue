@@ -741,22 +741,12 @@ const prevPage = () => {
 }
 
 // Reset to first page when search changes
-const resetPagination = () => {
-  currentPage.value = 1
-}
+
 
 // Watch search query to reset pagination
 const unwatchSearch = computed(() => searchQuery.value)
 unwatchSearch.value // Access to trigger reactivity
-const searchWatcher = () => {
-  resetPagination()
-}
-// Use a watcher effect
-const stopWatcher = computed(() => {
-  searchQuery.value // Access to trigger reactivity
-  resetPagination()
-  return null
-})
+
 
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement

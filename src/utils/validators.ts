@@ -107,7 +107,7 @@ export const isRequired = (value: any): boolean => {
  * Minimum length validation
  */
 export const minLength = (value: string, min: number): boolean => {
-  return value && value.length >= min
+  return Boolean(value && value.length >= min)
 }
 
 /**
@@ -120,7 +120,7 @@ export const maxLength = (value: string, max: number): boolean => {
 /**
  * Number range validation
  */
-export const isInRange = (
+export const isNumberInRange = (
   value: number,
   min: number,
   max: number

@@ -1,5 +1,5 @@
-import { ref, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { nanoid } from 'nanoid'
 import { useDataSourceStore, useDashboardStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
@@ -7,7 +7,7 @@ import type { DashboardTab } from '@/types/dashboard'
 
 export function useDashboardState() {
   const router = useRouter()
-  const route = useRoute()
+
   const dataSourceStore = useDataSourceStore()
   const dashboardStore = useDashboardStore()
 

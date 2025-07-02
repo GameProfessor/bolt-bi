@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+
 import { ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const currentYear = new Date().getFullYear()

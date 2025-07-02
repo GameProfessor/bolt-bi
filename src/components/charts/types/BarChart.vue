@@ -22,8 +22,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  BarController,
-  ChartConfiguration
+  BarController
 } from 'chart.js'
 import { 
   ExclamationTriangleIcon, 
@@ -239,7 +238,7 @@ const createChart = async () => {
             ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }
           }
         },
-        indexAxis: chartData.value.horizontal ? 'y' : 'x'
+        indexAxis: chartData.value.horizontal ? 'y' as const : 'x' as const
       }
 
       await nextTick()

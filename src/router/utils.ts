@@ -1,4 +1,4 @@
-import type { RouteRecordRaw, RouteLocationNormalized } from 'vue-router'
+import type { RouteLocationNormalized } from 'vue-router'
 import { getNavigationRoutes, getNavigationRoutesByModule, routeModules } from './modules'
 
 /**
@@ -86,8 +86,9 @@ export const getModuleByRoute = (route: RouteLocationNormalized) => {
 /**
  * Get route permissions (for future use with authentication)
  */
-export const getRoutePermissions = (route: RouteLocationNormalized) => {
-  return route.meta?.permissions || []
+export const getRoutePermissions = (route: RouteLocationNormalized): string[] => {
+  const permissions = route.meta?.permissions
+  return Array.isArray(permissions) ? permissions : []
 }
 
 /**
@@ -95,12 +96,12 @@ export const getRoutePermissions = (route: RouteLocationNormalized) => {
  */
 export const canAccessRoute = (route: RouteLocationNormalized, userPermissions: string[] = []): boolean => {
   const requiredPermissions = getRoutePermissions(route)
-  
+
   if (requiredPermissions.length === 0) {
     return true // No permissions required
   }
-  
-  return requiredPermissions.some(permission => userPermissions.includes(permission))
+
+  return requiredPermissions.some((permission: string) => userPermissions.includes(permission))
 }
 
 /**

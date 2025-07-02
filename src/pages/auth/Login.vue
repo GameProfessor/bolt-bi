@@ -146,12 +146,22 @@ const handleLogin = async () => {
         id: '1',
         name: 'Demo User',
         email: form.value.email || 'demo@example.com',
-        avatar: '',
+
         role: 'admin',
+        createdAt: new Date(),
         preferences: {
           theme: 'light',
           language: 'vi',
-          notifications: true
+          timezone: 'Asia/Ho_Chi_Minh',
+          dateFormat: 'DD/MM/YYYY',
+          numberFormat: 'vi-VN',
+          notifications: {
+            email: true,
+            browser: true,
+            dashboard: true,
+            dataSource: true,
+            system: true
+          }
         }
       })
       
