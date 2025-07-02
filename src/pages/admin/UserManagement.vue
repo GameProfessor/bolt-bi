@@ -311,6 +311,15 @@
                   <div class="ml-4">
                     <h3 class="text-lg font-medium text-gray-900">{{ group.name }}</h3>
                     <p class="text-sm text-gray-500">{{ group.userIds.length }} members</p>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                      <button
+                        @click="manageGroupMembers(group)"
+                        class="w-full inline-flex items-center justify-center px-3 py-2 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+                      >
+                        <UserGroupIcon class="h-4 w-4 mr-2" />
+                        Manage Members
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -374,6 +383,15 @@
       @save="saveGroup"
     />
 
+    <!-- Group Member Management Modal -->
+    <GroupMemberModal
+      :show="showGroupMemberModal"
+      :group="managingGroup"
+      :users="userStore.users"
+      @close="closeGroupMemberModal"
+      @save="saveGroupMembers"
+    />
+
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog
       :show="showDeleteDialog"
@@ -403,6 +421,7 @@ import { useUserStore } from '@/stores/modules/user'
 import type { User, UserGroup } from '@/types/user'
 import UserModal from './components/UserModal.vue'
 import GroupModal from './components/GroupModal.vue'
+import GroupMemberModal from './components/GroupMemberModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const userStore = useUserStore()
@@ -440,6 +459,8 @@ const groupSearchQuery = ref('')
 const showCreateGroupModal = ref(false)
 const showEditGroupModal = ref(false)
 const editingGroup = ref<UserGroup | null>(null)
+const showGroupMemberModal = ref(false)
+const managingGroup = ref<UserGroup | null>(null)
 
 // Delete confirmation
 const showDeleteDialog = ref(false)
@@ -639,6 +660,26 @@ const saveGroup = async (groupData: any) => {
     closeGroupModal()
   } catch (error) {
     console.error('Failed to save group:', error)
+  }
+}
+
+// Group member management
+const manageGroupMembers = (group: UserGroup) => {
+  managingGroup.value = group
+  showGroupMemberModal.value = true
+}
+
+const closeGroupMemberModal = () => {
+  showGroupMemberModal.value = false
+  managingGroup.value = null
+}
+
+const saveGroupMembers = async (groupId: string, userIds: string[]) => {
+  try {
+    await userStore.updateGroup(groupId, { userIds })
+    closeGroupMemberModal()
+  } catch (error) {
+    console.error('Failed to update group members:', error)
   }
 }
 
