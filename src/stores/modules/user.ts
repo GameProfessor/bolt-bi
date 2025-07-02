@@ -10,109 +10,24 @@ export const useUserStore = defineStore('user', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  // Mock data for development
-  const initializeMockData = () => {
-    if (users.value.length === 0) {
-      users.value = [
-        {
-          id: '1',
-          username: 'admin',
-          password: 'admin123',
-          email: 'admin@company.com',
-          fullName: 'System Administrator',
-          phone: '+84123456789',
-          type: 'local',
-          role: 'Admin',
-          groupIds: ['1'],
-          isActive: true,
-          lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          createdBy: 'system'
-        },
-        {
-          id: '2',
-          username: 'designer1',
-          password: 'designer123',
-          email: 'designer@company.com',
-          fullName: 'John Designer',
-          phone: '+84987654321',
-          type: 'local',
-          role: 'Dashboard Designer',
-          groupIds: ['2'],
-          isActive: true,
-          lastLogin: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-          createdBy: 'admin'
-        },
-        {
-          id: '3',
-          username: 'viewer1',
-          email: 'viewer@company.com',
-          fullName: 'Jane Viewer',
-          type: 'sso',
-          role: 'Dashboard Viewer',
-          groupIds: ['3'],
-          isActive: true,
-          lastLogin: new Date(Date.now() - 30 * 60 * 1000),
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          createdBy: 'admin'
-        }
-      ]
-    }
-
-    if (groups.value.length === 0) {
-      groups.value = [
-        {
-          id: '1',
-          name: 'Administrators',
-          description: 'Full system access',
-          permissions: ['all'],
-          userIds: ['1'],
-          isActive: true,
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          createdBy: 'system'
-        },
-        {
-          id: '2',
-          name: 'Dashboard Designers',
-          description: 'Can create and edit dashboards',
-          permissions: ['dashboard.create', 'dashboard.edit', 'dashboard.view', 'data.view'],
-          userIds: ['2'],
-          isActive: true,
-          createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-          createdBy: 'admin'
-        },
-        {
-          id: '3',
-          name: 'Dashboard Viewers',
-          description: 'Can only view dashboards',
-          permissions: ['dashboard.view'],
-          userIds: ['3'],
-          isActive: true,
-          createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-          createdBy: 'admin'
-        }
-      ]
-    }
-  }
-
   // Getters
   const activeUsers = computed(() => users.value.filter(user => user.isActive))
   const activeGroups = computed(() => groups.value.filter(group => group.isActive))
+
+  const getUserById = (id: string) => users.value.find(user => user.id === id)
+  const getGroupById = (id: string) => groups.value.find(group => group.id === id)
   
-  const getUsersByRole = computed(() => (role: string) => 
-    users.value.filter(user => user.role === role)
-  )
-
-  const getUsersByGroup = computed(() => (groupId: string) => 
-    users.value.filter(user => user.groupIds.includes(groupId))
-  )
-
-  const getGroupsByUser = computed(() => (userId: string) => {
-    const user = users.value.find(u => u.id === userId)
+  const getGroupsByUser = (userId: string) => {
+    const user = getUserById(userId)
     if (!user) return []
     return groups.value.filter(group => user.groupIds.includes(group.id))
-  })
+  }
+
+  const getUsersByGroup = (groupId: string) => {
+    const group = getGroupById(groupId)
+    if (!group) return []
+    return users.value.filter(user => group.userIds.includes(user.id))
+  }
 
   // Actions
   const createUser = async (userData: CreateUserRequest): Promise<User> => {
@@ -120,103 +35,127 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      // Validate username uniqueness
-      if (users.value.some(user => user.username === userData.username)) {
-        throw new Error('Username already exists')
-      }
-
-      // Validate email uniqueness if provided
-      if (userData.email && users.value.some(user => user.email === userData.email)) {
-        throw new Error('Email already exists')
-      }
-
       const newUser: User = {
         id: nanoid(),
         username: userData.username,
-        password: userData.password,
-        phone: userData.phone,
-        email: userData.email,
         fullName: userData.fullName,
+        email: userData.email,
+        phone: userData.phone,
         type: userData.type,
+        password: userData.password,
         role: userData.role,
         groupIds: userData.groupIds || [],
         isActive: userData.isActive ?? true,
-        createdAt: new Date(),
-        createdBy: 'current-user' // Should be replaced with actual current user
+        createdAt: new Date()
       }
 
       users.value.push(newUser)
+      
+      // Update groups if user is assigned to any
+      if (newUser.groupIds.length > 0) {
+        newUser.groupIds.forEach(groupId => {
+          const group = getGroupById(groupId)
+          if (group && !group.userIds.includes(newUser.id)) {
+            group.userIds.push(newUser.id)
+            group.updatedAt = new Date()
+          }
+        })
+      }
+
       saveToStorage()
       return newUser
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to create user'
+      error.value = 'Failed to create user'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const updateUser = async (userId: string, userData: UpdateUserRequest): Promise<User> => {
+  const updateUser = async (id: string, userData: UpdateUserRequest): Promise<User> => {
     loading.value = true
     error.value = null
 
     try {
-      const userIndex = users.value.findIndex(user => user.id === userId)
+      const userIndex = users.value.findIndex(user => user.id === id)
       if (userIndex === -1) {
         throw new Error('User not found')
       }
 
-      // Validate username uniqueness if changed
-      if (userData.username && userData.username !== users.value[userIndex].username) {
-        if (users.value.some(user => user.username === userData.username)) {
-          throw new Error('Username already exists')
-        }
-      }
+      const existingUser = users.value[userIndex]
+      const oldGroupIds = [...existingUser.groupIds]
 
-      // Validate email uniqueness if changed
-      if (userData.email && userData.email !== users.value[userIndex].email) {
-        if (users.value.some(user => user.email === userData.email)) {
-          throw new Error('Email already exists')
-        }
-      }
-
-      const updatedUser = {
-        ...users.value[userIndex],
+      // Update user
+      users.value[userIndex] = {
+        ...existingUser,
         ...userData,
+        id, // Ensure ID doesn't change
         updatedAt: new Date()
       }
 
-      users.value[userIndex] = updatedUser
+      const updatedUser = users.value[userIndex]
+
+      // Update group memberships
+      const newGroupIds = updatedUser.groupIds || []
+      
+      // Remove user from old groups
+      oldGroupIds.forEach(groupId => {
+        if (!newGroupIds.includes(groupId)) {
+          const group = getGroupById(groupId)
+          if (group) {
+            group.userIds = group.userIds.filter(userId => userId !== id)
+            group.updatedAt = new Date()
+          }
+        }
+      })
+
+      // Add user to new groups
+      newGroupIds.forEach(groupId => {
+        if (!oldGroupIds.includes(groupId)) {
+          const group = getGroupById(groupId)
+          if (group && !group.userIds.includes(id)) {
+            group.userIds.push(id)
+            group.updatedAt = new Date()
+          }
+        }
+      })
+
       saveToStorage()
       return updatedUser
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to update user'
+      error.value = 'Failed to update user'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const deleteUser = async (userId: string): Promise<void> => {
+  const deleteUser = async (id: string): Promise<void> => {
     loading.value = true
     error.value = null
 
     try {
-      const userIndex = users.value.findIndex(user => user.id === userId)
+      const userIndex = users.value.findIndex(user => user.id === id)
       if (userIndex === -1) {
         throw new Error('User not found')
       }
 
-      users.value.splice(userIndex, 1)
-      
+      const user = users.value[userIndex]
+
       // Remove user from all groups
-      groups.value.forEach(group => {
-        group.userIds = group.userIds.filter(id => id !== userId)
+      user.groupIds.forEach(groupId => {
+        const group = getGroupById(groupId)
+        if (group) {
+          group.userIds = group.userIds.filter(userId => userId !== id)
+          group.updatedAt = new Date()
+        }
       })
 
+      // Remove user
+      users.value.splice(userIndex, 1)
       saveToStorage()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to delete user'
+      error.value = 'Failed to delete user'
       throw err
     } finally {
       loading.value = false
@@ -228,160 +167,224 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      // Validate group name uniqueness
-      if (groups.value.some(group => group.name === groupData.name)) {
-        throw new Error('Group name already exists')
-      }
-
       const newGroup: UserGroup = {
         id: nanoid(),
         name: groupData.name,
         description: groupData.description,
-        permissions: groupData.permissions || [],
+        permissions: groupData.permissions,
         userIds: groupData.userIds || [],
         isActive: groupData.isActive ?? true,
-        createdAt: new Date(),
-        createdBy: 'current-user'
+        createdAt: new Date()
       }
 
       groups.value.push(newGroup)
+
+      // Update users if they are assigned to this group
+      if (newGroup.userIds.length > 0) {
+        newGroup.userIds.forEach(userId => {
+          const user = getUserById(userId)
+          if (user && !user.groupIds.includes(newGroup.id)) {
+            user.groupIds.push(newGroup.id)
+            user.updatedAt = new Date()
+          }
+        })
+      }
+
       saveToStorage()
       return newGroup
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to create group'
+      error.value = 'Failed to create group'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const updateGroup = async (groupId: string, groupData: UpdateGroupRequest): Promise<UserGroup> => {
+  const updateGroup = async (id: string, groupData: UpdateGroupRequest): Promise<UserGroup> => {
     loading.value = true
     error.value = null
 
     try {
-      const groupIndex = groups.value.findIndex(group => group.id === groupId)
+      const groupIndex = groups.value.findIndex(group => group.id === id)
       if (groupIndex === -1) {
         throw new Error('Group not found')
       }
 
-      // Validate group name uniqueness if changed
-      if (groupData.name && groupData.name !== groups.value[groupIndex].name) {
-        if (groups.value.some(group => group.name === groupData.name)) {
-          throw new Error('Group name already exists')
-        }
-      }
+      const existingGroup = groups.value[groupIndex]
+      const oldUserIds = [...existingGroup.userIds]
 
-      const updatedGroup = {
-        ...groups.value[groupIndex],
+      // Update group
+      groups.value[groupIndex] = {
+        ...existingGroup,
         ...groupData,
+        id, // Ensure ID doesn't change
         updatedAt: new Date()
       }
 
-      groups.value[groupIndex] = updatedGroup
+      const updatedGroup = groups.value[groupIndex]
+
+      // Update user memberships
+      const newUserIds = updatedGroup.userIds || []
+
+      // Remove group from old users
+      oldUserIds.forEach(userId => {
+        if (!newUserIds.includes(userId)) {
+          const user = getUserById(userId)
+          if (user) {
+            user.groupIds = user.groupIds.filter(groupId => groupId !== id)
+            user.updatedAt = new Date()
+          }
+        }
+      })
+
+      // Add group to new users
+      newUserIds.forEach(userId => {
+        if (!oldUserIds.includes(userId)) {
+          const user = getUserById(userId)
+          if (user && !user.groupIds.includes(id)) {
+            user.groupIds.push(id)
+            user.updatedAt = new Date()
+          }
+        }
+      })
+
       saveToStorage()
       return updatedGroup
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to update group'
+      error.value = 'Failed to update group'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const deleteGroup = async (groupId: string): Promise<void> => {
+  const deleteGroup = async (id: string): Promise<void> => {
     loading.value = true
     error.value = null
 
     try {
-      const groupIndex = groups.value.findIndex(group => group.id === groupId)
+      const groupIndex = groups.value.findIndex(group => group.id === id)
       if (groupIndex === -1) {
         throw new Error('Group not found')
       }
 
-      groups.value.splice(groupIndex, 1)
-      
+      const group = groups.value[groupIndex]
+
       // Remove group from all users
-      users.value.forEach(user => {
-        user.groupIds = user.groupIds.filter(id => id !== groupId)
+      group.userIds.forEach(userId => {
+        const user = getUserById(userId)
+        if (user) {
+          user.groupIds = user.groupIds.filter(groupId => groupId !== id)
+          user.updatedAt = new Date()
+        }
       })
 
+      // Remove group
+      groups.value.splice(groupIndex, 1)
       saveToStorage()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to delete group'
+      error.value = 'Failed to delete group'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const addUserToGroup = async (userId: string, groupId: string): Promise<void> => {
-    const user = users.value.find(u => u.id === userId)
-    const group = groups.value.find(g => g.id === groupId)
-    
-    if (!user || !group) {
-      throw new Error('User or group not found')
-    }
-
-    if (!user.groupIds.includes(groupId)) {
-      user.groupIds.push(groupId)
-    }
-    
-    if (!group.userIds.includes(userId)) {
-      group.userIds.push(userId)
-    }
-
-    saveToStorage()
-  }
-
-  const removeUserFromGroup = async (userId: string, groupId: string): Promise<void> => {
-    const user = users.value.find(u => u.id === userId)
-    const group = groups.value.find(g => g.id === groupId)
-    
-    if (!user || !group) {
-      throw new Error('User or group not found')
-    }
-
-    user.groupIds = user.groupIds.filter(id => id !== groupId)
-    group.userIds = group.userIds.filter(id => id !== userId)
-
-    saveToStorage()
-  }
-
+  // Storage functions
   const saveToStorage = () => {
-    localStorage.setItem('bi-users', JSON.stringify(users.value))
-    localStorage.setItem('bi-groups', JSON.stringify(groups.value))
+    const data = {
+      users: users.value,
+      groups: groups.value
+    }
+    localStorage.setItem('bi-user-management', JSON.stringify(data))
   }
 
   const loadFromStorage = () => {
     try {
-      const storedUsers = localStorage.getItem('bi-users')
-      const storedGroups = localStorage.getItem('bi-groups')
-      
-      if (storedUsers) {
-        users.value = JSON.parse(storedUsers).map((user: any) => ({
+      const stored = localStorage.getItem('bi-user-management')
+      if (stored) {
+        const data = JSON.parse(stored)
+        
+        users.value = (data.users || []).map((user: any) => ({
           ...user,
           createdAt: new Date(user.createdAt),
           updatedAt: user.updatedAt ? new Date(user.updatedAt) : undefined,
           lastLogin: user.lastLogin ? new Date(user.lastLogin) : undefined
         }))
-      }
-      
-      if (storedGroups) {
-        groups.value = JSON.parse(storedGroups).map((group: any) => ({
+
+        groups.value = (data.groups || []).map((group: any) => ({
           ...group,
           createdAt: new Date(group.createdAt),
           updatedAt: group.updatedAt ? new Date(group.updatedAt) : undefined
         }))
+      } else {
+        // Initialize with default data
+        initializeDefaultData()
       }
-    } catch (e) {
-      console.error('Failed to load user data from storage:', e)
+    } catch (err) {
+      console.error('Failed to load user data from storage:', err)
+      initializeDefaultData()
     }
   }
 
-  // Initialize
+  const initializeDefaultData = () => {
+    // Create default admin user
+    const adminUser: User = {
+      id: 'admin-1',
+      username: 'admin',
+      fullName: 'System Administrator',
+      email: 'admin@example.com',
+      type: 'local',
+      password: 'admin123',
+      role: 'Admin',
+      groupIds: [],
+      isActive: true,
+      createdAt: new Date(),
+      lastLogin: new Date()
+    }
+
+    // Create default groups
+    const adminGroup: UserGroup = {
+      id: 'group-admin',
+      name: 'Administrators',
+      description: 'System administrators with full access',
+      permissions: ['all'],
+      userIds: [adminUser.id],
+      isActive: true,
+      createdAt: new Date()
+    }
+
+    const designerGroup: UserGroup = {
+      id: 'group-designer',
+      name: 'Dashboard Designers',
+      description: 'Users who can create and edit dashboards',
+      permissions: ['dashboard.view', 'dashboard.create', 'dashboard.edit', 'data.view', 'data.create'],
+      userIds: [],
+      isActive: true,
+      createdAt: new Date()
+    }
+
+    const viewerGroup: UserGroup = {
+      id: 'group-viewer',
+      name: 'Dashboard Viewers',
+      description: 'Users who can only view dashboards',
+      permissions: ['dashboard.view', 'data.view'],
+      userIds: [],
+      isActive: true,
+      createdAt: new Date()
+    }
+
+    // Add admin to admin group
+    adminUser.groupIds = [adminGroup.id]
+
+    users.value = [adminUser]
+    groups.value = [adminGroup, designerGroup, viewerGroup]
+    
+    saveToStorage()
+  }
+
+  // Initialize data on store creation
   loadFromStorage()
-  initializeMockData()
 
   return {
     // State
@@ -393,9 +396,10 @@ export const useUserStore = defineStore('user', () => {
     // Getters
     activeUsers,
     activeGroups,
-    getUsersByRole,
-    getUsersByGroup,
+    getUserById,
+    getGroupById,
     getGroupsByUser,
+    getUsersByGroup,
     
     // Actions
     createUser,
@@ -404,9 +408,9 @@ export const useUserStore = defineStore('user', () => {
     createGroup,
     updateGroup,
     deleteGroup,
-    addUserToGroup,
-    removeUserFromGroup,
-    saveToStorage,
-    loadFromStorage
+    loadFromStorage,
+    saveToStorage
   }
 })
+
+export type UserStore = ReturnType<typeof useUserStore>
