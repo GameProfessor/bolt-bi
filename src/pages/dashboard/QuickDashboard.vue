@@ -487,8 +487,8 @@ const initializeTabGridStack = (tabId: string) => {
       // Create new GridStack instance for this tab
       const gridStack = GridStack.init({
         // column: 12,        // more columns = finer grid. default is 12
-        //cellHeight: 70,    // smaller cell height = finer vertical movement
-        margin: 0,
+        cellHeight: 70,    // smaller cell height = finer vertical movement
+        margin: 10,
         minRow: 1,
         animate: true,
         resizable: {
@@ -496,7 +496,7 @@ const initializeTabGridStack = (tabId: string) => {
         },
         draggable: {
           handle: '.grid-stack-item-content',
-          scroll: false
+          scroll: true
         }
       }, container)
 
@@ -1160,30 +1160,39 @@ const updateDragPreviewPosition = (event: DragEvent) => {
   if (showChartPanel.value) availableWidth -= chartTypeColWidth.value
   
   const cellWidth = availableWidth / 12
-  const cellHeight = 70 + 10
+  // Dynamically get cellHeight from GridStack instance
+  let cellHeight = 70
+  if (activeTabId.value && tabGridStacks.value.has(activeTabId.value)) {
+    const grid = tabGridStacks.value.get(activeTabId.value)
+    if (grid && typeof grid.getCellHeight === 'function') {
+      cellHeight = grid.getCellHeight()
+    } else if (grid && grid.opts && grid.opts.cellHeight) {
+      cellHeight = typeof grid.opts.cellHeight === 'function' ? grid.opts.cellHeight() : grid.opts.cellHeight
+    }
+  }
 
   // Use the dragged chart type, fallback to selectedChartType if not available
   const chartType = draggedChartType.value || selectedChartType.value
 
   // Use layout mapping for preview size
   const { w, h } = CHART_TYPE_DEFAULT_LAYOUT[chartType] || { w: 4, h: 3 }
-  const previewWidth = w * cellWidth - 24
-  const previewHeight = h * cellHeight - 24
+  const previewWidth = w * cellWidth
+  const previewHeight = h * cellHeight
   
   let previewLeft = x - (previewWidth / 2)
   let previewTop = y - (previewHeight / 2)
   
-  const dashboardWidth = rect.width - 24
-  const dashboardHeight = rect.height - 24
+  const dashboardWidth = rect.width
+  const dashboardHeight = rect.height
   
-  previewLeft = Math.max(12, Math.min(previewLeft, dashboardWidth - previewWidth - 12))
-  previewTop = Math.max(12, Math.min(previewTop, dashboardHeight - previewHeight - 12))
+  previewLeft = Math.max(0, Math.min(previewLeft, dashboardWidth - previewWidth))
+  previewTop = Math.max(0, Math.min(previewTop, dashboardHeight - previewHeight))
   
   const isWithinBoundaries = 
-    previewLeft >= 12 && 
-    previewTop >= 12 && 
-    previewLeft + previewWidth <= dashboardWidth - 12 && 
-    previewTop + previewHeight <= dashboardHeight - 12
+    previewLeft >= 0 && 
+    previewTop >= 0 && 
+    previewLeft + previewWidth <= dashboardWidth && 
+    previewTop + previewHeight <= dashboardHeight
   
   if (!isWithinBoundaries) {
     showDragPreview.value = false
@@ -1629,14 +1638,15 @@ watch(
   @apply bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 transition-opacity duration-200;
 }
 
-.chart-content {
-  height: 100%;
-  padding: 8px;
+.chart-content,
+.chart-factory,
+.chart-container {
+  box-sizing: border-box;
 }
 
 .grid-stack-item-content {
   position: relative;
-  height: 100%;
+  /* height: 100%; */
   cursor: move;
 }
 

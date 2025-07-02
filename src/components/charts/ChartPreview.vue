@@ -72,4 +72,5 @@ const chartComponent = computed(() => {
   min-height: 100px;
   overflow: hidden;
 }
+
 </style>
