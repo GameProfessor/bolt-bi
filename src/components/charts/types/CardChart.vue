@@ -77,8 +77,7 @@ const hasValidData = computed(() => {
   return !!(dataSource && dataSource.rows.length > 0)
 })
 
-const error = computed(() => {
-  if (!props.chart.base.dataSourceId) return 'No data source selected'
+const error = computed(() => {  
   if (!props.chart.properties.card?.keyMetric) return 'No key metric selected'
   const dataSource = dataSourceStore.getDataSourceById(props.chart.base.dataSourceId)
   if (!dataSource) return 'Data source not found'

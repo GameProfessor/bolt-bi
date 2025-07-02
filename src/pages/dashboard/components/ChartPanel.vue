@@ -220,7 +220,7 @@
           <span v-if="editingChartId">Update Chart</span>
           <span v-else>Add to Dashboard</span>
         </button>
-        <button v-if="editingChartId" @click="$emit('cancel-edit')" class="w-full mt-2 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
+        <!-- <button v-if="editingChartId" @click="$emit('cancel-edit')" class="w-full mt-2 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button> -->
       </div>
     </div>
   </div>
