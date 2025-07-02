@@ -311,7 +311,7 @@
                 :gs-h="chart.layout.h"
                 :gs-no-drag="viewMode"
               >
-                <div class="grid-stack-item-content">
+                <div class="grid-stack-item-content shadow-lg">
                   <div class="chart-header flex justify-end items-center gap-2">
                     <!-- 3-dot menu -->
                     <div class="relative chart-menu-container">

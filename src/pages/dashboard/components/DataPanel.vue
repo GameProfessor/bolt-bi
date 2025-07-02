@@ -121,18 +121,18 @@
                 :key="column.name"
                 :draggable="true"
                 @dragstart="$emit('field-drag', $event, column, ds.id)"
-                class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200"
+                class="flex items-center justify-between p-2 rounded cursor-move transition-colors duration-200 min-w-0"
                 :class="{
                   'bg-primary-50': isFieldInUse(column.name, ds.id),
                   'bg-white hover:bg-gray-50': !isFieldInUse(column.name, ds.id)
                 }"
               >
-                <div class="flex items-center">
+                <div class="flex items-center min-w-0">
                   <CheckIcon
                     v-if="isFieldInUse(column.name, ds.id)"
                     class="h-4 w-4 text-primary-600 mr-2"
                   />
-                  <span class="text-sm font-medium text-gray-900">{{ column.name }}</span>
+                  <span class="text-sm font-medium text-gray-900 truncate flex-1 min-w-0 text-left" :title="column.name">{{ column.name }}</span>
                 </div>
                 <span
                   class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
