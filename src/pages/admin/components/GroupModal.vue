@@ -48,10 +48,7 @@
                 <form @submit.prevent="handleSubmit" class="space-y-4">
                   <!-- Basic Information -->
                   <div class="space-y-3">
-                    <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
-                      <UserGroupIcon class="h-4 w-4 mr-2 text-primary-600" />
-                      Group Information
-                    </h4>
+          
                     
                     <!-- Group Name -->
                     <div>
@@ -95,56 +92,6 @@
                     </div>
                   </div>
 
-                  <!-- Group Members Section -->
-                  <div class="space-y-3">
-                    <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
-                      <UserIcon class="h-4 w-4 mr-2 text-green-600" />
-                      Group Members
-                    </h4>
-                    
-                    <!-- Compact User Search -->
-                    <div class="relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
-                      </div>
-                      <input
-                        v-model="userSearchQuery"
-                        type="text"
-                        placeholder="Search users..."
-                        class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
-                      />
-                    </div>
-
-                    <!-- Compact Users List -->
-                    <div class="max-h-32 overflow-y-auto border border-gray-200 rounded-md bg-white">
-                      <div v-if="filteredUsers.length === 0" class="p-3 text-center text-gray-500 text-sm">
-                        {{ userSearchQuery ? 'No users found' : 'No users available' }}
-                      </div>
-                      <label
-                        v-for="user in filteredUsers"
-                        :key="user.id"
-                        class="flex items-center p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      >
-                        <input
-                          type="checkbox"
-                          :value="user.id"
-                          v-model="form.userIds"
-                          class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
-                        />
-                        <div class="ml-2 flex-1 min-w-0">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ user.fullName || user.username }}</div>
-                          <div class="text-xs text-gray-500 truncate">{{ user.role }} • {{ user.email || user.username }}</div>
-                        </div>
-                        <span
-                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ml-2"
-                          :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                        >
-                          {{ user.isActive ? 'Active' : 'Inactive' }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
                 </form>
               </div>
 
@@ -174,13 +121,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { 
   XMarkIcon, 
-  UserGroupIcon, 
-  UserIcon, 
-  MagnifyingGlassIcon 
 } from '@heroicons/vue/24/outline'
 import type { User, UserGroup } from '@/types/user'
 
@@ -207,20 +151,6 @@ const form = reactive({
   isActive: true
 })
 
-// Filtered users based on search query
-const filteredUsers = computed(() => {
-  if (!userSearchQuery.value) {
-    return props.users
-  }
-  
-  const query = userSearchQuery.value.toLowerCase()
-  return props.users.filter(user =>
-    user.username.toLowerCase().includes(query) ||
-    (user.fullName && user.fullName.toLowerCase().includes(query)) ||
-    (user.email && user.email.toLowerCase().includes(query)) ||
-    user.role.toLowerCase().includes(query)
-  )
-})
 
 // Watch for group prop changes to populate form
 watch(() => props.group, (group) => {

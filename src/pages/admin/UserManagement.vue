@@ -328,6 +328,13 @@
                   >
                     <TrashIcon class="h-5 w-5" />
                   </button>
+                  <button
+                    @click="openManageMembersModal(group)"
+                    class="text-blue-600 hover:text-blue-900"
+                    title="Manage Members"
+                  >
+                    <UserIcon class="h-5 w-5" />
+                  </button>
                 </div>
               </div>
               
@@ -384,6 +391,15 @@
       @close="showDeleteDialog = false"
       @confirm="confirmDelete"
     />
+
+    <!-- Manage Members Modal -->
+    <GroupMember
+      :show="showManageMembersModal"
+      :group="managingGroup"
+      :users="userStore.users"
+      @close="closeManageMembersModal"
+      @save="saveGroupMembers"
+    />
   </div>
 </template>
 
@@ -404,6 +420,7 @@ import type { User, UserGroup } from '@/types/user'
 import UserModal from './components/UserModal.vue'
 import GroupModal from './components/GroupModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import GroupMember from './components/GroupMember.vue'
 
 const userStore = useUserStore()
 
@@ -446,6 +463,10 @@ const showDeleteDialog = ref(false)
 const deleteDialogTitle = ref('')
 const deleteDialogMessage = ref('')
 const deleteAction = ref<(() => void) | null>(null)
+
+// Manage Members modal state
+const showManageMembersModal = ref(false)
+const managingGroup = ref<UserGroup | null>(null)
 
 // Computed properties for users
 const filteredUsers = computed(() => {
@@ -545,9 +566,6 @@ const getRoleColor = (role: string) => {
   return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800'
 }
 
-const getUserGroups = (userId: string) => {
-  return userStore.getGroupsByUser(userId)
-}
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -648,6 +666,25 @@ const confirmDelete = () => {
     showDeleteDialog.value = false
     deleteAction.value = null
   }
+}
+
+// Manage Members actions
+const openManageMembersModal = (group: UserGroup) => {
+  managingGroup.value = group
+  showManageMembersModal.value = true
+}
+
+const closeManageMembersModal = () => {
+  showManageMembersModal.value = false
+  managingGroup.value = null
+}
+
+const saveGroupMembers = (userIds: string[]) => {
+  if (managingGroup.value) {
+    // userStore.updateGroupMembers(managingGroup.value.id, userIds)
+    managingGroup.value.userIds = [...userIds]
+  }
+  closeManageMembersModal()
 }
 
 onMounted(() => {
