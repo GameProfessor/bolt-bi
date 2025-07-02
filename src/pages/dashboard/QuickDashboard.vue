@@ -491,6 +491,7 @@ const initializeTabGridStack = (tabId: string) => {
         margin: 10,
         minRow: 1,
         animate: true,
+        float: true,  // allow floating charts
         resizable: {
           handles: 'e, se, s, sw, w'
         },
