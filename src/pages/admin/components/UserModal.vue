@@ -185,35 +185,57 @@
                     </div>
                   </div>
 
-                  <!-- Groups Section - Compact -->
+                  <!-- Groups Section - Compact with 2-row display -->
                   <div class="space-y-3">
                     <h4 class="text-sm font-medium text-gray-900 flex items-center border-b border-gray-200 pb-1">
                       <UserGroupIcon class="h-4 w-4 mr-2 text-green-600" />
                       Groups
                     </h4>
                     
-                    <!-- Simple Multi-select Groups -->
+                    <!-- Selected Groups Display - Max 2 rows -->
+                    <div v-if="selectedGroups.length > 0" class="mb-2">
+                      <div class="flex flex-wrap gap-1 max-h-16 overflow-y-auto p-2 bg-gray-50 rounded-md border border-gray-200">
+                        <span
+                          v-for="group in selectedGroups"
+                          :key="group.id"
+                          class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200 hover:bg-primary-200 transition-colors duration-150"
+                        >
+                          {{ group.name }}
+                          <button
+                            type="button"
+                            @click="removeGroup(group.id)"
+                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary-300 focus:outline-none focus:bg-primary-300 transition-colors duration-150"
+                            title="Remove group"
+                          >
+                            <XMarkIcon class="h-3 w-3" />
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <!-- Group Selection Dropdown -->
                     <div>
-                      <label for="groups" class="block text-xs font-medium text-gray-700 mb-1">
-                        Select Groups
+                      <label for="groupSelect" class="block text-xs font-medium text-gray-700 mb-1">
+                        Add Groups
                       </label>
                       <select
-                        id="groups"
-                        v-model="form.groupIds"
-                        multiple
-                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white multiselect-groups"
-                        size="5"
+                        id="groupSelect"
+                        v-model="selectedGroupId"
+                        @change="addGroup"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white"
                       >
+                        <option value="">Select a group to add...</option>
                         <option
-                          v-for="group in groups"
+                          v-for="group in availableGroups"
                           :key="group.id"
                           :value="group.id"
-                          class="py-2 px-2 hover:bg-primary-50 focus:bg-primary-100"
                         >
                           {{ group.name }}
                         </option>
                       </select>
-                      <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple groups</p>
+                      <p class="mt-1 text-xs text-gray-500">
+                        {{ selectedGroups.length === 0 ? 'No groups selected' : `${selectedGroups.length} group(s) selected` }}
+                      </p>
                     </div>
                   </div>
                 </form>
@@ -273,6 +295,8 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+const selectedGroupId = ref('')
+
 const form = reactive({
   username: '',
   fullName: '',
@@ -284,6 +308,30 @@ const form = reactive({
   groupIds: [] as string[],
   isActive: true
 })
+
+// Computed properties for group management
+const selectedGroups = computed(() => {
+  return props.groups.filter(group => form.groupIds.includes(group.id))
+})
+
+const availableGroups = computed(() => {
+  return props.groups.filter(group => !form.groupIds.includes(group.id))
+})
+
+// Group management methods
+const addGroup = () => {
+  if (selectedGroupId.value && !form.groupIds.includes(selectedGroupId.value)) {
+    form.groupIds.push(selectedGroupId.value)
+    selectedGroupId.value = ''
+  }
+}
+
+const removeGroup = (groupId: string) => {
+  const index = form.groupIds.indexOf(groupId)
+  if (index > -1) {
+    form.groupIds.splice(index, 1)
+  }
+}
 
 // Watch for user prop changes to populate form
 watch(() => props.user, (user) => {
@@ -331,64 +379,3 @@ const handleSubmit = () => {
   emit('save', userData)
 }
 </script>
-<style scoped>
-/* Enhanced multi-select styling */
-.multiselect-groups {
-  background-image: none;
-  background-color: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
-}
-
-.multiselect-groups:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.multiselect-groups option {
-  padding: 8px 12px;
-  margin: 2px 0;
-  border-radius: 4px;
-  transition: all 0.15s ease-in-out;
-  background-color: transparent;
-  color: #374151;
-  font-weight: 500;
-}
-
-.multiselect-groups option:hover {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.multiselect-groups option:checked {
-  background-color: #6366f1;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.multiselect-groups option:checked:hover {
-  background-color: #4f46e5;
-}
-
-/* Custom scrollbar for multi-select */
-.multiselect-groups::-webkit-scrollbar {
-  width: 6px;
-}
-
-.multiselect-groups::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.multiselect-groups::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-</style>
