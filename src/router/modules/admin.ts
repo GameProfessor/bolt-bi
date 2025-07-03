@@ -27,7 +27,10 @@ const adminRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Access Logs',
       requiresAuth: true,
-      requiresPermission: 'admin'
+      requiresPermission: 'canManageUsers',
+      showInNavigation: true,
+      module: 'admin',
+      icon: 'DocumentTextIcon'
     }
   }
 ]
