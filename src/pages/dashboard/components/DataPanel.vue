@@ -1,5 +1,9 @@
 <template>
-  <div class="bg-white border-r border-gray-200 flex flex-col min-h-0 h-full" :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }">
+  <div
+    class="bg-white border-r border-gray-200 flex flex-col min-h-0 h-full"
+    :class="{ 'delete-confirm-active': showDeleteConfirm }"
+    :style="{ minWidth: '180px', maxWidth: '400px', width: width + 'px' }"
+  >
     <!-- Tab Navigation -->
     <div class="border-b border-gray-200 p-3">
       <nav class="flex gap-2" aria-label="Tabs">
@@ -226,6 +230,17 @@
       @edit-custom="handleEditCustomField"
       @delete-custom="handleDeleteCustomField"
     />
+
+    <ConfirmDialog
+      :show="showDeleteConfirm"
+      title="Delete Custom Field"
+      message="Are you sure you want to delete this custom field? This action cannot be undone."
+      type="danger"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      @confirm="onDeleteConfirm"
+      @close="onDeleteCancel"
+    />
   </div>
 </template>
 
@@ -250,6 +265,7 @@ import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import ManageDataField from './ManageDataField.vue'
 import CustomFieldModal from './CustomFieldModal.vue'
 import DataSetModal from './DataSetModal.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const props = defineProps<{
   selectedDataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>
@@ -327,6 +343,9 @@ let customFieldOriginalName = ''
 const showManageDataField = ref(false)
 const manageDataFieldDataFields = ref<any[]>([])
 const manageDataFieldCustomFields = ref<any[]>([])
+
+// Track the current data source being managed
+let manageDataFieldTargetDataSource: any = null
 
 // Computed properties for data source manager
 const availableCategories = computed(() => {
@@ -495,33 +514,65 @@ function saveCustomField() {
   closeCustomFieldModal()
 }
 
+const showDeleteConfirm = ref(false)
+const pendingDelete = ref<{ ds: any; column: any } | null>(null)
+
 function removeCustomFieldModal(ds: any, column: any) {
-  removeCustomField(ds, column.name)
+  pendingDelete.value = { ds, column }
+  showDeleteConfirm.value = true
+}
+
+function onDeleteConfirm() {
+  if (pendingDelete.value) {
+    removeCustomField(pendingDelete.value.ds, pendingDelete.value.column.name)
+    refreshManageDataFieldCustomFields()
+  }
+  showDeleteConfirm.value = false
+  pendingDelete.value = null
+}
+
+function onDeleteCancel() {
+  showDeleteConfirm.value = false
+  pendingDelete.value = null
 }
 
 function openManageDataField(ds: any) {
+  manageDataFieldTargetDataSource = ds
   // Separate normal and custom fields
   manageDataFieldDataFields.value = ds.columns.filter((c: any) => !c.isCustom).map((c: any, idx: number) => ({ id: idx + 1, name: c.name, type: c.type }))
   manageDataFieldCustomFields.value = ds.columns.filter((c: any) => c.isCustom).map((c: any, idx: number) => ({ id: idx + 1, name: c.name, expression: c.expression, type: c.type }))
   showManageDataField.value = true
 }
 
-function handleAddCustomField() {
-  // You can open your custom field modal here, or emit to parent
-  // For now, just close the manage modal
-  showManageDataField.value = false
+function handleAddCustomField(field: { name: string; expression: string; type: string }) {
+  if (!manageDataFieldTargetDataSource) return
+  addCustomField(manageDataFieldTargetDataSource, field.name, field.expression, field.type as 'string' | 'number' | 'date')
+  refreshManageDataFieldCustomFields()
 }
 
-function handleEditCustomField(field: any) {
-  // You can open your custom field modal here, or emit to parent
-  // For now, just close the manage modal
-  showManageDataField.value = false
+function handleEditCustomField(field: { id: number; name: string; expression: string; type: string }) {
+  if (!manageDataFieldTargetDataSource) return
+  // Find the original custom field by id
+  const customFields = manageDataFieldTargetDataSource.columns.filter((c: any) => c.isCustom)
+  const original = customFields[field.id - 1]
+  if (!original) return
+  editCustomField(manageDataFieldTargetDataSource, original.name, field.name, field.expression, field.type as 'string' | 'number' | 'date')
+  refreshManageDataFieldCustomFields()
 }
 
-function handleDeleteCustomField(field: any) {
-  // You can handle delete logic here, or emit to parent
-  // For now, just close the manage modal
-  showManageDataField.value = false
+function handleDeleteCustomField(field: { id: number; name: string; expression: string; type: string }) {
+  if (!manageDataFieldTargetDataSource) return
+  // Find the original custom field by id
+  const customFields = manageDataFieldTargetDataSource.columns.filter((c: any) => c.isCustom)
+  const original = customFields[field.id - 1]
+  if (!original) return
+  removeCustomField(manageDataFieldTargetDataSource, original.name)
+  refreshManageDataFieldCustomFields()
+}
+
+function refreshManageDataFieldCustomFields() {
+  if (!manageDataFieldTargetDataSource) return
+  manageDataFieldCustomFields.value = manageDataFieldTargetDataSource.columns.filter((c: any) => c.isCustom).map((c: any, idx: number) => ({ id: idx + 1, name: c.name, expression: c.expression, type: c.type }))
 }
 
 // Handler for save event from CustomFieldModal
@@ -535,3 +586,9 @@ defineExpose({
   openDataSourceManager
 })
 </script>
+
+<style scoped>
+.delete-confirm-active ~ .resizer {
+  display: none !important;
+}
+</style>

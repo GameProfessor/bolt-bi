@@ -23,7 +23,7 @@
             leave-from="opacity-100 scale-100"
             leave-to="opacity-0 scale-95"
           >
-            <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+            <DialogPanel class="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
               <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
                   Manage Data Fields
@@ -72,7 +72,13 @@
                   </div>
                   <div v-else class="h-full flex flex-col">
                     <div class="flex justify-end mb-2">
-                      <button @click="openAddCustomField" class="px-3 py-1 bg-primary-600 text-white text-xs rounded hover:bg-primary-700">+ Add Custom Field</button>
+                      <button
+                        @click="startAdd"
+                        v-if="!adding"
+                        class="px-3 py-1 bg-primary-600 text-white text-xs rounded hover:bg-primary-700 flex items-center"
+                      >
+                        <PlusIcon class="h-4 w-4 mr-1" /> Add Custom Field
+                      </button>
                     </div>
                     <div class="flex-1 overflow-y-auto">
                       <table class="min-w-full divide-y divide-gray-200">
@@ -86,19 +92,62 @@
                           </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                          <tr v-for="field in customFields" :key="field.id">
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ field.id }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ field.name }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ field.expression }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ field.type }}</td>
-                            <td class="px-4 py-2 text-sm flex items-center gap-2">
-                              <button @click="openEditCustomField(field)" class="text-gray-600 hover:text-primary-700" title="Edit">
-                                <PencilIcon class="h-5 w-5" />
-                              </button>
-                              <button @click="$emit('delete-custom', field)" class="text-red-600 hover:text-red-800" title="Delete">
-                                <TrashIcon class="h-5 w-5" />
-                              </button>
+                          <tr v-if="adding">
+                            <td class="px-4 py-2 text-sm text-gray-900">—</td>
+                            <td class="px-4 py-2 text-sm">
+                              <input
+                                v-model="editForm.name"
+                                ref="addNameInput"
+                                class="w-full border border-gray-300 rounded px-2 py-1"
+                                placeholder="Name"
+                              />
                             </td>
+                            <td class="px-4 py-2 text-sm">
+                              <input v-model="editForm.expression" class="w-full border border-gray-300 rounded px-2 py-1" placeholder="Expression" />
+                            </td>
+                            <td class="px-4 py-2 text-sm">
+                              <select v-model="editForm.type" class="w-full border border-gray-300 rounded px-2 py-1">
+                                <option value="number">Number</option>
+                                <option value="string">String</option>
+                                <option value="date">Date</option>
+                              </select>
+                            </td>
+                            <td class="px-4 py-2 text-sm flex items-center gap-2">
+                              <button @click="saveAdd" class="text-primary-600 hover:text-primary-800" title="Save"><CheckIcon class="h-5 w-5" /></button>
+                              <button @click="cancelEdit" class="text-gray-400 hover:text-red-600" title="Cancel"><CancelIcon class="h-5 w-5" /></button>
+                            </td>
+                          </tr>
+                          <tr v-for="field in customFields" :key="field.id">
+                            <template v-if="editingId === field.id">
+                              <td class="px-4 py-2 text-sm text-gray-900">{{ field.id }}</td>
+                              <td class="px-4 py-2 text-sm">
+                                <input v-model="editForm.name" class="w-full border border-gray-300 rounded px-2 py-1" />
+                              </td>
+                              <td class="px-4 py-2 text-sm">
+                                <input v-model="editForm.expression" class="w-full border border-gray-300 rounded px-2 py-1" />
+                              </td>
+                              <td class="px-4 py-2 text-sm">
+                                <select v-model="editForm.type" class="w-full border border-gray-300 rounded px-2 py-1">
+                                  <option value="number">Number</option>
+                                  <option value="string">String</option>
+                                  <option value="date">Date</option>
+                                </select>
+                              </td>
+                              <td class="px-4 py-2 text-sm flex items-center gap-2">
+                                <button @click="saveEdit(field)" class="text-primary-600 hover:text-primary-800" title="Save"><CheckIcon class="h-5 w-5" /></button>
+                                <button @click="cancelEdit" class="text-gray-400 hover:text-red-600" title="Cancel"><CancelIcon class="h-5 w-5" /></button>
+                              </td>
+                            </template>
+                            <template v-else>
+                              <td class="px-4 py-2 text-sm text-gray-900">{{ field.id }}</td>
+                              <td class="px-4 py-2 text-sm text-gray-900">{{ field.name }}</td>
+                              <td class="px-4 py-2 text-sm text-gray-900">{{ field.expression }}</td>
+                              <td class="px-4 py-2 text-sm text-gray-900">{{ field.type }}</td>
+                              <td class="px-4 py-2 text-sm flex items-center gap-2">
+                                <button @click="startEdit(field)" class="text-gray-600 hover:text-primary-700" title="Edit"><PencilIcon class="h-5 w-5" /></button>
+                                <button @click="remove(field)" class="text-red-600 hover:text-red-800" title="Delete"><TrashIcon class="h-5 w-5" /></button>
+                              </td>
+                            </template>
                           </tr>
                         </tbody>
                       </table>
@@ -117,21 +166,12 @@
       </div>
     </Dialog>
   </TransitionRoot>
-  <CustomFieldModal
-    :show="showCustomFieldModal"
-    :edit-mode="customFieldEditMode"
-    :form="customFieldForm"
-    @close="handleCustomFieldModalClose"
-    @save="handleCustomFieldModalSave"
-    class="z-[1100]"
-  />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import CustomFieldModal from './CustomFieldModal.vue'
+import { XMarkIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon as CancelIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   show: boolean
@@ -142,37 +182,42 @@ const emit = defineEmits(['close', 'add-custom', 'edit-custom', 'delete-custom',
 
 const activeTab = ref<'fields' | 'custom'>('fields')
 
-// State for CustomFieldModal
-const showCustomFieldModal = ref(false)
-const customFieldEditMode = ref(false)
-const customFieldForm = ref({ name: '', expression: '', type: 'number' })
-let editingFieldId: string | null = null
+// Inline editing/adding state
+const editingId = ref<string | null>(null)
+const adding = ref(false)
+const editForm = ref({ name: '', expression: '', type: 'number' })
+const addNameInput = ref<HTMLInputElement | null>(null)
 
-function openAddCustomField() {
-  customFieldEditMode.value = false
-  customFieldForm.value = { name: '', expression: '', type: 'number' }
-  editingFieldId = null
-  showCustomFieldModal.value = true
+function startAdd() {
+  adding.value = true
+  editForm.value = { name: '', expression: '', type: 'number' }
+  editingId.value = null
 }
-
-function openEditCustomField(field: { id: string; name: string; expression: string; type: string }) {
-  customFieldEditMode.value = true
-  customFieldForm.value = { name: field.name, expression: field.expression, type: field.type }
-  editingFieldId = field.id
-  showCustomFieldModal.value = true
+function startEdit(field: any) {
+  editingId.value = field.id
+  adding.value = false
+  editForm.value = { name: field.name, expression: field.expression, type: field.type }
 }
-
-function handleCustomFieldModalClose() {
-  showCustomFieldModal.value = false
+function cancelEdit() {
+  editingId.value = null
+  adding.value = false
 }
-
-function handleCustomFieldModalSave(field: { name: string; expression: string; type: string }) {
-  showCustomFieldModal.value = false
-  if (customFieldEditMode.value && editingFieldId) {
-    emit('edit-custom', { ...field, id: editingFieldId })
-  } else {
-    emit('add-custom', field)
-  }
+function saveEdit(field: any) {
+  emit('edit-custom', { ...editForm.value, id: field.id })
+  editingId.value = null
+  emit('refresh-custom-fields')
+}
+function saveAdd() {
+  emit('add-custom', { ...editForm.value })
+  editForm.value = { name: '', expression: '', type: 'number' }
+  adding.value = true
+  emit('refresh-custom-fields')
+  nextTick(() => {
+    addNameInput.value?.focus()
+  })
+}
+function remove(field: any) {
+  emit('delete-custom', field)
   emit('refresh-custom-fields')
 }
 </script> 
