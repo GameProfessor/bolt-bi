@@ -35,37 +35,37 @@
           <div class="mb-6">
             <div class="mb-4">
               <label for="dashboardCategory" class="block text-sm font-medium text-gray-800 mb-1">
-                Category
-              </label>
-              <select
-                id="dashboardCategory"
-                v-model="dashboardCategory"
+              Category
+            </label>
+            <select
+              id="dashboardCategory"
+              v-model="dashboardCategory"
                 class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
-              >
-                <option value="">Select category</option>
-                <option value="Sales">Sales</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Finance">Finance</option>
-                <option value="Operations">Operations</option>
-                <option value="HR">HR</option>
-                <option value="Customer">Customer</option>
-                <option value="Product">Product</option>
-                <option value="Analytics">Analytics</option>
-                <option value="Executive">Executive</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
+            >
+              <option value="">Select category</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+              <option value="HR">HR</option>
+              <option value="Customer">Customer</option>
+              <option value="Product">Product</option>
+              <option value="Analytics">Analytics</option>
+              <option value="Executive">Executive</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
               <label for="dashboardDescription" class="block text-sm font-medium text-gray-800 mb-1">
-                Description
-              </label>
-              <textarea
+              Description
+            </label>
+            <textarea
                 id="dashboardDescription"
-                v-model="dashboardDescription"
+              v-model="dashboardDescription"
                 rows="3"
                 class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400 resize-none"
-                placeholder="Dashboard description"
-              />
+              placeholder="Dashboard description"
+            />
             </div>
           </div>
 
@@ -232,11 +232,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-  Cog6ToothIcon,
-  ChevronDownIcon,
-  CheckIcon,
-  PencilIcon,
+import { 
+  Cog6ToothIcon, 
+  ChevronDownIcon, 
+  CheckIcon, 
+  PencilIcon, 
   TrashIcon,
   CircleStackIcon,
   InformationCircleIcon,

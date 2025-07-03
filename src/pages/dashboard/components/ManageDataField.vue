@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot :show="show" as="template">
-    <Dialog @close="$emit('close')" class="relative z-50">
+    <Dialog @close="$emit('close')" class="relative z-[1000]">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -123,6 +123,7 @@
     :form="customFieldForm"
     @close="handleCustomFieldModalClose"
     @save="handleCustomFieldModalSave"
+    class="z-[1100]"
   />
 </template>
 
@@ -137,7 +138,7 @@ const props = defineProps<{
   dataFields: Array<{ id: string; name: string; type: string }>
   customFields: Array<{ id: string; name: string; expression: string; type: string }>
 }>()
-const emit = defineEmits(['close', 'add-custom', 'edit-custom', 'delete-custom'])
+const emit = defineEmits(['close', 'add-custom', 'edit-custom', 'delete-custom', 'refresh-custom-fields'])
 
 const activeTab = ref<'fields' | 'custom'>('fields')
 
@@ -172,5 +173,6 @@ function handleCustomFieldModalSave(field: { name: string; expression: string; t
   } else {
     emit('add-custom', field)
   }
+  emit('refresh-custom-fields')
 }
 </script> 
