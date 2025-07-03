@@ -110,7 +110,7 @@
                   style="border-left: 1px solid rgba(255,255,255,0.15);"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                </button>
+            </button>
           </div>
               <transition name="fade">
                 <div v-if="showSaveDropdown" class="absolute right-0 z-50 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">

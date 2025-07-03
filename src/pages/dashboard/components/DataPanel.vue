@@ -106,6 +106,7 @@
           <div v-for="ds in selectedDataSources" :key="ds.id" class="border rounded-lg overflow-hidden">
             <button
               @click="$emit('toggle-expand', ds.id)"
+              @dblclick="openManageDataField(ds)"
               class="w-full px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
             >
               <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate text-left" :title="ds.name">{{ ds.name }}</span>
@@ -148,7 +149,7 @@
               <!-- Custom fields -->
               <div class="mt-2 border-t pt-2">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs font-semibold text-primary-700">Custom Fields</span>
+                  <span class="text-xs font-semibold text-primary-700 cursor-pointer" @click="openManageDataField(ds)">Custom Fields</span>
                   <button @click="openCustomFieldModal(ds)" class="text-xs text-primary-600 hover:underline">+ Add</button>
                 </div>
                 <div v-for="column in ds.columns.filter(c => c.isCustom)" :key="column.name" class="flex items-center justify-between p-2 rounded mt-1">
@@ -191,261 +192,51 @@
     </div>
 
     <!-- Data Source Manager Modal -->
-    <TransitionRoot appear :show="showDataSourceManager" as="template">
-      <Dialog as="div" @close="showDataSourceManager = false" class="relative z-50">
-        <TransitionChild
-          as="template"
-          enter="duration-300 ease-out"
-          enter-from="opacity-0"
-          enter-to="opacity-100"
-          leave="duration-200 ease-in"
-          leave-from="opacity-100"
-          leave-to="opacity-0"
-        >
-          <div class="fixed inset-0 bg-black bg-opacity-25" />
-        </TransitionChild>
-
-        <div class="fixed inset-0 overflow-y-auto">
-          <div class="flex min-h-full items-center justify-center p-4 text-center">
-            <TransitionChild
-              as="template"
-              enter="duration-300 ease-out"
-              enter-from="opacity-0 scale-95"
-              enter-to="opacity-100 scale-100"
-              leave="duration-200 ease-in"
-              leave-from="opacity-100 scale-100"
-              leave-to="opacity-0 scale-95"
-            >
-              <DialogPanel class="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
-                <!-- Modal Header -->
-                <div class="px-6 py-4 border-b border-gray-200">
-                  <div class="flex items-center justify-between">
-                    <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                      Choose datasets
-                    </DialogTitle>
-                    <button
-                      @click="showDataSourceManager = false"
-                      class="text-gray-400 hover:text-gray-600"
-                    >
-                      <XMarkIcon class="h-6 w-6" />
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Search and Filter Controls -->
-                <div class="px-6 py-4 border-b border-gray-200">
-                  <div class="flex items-center gap-4">
-                    <!-- Search Input -->
-                    <div class="flex-1 relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        v-model="searchQuery"
-                        type="text"
-                        placeholder="Search datasets"
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                      />
-                    </div>
-                    <!-- Category Filter -->
-                    <div class="min-w-0 flex-shrink-0">
-                      <select
-                        v-model="selectedCategory"
-                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                      >
-                        <option value="">All Categories</option>
-                        <option v-for="category in availableCategories" :key="category" :value="category">
-                          {{ category }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Datasets Table -->
-                <div class="px-6 py-4">
-                  <div class="overflow-hidden border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                      <thead class="bg-gray-50">
-                        <tr>
-                          <th scope="col" class="w-12 px-6 py-3 text-left">
-                            <input
-                              type="checkbox"
-                              :checked="isAllSelected"
-                              @change="toggleSelectAll"
-                              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            ID
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Category
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody class="bg-white divide-y divide-gray-200">
-                        <tr
-                          v-for="(ds, index) in paginatedDataSources"
-                          :key="ds.id"
-                          class="hover:bg-gray-50"
-                        >
-                          <td class="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              :checked="isDataSourceSelected(ds)"
-                              @change="toggleDataSource(ds)"
-                              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ (currentPage - 1) * itemsPerPage + index + 1 }}
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ ds.name }}
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ ds.category || 'General' }}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <!-- Pagination Info -->
-                  <div class="mt-4 flex items-center justify-between text-sm text-gray-700">
-                    <div>
-                      {{ paginationInfo }}
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <!-- Pagination Controls -->
-                      <button
-                        @click="goToPreviousPage"
-                        :disabled="currentPage === 1"
-                        class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      
-                      <button
-                        v-for="page in visiblePages"
-                        :key="page"
-                        @click="goToPage(page)"
-                        :class="[
-                          'px-3 py-1 border text-sm rounded',
-                          page === currentPage
-                            ? 'bg-primary-600 text-white border-primary-600'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        ]"
-                      >
-                        {{ page }}
-                      </button>
-                      
-                      <button
-                        @click="goToNextPage"
-                        :disabled="currentPage === totalPages"
-                        class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Modal Footer -->
-                <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
-                  <button
-                    @click="showDataSourceManager = false"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Back
-                  </button>
-                  <button
-                    @click="saveSelectedDataSources"
-                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Save
-                  </button>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
-          </div>
-        </div>
-      </Dialog>
-    </TransitionRoot>
+    <DataSetModal
+      :show="showDataSourceManager"
+      :data-sources="dataSources"
+      :selected-data-sources="tempSelectedDataSources"
+      :search-query="searchQuery"
+      :selected-category="selectedCategory"
+      :current-page="currentPage"
+      :items-per-page="itemsPerPage"
+      @close="showDataSourceManager = false"
+      @save="saveSelectedDataSources"
+      @update:selectedDataSources="val => tempSelectedDataSources = val"
+      @update:searchQuery="val => searchQuery = val"
+      @update:selectedCategory="val => selectedCategory = val"
+      @update:currentPage="val => currentPage = val"
+    />
 
     <!-- Custom Field Modal -->
-    <TransitionRoot appear :show="showCustomFieldModal" as="template">
-      <Dialog as="div" @close="closeCustomFieldModal" class="relative z-50">
-        <TransitionChild
-          as="template"
-          enter="duration-300 ease-out"
-          enter-from="opacity-0"
-          enter-to="opacity-100"
-          leave="duration-200 ease-in"
-          leave-from="opacity-100"
-          leave-to="opacity-0"
-        >
-          <div class="fixed inset-0 bg-black bg-opacity-25" />
-        </TransitionChild>
-        <div class="fixed inset-0 overflow-y-auto">
-          <div class="flex min-h-full items-center justify-center p-4 text-center">
-            <TransitionChild
-              as="template"
-              enter="duration-300 ease-out"
-              enter-from="opacity-0 scale-95"
-              enter-to="opacity-100 scale-100"
-              leave="duration-200 ease-in"
-              leave-from="opacity-100 scale-100"
-              leave-to="opacity-0 scale-95"
-            >
-              <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                  {{ customFieldEditMode ? 'Edit Custom Field' : 'Add Custom Field' }}
-                </DialogTitle>
-                <div class="mt-4 space-y-3">
-                  <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Field Name</label>
-                    <input v-model="customFieldForm.name" type="text" class="w-full rounded border-gray-300 text-sm" />
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Expression</label>
-                    <input v-model="customFieldForm.expression" type="text" class="w-full rounded border-gray-300 text-sm" placeholder="e.g. revenue - cost" />
-                    <p class="text-xs text-gray-500 mt-1">Use existing field names as variables. Example: <span class="font-mono">revenue - cost</span></p>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                    <select v-model="customFieldForm.type" class="w-full rounded border-gray-300 text-sm">
-                      <option value="number">Number</option>
-                      <option value="string">String</option>
-                      <option value="date">Date</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="mt-6 flex justify-end gap-2">
-                  <button @click="closeCustomFieldModal" class="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Cancel</button>
-                  <button @click="saveCustomField" class="px-4 py-2 rounded bg-primary-600 text-white hover:bg-primary-700">Save</button>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
-          </div>
-        </div>
-      </Dialog>
-    </TransitionRoot>
+    <CustomFieldModal
+      :show="showCustomFieldModal"
+      :edit-mode="customFieldEditMode"
+      :form="customFieldForm"
+      @close="closeCustomFieldModal"
+      @save="onCustomFieldModalSave"
+    />
+
+    <ManageDataField
+      :show="showManageDataField"
+      :data-fields="manageDataFieldDataFields"
+      :custom-fields="manageDataFieldCustomFields"
+      @close="showManageDataField = false"
+      @add-custom="handleAddCustomField"
+      @edit-custom="handleEditCustomField"
+      @delete-custom="handleDeleteCustomField"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { 
-  Cog6ToothIcon, 
-  ChevronDownIcon, 
-  CheckIcon, 
-  PencilIcon, 
+import {
+  Cog6ToothIcon,
+  ChevronDownIcon,
+  CheckIcon,
+  PencilIcon,
   TrashIcon,
   CircleStackIcon,
   InformationCircleIcon,
@@ -456,6 +247,9 @@ import {
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useDataSourceStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
+import ManageDataField from './ManageDataField.vue'
+import CustomFieldModal from './CustomFieldModal.vue'
+import DataSetModal from './DataSetModal.vue'
 
 const props = defineProps<{
   selectedDataSources: Array<{ id: string; name: string; columns: DataSourceColumn[] }>
@@ -528,6 +322,11 @@ const customFieldForm = ref({ name: '', expression: '', type: 'number' })
 const customFieldEditMode = ref(false)
 let customFieldTargetDataSource: any = null
 let customFieldOriginalName = ''
+
+// Modal state for ManageDataField
+const showManageDataField = ref(false)
+const manageDataFieldDataFields = ref<any[]>([])
+const manageDataFieldCustomFields = ref<any[]>([])
 
 // Computed properties for data source manager
 const availableCategories = computed(() => {
@@ -698,6 +497,37 @@ function saveCustomField() {
 
 function removeCustomFieldModal(ds: any, column: any) {
   removeCustomField(ds, column.name)
+}
+
+function openManageDataField(ds: any) {
+  // Separate normal and custom fields
+  manageDataFieldDataFields.value = ds.columns.filter((c: any) => !c.isCustom).map((c: any, idx: number) => ({ id: idx + 1, name: c.name, type: c.type }))
+  manageDataFieldCustomFields.value = ds.columns.filter((c: any) => c.isCustom).map((c: any, idx: number) => ({ id: idx + 1, name: c.name, expression: c.expression, type: c.type }))
+  showManageDataField.value = true
+}
+
+function handleAddCustomField() {
+  // You can open your custom field modal here, or emit to parent
+  // For now, just close the manage modal
+  showManageDataField.value = false
+}
+
+function handleEditCustomField(field: any) {
+  // You can open your custom field modal here, or emit to parent
+  // For now, just close the manage modal
+  showManageDataField.value = false
+}
+
+function handleDeleteCustomField(field: any) {
+  // You can handle delete logic here, or emit to parent
+  // For now, just close the manage modal
+  showManageDataField.value = false
+}
+
+// Handler for save event from CustomFieldModal
+function onCustomFieldModalSave(field: { name: string; expression: string; type: string }) {
+  customFieldForm.value = { ...field }
+  saveCustomField()
 }
 
 // Expose the openDataSourceManager method to parent

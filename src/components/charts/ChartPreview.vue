@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { 
-  ExclamationTriangleIcon,
+  ExclamationTriangleIcon, 
   Squares2X2Icon
 } from '@heroicons/vue/24/outline'
 import type { DashboardChart } from '@/types/dashboard'
