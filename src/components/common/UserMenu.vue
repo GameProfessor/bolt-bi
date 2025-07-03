@@ -39,8 +39,22 @@
 
         <!-- Menu items -->
         <div class="py-1">
+          <button
+            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            @click="openProfileModal"
+          >
+            <component :is="UserIcon" class="h-4 w-4 mr-3 text-gray-400" />
+            Profile
+          </button>
+          <button
+            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            @click="openChangePasswordModal"
+          >
+            <component :is="KeyIcon" class="h-4 w-4 mr-3 text-gray-400" />
+            Change password
+          </button>
           <router-link
-            v-for="item in menuItems"
+            v-for="(item, idx) in menuItems.filter(i => i.name !== 'Profile' && i.name !== 'Change password')"
             :key="item.name"
             :to="item.to"
             class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
@@ -76,26 +90,57 @@
       </div>
     </div>
   </div>
+
+  <UserModal
+    v-if="showUserModal"
+    :show="showUserModal"
+    :user="user"
+    :groups="[]"
+    :hide-account-type="true"
+    :hide-active-account="true"
+    :read-only-fields="['username', 'role', 'groupIds']"
+    title="User Profile"
+    @close="closeUserModal"
+    @save="handleUserSave"
+  />
+
+  <ChangePasswordModal
+    v-if="showChangePasswordModal"
+    :show="showChangePasswordModal"
+    @close="closeChangePasswordModal"
+    @save="handleChangePasswordSave"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ChevronDownIcon,
   UserIcon,
   KeyIcon,
 } from '@heroicons/vue/24/outline'
+import UserModal from '@/pages/admin/components/UserModal.vue'
+import ChangePasswordModal from '@/components/common/ChangePasswordModal.vue'
 
 const router = useRouter()
 const showMenu = ref(false)
+const showUserModal = ref(false)
+const showChangePasswordModal = ref(false)
 
 // Mock user data - trong thực tế sẽ lấy từ auth store
 const user = ref({
+  id: '1',
+  username: 'johndoe',
   name: 'John Doe',
+  fullName: 'John Doe',
   email: 'john.doe@example.com',
   avatar: null,
-  role: 'Admin'
+  role: 'Admin' as 'Admin',
+  type: 'local' as 'local',
+  groupIds: [],
+  isActive: true,
+  createdAt: new Date()
 })
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.value.name) + '&background=6366f1&color=fff'
@@ -131,6 +176,29 @@ const handleLogout = async () => {
   } catch (error) {
     console.error('Logout failed:', error)
   }
+}
+
+const openProfileModal = () => {
+  showUserModal.value = true
+}
+const closeUserModal = () => {
+  showUserModal.value = false
+}
+const handleUserSave = (userData: any) => {
+  // Update user info locally (mock)
+  user.value = { ...user.value, ...userData }
+  showUserModal.value = false
+}
+
+const openChangePasswordModal = () => {
+  showChangePasswordModal.value = true
+}
+const closeChangePasswordModal = () => {
+  showChangePasswordModal.value = false
+}
+const handleChangePasswordSave = (data: any) => {
+  // Mock: handle password change
+  showChangePasswordModal.value = false
 }
 
 // Close menu when clicking outside

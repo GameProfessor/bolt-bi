@@ -30,7 +30,7 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                      {{ user ? 'Edit User' : 'Create User' }}
+                      {{ props.title || (user ? 'Edit User' : 'Create User') }}
                     </DialogTitle>
                     <p class="text-sm text-gray-500 mt-1">
                       {{ user ? 'Update user information and permissions' : 'Add a new user to the system' }}
@@ -68,6 +68,7 @@
                           required
                           class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm"
                           placeholder="Username"
+                          :disabled="props.readOnlyFields && props.readOnlyFields.includes('username')"
                         />
                       </div>
 
@@ -138,7 +139,7 @@
                     
                     <div class="grid grid-cols-2 gap-3">
                       <!-- User Type -->
-                      <div>
+                      <div v-if="!props.hideAccountType">
                         <label for="type" class="block text-xs font-medium text-gray-700 mb-1">
                           Type <span class="text-red-500">*</span>
                         </label>
@@ -147,6 +148,7 @@
                           v-model="form.type"
                           required
                           class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white"
+                          :disabled="props.readOnlyFields && props.readOnlyFields.includes('type')"
                         >
                           <option value="local">Local</option>
                           <option value="sso">SSO</option>
@@ -163,6 +165,7 @@
                           v-model="form.role"
                           required
                           class="block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-200 transition-all duration-200 text-sm bg-white"
+                          :disabled="props.readOnlyFields && props.readOnlyFields.includes('role')"
                         >
                           <option value="Admin">Admin</option>
                           <option value="Dashboard Designer">Designer</option>
@@ -174,12 +177,13 @@
                    
 
                     <!-- Status -->
-                    <div>
+                    <div v-if="!props.hideActiveAccount">
                       <label class="flex items-center">
                         <input
                           v-model="form.isActive"
                           type="checkbox"
                           class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 h-4 w-4"
+                          :disabled="props.readOnlyFields && props.readOnlyFields.includes('isActive')"
                         />
                         <span class="ml-2 text-sm text-gray-700">Active account</span>
                       </label>
@@ -213,6 +217,7 @@
     option: 'text-sm px-3 py-2',            // reduce font size of options
     search: 'text-xs placeholder-gray-400',
   }"
+                        :disabled="props.readOnlyFields && props.readOnlyFields.includes('groupIds')"
                       />
                       <p class="mt-1 text-xs text-gray-500">Type to search and select multiple groups</p>
                     </div>
@@ -265,6 +270,10 @@ interface Props {
   show: boolean
   user?: User | null
   groups: UserGroup[]
+  hideAccountType: boolean
+  hideActiveAccount: boolean
+  readOnlyFields: string[]
+  title: string
 }
 
 interface Emits {
