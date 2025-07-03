@@ -118,8 +118,8 @@ const showNotifications = ref(false)
 const notifications = ref<Notification[]>([
   {
     id: '1',
-    title: 'Dashboard Updated',
-    message: 'Sales dashboard has been updated with new data',
+    title: 'Dashboard Shared',
+    message: 'Sales dashboard has been shared with you',
     type: 'info',
     read: false,
     createdAt: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago

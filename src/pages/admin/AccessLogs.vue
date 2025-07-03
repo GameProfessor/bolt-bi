@@ -28,7 +28,7 @@
       </div>
 
       <!-- Statistics Cards -->
-      <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div class="bg-white overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
@@ -44,7 +44,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Filters -->
       <div class="mt-8 bg-white shadow rounded-lg">
@@ -421,7 +421,6 @@ import {
   DocumentArrowDownIcon,
   ArrowPathIcon,
   DocumentTextIcon,
-  UserGroupIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
   UserIcon,

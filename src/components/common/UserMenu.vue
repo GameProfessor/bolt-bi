@@ -56,14 +56,14 @@
 
         <!-- Settings & Logout -->
         <div class="py-1">
-          <router-link
+          <!-- <router-link
             to="/settings"
             class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
             @click="showMenu = false"
           >
             <CogIcon class="h-4 w-4 mr-3 text-gray-400" />
             Settings
-          </router-link>
+          </router-link> -->
           
           <button
             @click="handleLogout"
@@ -84,11 +84,7 @@ import { useRouter } from 'vue-router'
 import {
   ChevronDownIcon,
   UserIcon,
-  DocumentTextIcon,
-  ChartBarIcon,
-  CogIcon,
-  ArrowRightOnRectangleIcon,
-  HeartIcon
+  KeyIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -111,19 +107,9 @@ const menuItems = [
     icon: UserIcon
   },
   {
-    name: 'My Dashboards',
-    to: '/my-dashboards',
-    icon: ChartBarIcon
-  },
-  {
-    name: 'My Reports',
-    to: '/my-reports',
-    icon: DocumentTextIcon
-  },
-  {
-    name: 'Favorites',
-    to: '/favorites',
-    icon: HeartIcon
+    name: 'Change password',
+    to: '/change-password',
+    icon: KeyIcon
   }
 ]
 

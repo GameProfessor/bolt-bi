@@ -453,7 +453,7 @@
 
     <!-- Data Source Detail Modal -->
     <TransitionRoot :show="!!selectedDataSource" as="template">
-      <Dialog @close="selectedDataSource = null" class="relative z-10">
+      <Dialog @close="selectedDataSource = null" class="relative z-[2000]">
         <TransitionChild
           as="template"
           enter="ease-out duration-300"

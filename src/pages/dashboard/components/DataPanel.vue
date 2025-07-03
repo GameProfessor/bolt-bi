@@ -245,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { 
   Cog6ToothIcon, 
@@ -256,10 +256,9 @@ import {
   CircleStackIcon,
   InformationCircleIcon,
   WrenchScrewdriverIcon,
-  XMarkIcon,
-  MagnifyingGlassIcon
+
 } from '@heroicons/vue/24/outline'
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+
 import { useDataSourceStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import ManageDataField from './ManageDataField.vue'
@@ -347,74 +346,6 @@ const manageDataFieldCustomFields = ref<any[]>([])
 // Track the current data source being managed
 let manageDataFieldTargetDataSource: any = null
 
-// Computed properties for data source manager
-const availableCategories = computed(() => {
-  const categories = new Set<string>()
-  if (dataSources.value) {
-    dataSources.value.forEach(ds => {
-      categories.add(ds.category || 'General')
-    })
-  }
-  return Array.from(categories).sort()
-})
-
-const filteredDataSources = computed(() => {
-  let filtered = dataSources.value || []
-
-  // Apply search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(ds =>
-      ds.name.toLowerCase().includes(query) ||
-      ds.id.toLowerCase().includes(query)
-    )
-  }
-
-  // Apply category filter
-  if (selectedCategory.value) {
-    filtered = filtered.filter(ds => (ds.category || 'General') === selectedCategory.value)
-  }
-
-  return filtered
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredDataSources.value.length / itemsPerPage.value)
-})
-
-const paginatedDataSources = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredDataSources.value.slice(start, end)
-})
-
-const paginationInfo = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value + 1
-  const end = Math.min(currentPage.value * itemsPerPage.value, filteredDataSources.value.length)
-  const total = filteredDataSources.value.length
-  return `${start} - ${end} of ${total} items`
-})
-
-const visiblePages = computed(() => {
-  const pages = []
-  const total = totalPages.value
-  const current = currentPage.value
-  
-  // Show up to 5 pages around current page
-  const start = Math.max(1, current - 2)
-  const end = Math.min(total, current + 2)
-  
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-  
-  return pages
-})
-
-const isAllSelected = computed(() => {
-  return paginatedDataSources.value.length > 0 && 
-         paginatedDataSources.value.every(ds => isDataSourceSelected(ds))
-})
 
 // Data source manager methods
 const openDataSourceManager = () => {
@@ -423,56 +354,6 @@ const openDataSourceManager = () => {
   searchQuery.value = ''
   selectedCategory.value = ''
   currentPage.value = 1
-}
-
-const isDataSourceSelected = (dataSource: any) => {
-  return tempSelectedDataSources.value.some(ds => ds.id === dataSource.id)
-}
-
-const toggleDataSource = (dataSource: any) => {
-  const index = tempSelectedDataSources.value.findIndex(ds => ds.id === dataSource.id)
-  if (index === -1) {
-    tempSelectedDataSources.value.push(dataSource)
-  } else {
-    tempSelectedDataSources.value.splice(index, 1)
-  }
-}
-
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    // Deselect all visible items
-    paginatedDataSources.value.forEach(ds => {
-      const index = tempSelectedDataSources.value.findIndex(selected => selected.id === ds.id)
-      if (index !== -1) {
-        tempSelectedDataSources.value.splice(index, 1)
-      }
-    })
-  } else {
-    // Select all visible items
-    paginatedDataSources.value.forEach(ds => {
-      if (!isDataSourceSelected(ds)) {
-        tempSelectedDataSources.value.push(ds)
-      }
-    })
-  }
-}
-
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-const goToPreviousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const goToNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
 }
 
 const saveSelectedDataSources = () => {
