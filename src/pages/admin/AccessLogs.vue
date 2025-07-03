@@ -33,60 +33,12 @@
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <DocumentTextIcon class="h-6 w-6 text-gray-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Total Logs</dt>
-                  <dd class="text-lg font-medium text-gray-900">{{ accessLogStore.totalLogs.toLocaleString() }}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
                 <UserGroupIcon class="h-6 w-6 text-blue-400" />
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
-                  <dd class="text-lg font-medium text-gray-900">{{ accessLogStore.activeUsers }}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CheckCircleIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Success Rate</dt>
-                  <dd class="text-lg font-medium text-gray-900">{{ accessLogStore.successRate }}%</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ClockIcon class="h-6 w-6 text-yellow-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Peak Hour</dt>
-                  <dd class="text-lg font-medium text-gray-900">{{ accessLogStore.peakHour }}</dd>
+                  <dt class="text-sm font-medium text-gray-500 truncate">User đăng nhập trong ngày</dt>
+                  <dd class="text-lg font-medium text-gray-900">{{ accessLogStore.stats.uniqueUsers }}</dd>
                 </dl>
               </div>
             </div>
@@ -121,7 +73,7 @@
               <select
                 id="action"
                 v-model="filters.action"
-                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white"
               >
                 <option value="">All Actions</option>
                 <option value="login">Login</option>
@@ -144,7 +96,7 @@
               <select
                 id="status"
                 v-model="filters.status"
-                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-200 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white"
               >
                 <option value="">All Status</option>
                 <option value="success">Success</option>
@@ -153,53 +105,24 @@
               </select>
             </div>
 
-            <!-- Date Range -->
-            <div>
-              <label for="dateRange" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-              <select
-                id="dateRange"
-                v-model="filters.dateRange"
-                @change="handleDateRangeChange"
-                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-              >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="7days">Last 7 days</option>
-                <option value="30days">Last 30 days</option>
-                <option value="custom">Custom Range</option>
-              </select>
-            </div>
-
-            <!-- Clear Filters -->
-            <div class="flex items-end">
-              <button
-                @click="clearFilters"
-                class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              >
-                <XMarkIcon class="h-4 w-4 mr-2" />
-                Clear
-              </button>
-            </div>
-          </div>
-
-          <!-- Custom Date Range -->
-          <div v-if="filters.dateRange === 'custom'" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <!-- Start Date -->
             <div>
               <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
               <input
                 id="startDate"
                 v-model="filters.startDate"
                 type="date"
-                class="block w-full border border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
+            <!-- End Date -->
             <div>
               <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
               <input
                 id="endDate"
                 v-model="filters.endDate"
                 type="date"
-                class="block w-full border border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
           </div>
@@ -209,7 +132,7 @@
         <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
           <div class="flex items-center justify-between">
             <p class="text-sm text-gray-700">
-              Showing {{ paginatedLogs.length }} of {{ filteredLogs.length }} logs
+              Showing {{ paginatedLogs.length }} of {{ filteredLogs.logs.length }} logs
             </p>
             <div class="flex items-center space-x-2">
               <label for="pageSize" class="text-sm text-gray-700">Show:</label>
@@ -229,7 +152,7 @@
 
         <!-- Logs Table -->
         <div class="overflow-hidden">
-          <div v-if="filteredLogs.length === 0" class="text-center py-12">
+          <div v-if="filteredLogs.logs.length === 0" class="text-center py-12">
             <DocumentTextIcon class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-sm font-medium text-gray-900">No logs found</h3>
             <p class="mt-1 text-sm text-gray-500">
@@ -254,13 +177,7 @@
                     Resource
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    IP Address
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Duration
                   </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
@@ -300,9 +217,6 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {{ log.resource || '-' }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ log.ipAddress }}
-                  </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -310,9 +224,6 @@
                     >
                       {{ log.status }}
                     </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ log.duration ? log.duration + 'ms' : '-' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -351,9 +262,9 @@
                   Showing
                   <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
                   to
-                  <span class="font-medium">{{ Math.min(currentPage * pageSize, filteredLogs.length) }}</span>
+                  <span class="font-medium">{{ Math.min(currentPage * pageSize, filteredLogs.logs.length) }}</span>
                   of
-                  <span class="font-medium">{{ filteredLogs.length }}</span>
+                  <span class="font-medium">{{ filteredLogs.logs.length }}</span>
                   results
                 </p>
               </div>
@@ -462,33 +373,26 @@
                         </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500">IP Address</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ selectedLog.ipAddress }}</dd>
-                      </div>
-                      <div>
-                        <dt class="text-sm font-medium text-gray-500">Duration</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ selectedLog.duration ? selectedLog.duration + 'ms' : 'N/A' }}</dd>
+                        <dt class="text-sm font-medium text-gray-500">Resource</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ selectedLog.resource || 'N/A' }}</dd>
                       </div>
                       <div>
                         <dt class="text-sm font-medium text-gray-500">Session ID</dt>
                         <dd class="mt-1 text-sm text-gray-900 font-mono">{{ selectedLog.sessionId }}</dd>
                       </div>
-                      <div>
-                        <dt class="text-sm font-medium text-gray-500">Resource</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ selectedLog.resource || 'N/A' }}</dd>
-                      </div>
                     </div>
-
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">IP Address</dt>
+                      <dd class="mt-1 text-sm text-gray-900 break-all">IP address of the user</dd>
+                    </div>
                     <div>
                       <dt class="text-sm font-medium text-gray-500">User Agent</dt>
                       <dd class="mt-1 text-sm text-gray-900 break-all">{{ selectedLog.userAgent }}</dd>
                     </div>
 
-                    <div v-if="selectedLog.details">
+                    <div>
                       <dt class="text-sm font-medium text-gray-500">Additional Details</dt>
-                      <dd class="mt-1">
-                        <pre class="text-sm text-gray-900 bg-gray-100 p-3 rounded overflow-auto">{{ JSON.stringify(selectedLog.details, null, 2) }}</pre>
-                      </dd>
+                      <dd class="mt-1 text-sm text-gray-900 break-all">{{ selectedLog.details }} More detail if possible </dd>
                     </div>
                   </div>
 
@@ -518,8 +422,6 @@ import {
   ArrowPathIcon,
   DocumentTextIcon,
   UserGroupIcon,
-  CheckCircleIcon,
-  ClockIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
   UserIcon,
@@ -542,24 +444,31 @@ const filters = reactive({
   search: '',
   action: '',
   status: '',
-  dateRange: '30days',
   startDate: '',
   endDate: ''
 })
 
 // Computed
 const filteredLogs = computed(() => {
-  return accessLogStore.getFilteredLogs(filters)
+  return accessLogStore.getFilteredLogs({
+    userId: filters.search ? undefined : undefined,
+    action: filters.action as any || undefined,
+    status: (filters.status as 'success' | 'failed' | 'warning') || undefined,
+    dateFrom: filters.startDate ? new Date(filters.startDate) : undefined,
+    dateTo: filters.endDate ? new Date(filters.endDate) : undefined,
+    ipAddress: undefined,
+    resource: undefined
+  })
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredLogs.value.length / pageSize.value)
+  return Math.ceil(filteredLogs.value.logs.length / pageSize.value)
 })
 
 const paginatedLogs = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return filteredLogs.value.slice(start, end)
+  return filteredLogs.value.logs.slice(start, end)
 })
 
 const visiblePages = computed(() => {
@@ -642,50 +551,28 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
-const handleDateRangeChange = () => {
-  if (filters.dateRange !== 'custom') {
-    filters.startDate = ''
-    filters.endDate = ''
-  }
-  currentPage.value = 1
-}
-
-const clearFilters = () => {
-  Object.assign(filters, {
-    search: '',
-    action: '',
-    status: '',
-    dateRange: '30days',
-    startDate: '',
-    endDate: ''
-  })
-  currentPage.value = 1
-}
-
 const viewLogDetails = (log: AccessLog) => {
   selectedLog.value = log
   showDetailsModal.value = true
 }
 
 const refreshLogs = () => {
-  accessLogStore.refreshLogs()
+  accessLogStore.generateMockLogs()
 }
 
 const exportLogs = () => {
-  const logs = filteredLogs.value
+  const logs = filteredLogs.value.logs
   const csvContent = [
     // Header
-    'Timestamp,Username,User Role,Action,Resource,IP Address,Status,Duration,Session ID,User Agent',
+    'Timestamp,Username,User Role,Action,Resource,Status,Session ID,User Agent',
     // Data rows
-    ...logs.map(log => [
+    ...logs.map((log: any) => [
       formatDateTime(log.timestamp),
       log.username,
       log.userRole,
       formatAction(log.action),
       log.resource || '',
-      log.ipAddress,
       log.status,
-      log.duration || '',
       log.sessionId,
       `"${log.userAgent}"`
     ].join(','))
@@ -723,6 +610,6 @@ const prevPage = () => {
 
 // Lifecycle
 onMounted(() => {
-  accessLogStore.loadLogs()
+  // Store is already initialized with mock data
 })
 </script>

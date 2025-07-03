@@ -84,14 +84,10 @@ import {
   BuildingStorefrontIcon,
   BoltIcon,
   UserIcon,
-
   Bars3Icon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
-import {
+  XMarkIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/outline'
-
 
 import NotificationBell from '@/components/common/NotificationBell.vue'
 import UserMenu from '@/components/common/UserMenu.vue'
@@ -136,6 +132,12 @@ const navigationItems = [
     to: '/admin/users',
     routeName: 'UserManagement',
     icon: UserIcon
+  },
+  {
+    name: 'Access Logs',
+    to: '/admin/access-logs',
+    routeName: 'AccessLogs',
+    icon: DocumentTextIcon
   },
   // {
   //   name: 'Template Designer',
