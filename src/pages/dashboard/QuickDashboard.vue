@@ -71,7 +71,8 @@
           <!-- Right: Action Buttons -->
           <div class="flex items-center gap-3 ml-auto">
             <button
-             v-if="!viewMode"
+              v-if="!viewMode"
+              @click="openShareModal"
               class="inline-flex items-center px-4 py-2 border border-primary-200 text-sm font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               title="Share dashboard"
             >
@@ -374,6 +375,15 @@
       @confirm="handleLeaveConfirm"
       @close="handleLeaveCancel"
     />
+
+    <ShareDashboardModal
+      :show="showShareModal"
+      :users="userStore.users"
+      :groups="userStore.groups"
+      :shareList="shareList"
+      @close="closeShareModal"
+      @save="saveShareList"
+    />
   </div>
 </template>
 
@@ -385,6 +395,7 @@ import {
   ArrowLeftIcon,
   Squares2X2Icon,
   DocumentCheckIcon,
+  ShareIcon,
   ChartBarIcon,
   PresentationChartLineIcon,
   ChartPieIcon,
@@ -403,10 +414,13 @@ import ChartPanel from './components/ChartPanel.vue'
 import Toast from '@/components/ui/Toast.vue'
 import { useDashboardState } from './composables/useDashboardState'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import ShareDashboardModal from './components/ShareDashboardModal.vue'
+import { useUserStore } from '@/stores/modules/user'
 
 const router = useRouter()
 const route = useRoute()
 const dashboardStore = useDashboardStore()
+const userStore = useUserStore()
 
 // Use the dashboard state composable
 const {
@@ -1576,6 +1590,20 @@ function saveAsTemplate() {
   showSaveDropdown.value = false
   // TODO: Implement save as template logic
   alert('Save as Template (not yet implemented)')
+}
+
+const showShareModal = ref(false)
+const shareList = ref([])
+
+function openShareModal() {
+  showShareModal.value = true
+}
+function closeShareModal() {
+  showShareModal.value = false
+}
+function saveShareList(newList) {
+  shareList.value = newList
+  showShareModal.value = false
 }
 
 onMounted(async () => {
