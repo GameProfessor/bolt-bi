@@ -182,7 +182,8 @@
         @update:selectedChartType="selectedChartType = $event"
         @field-drop="onFieldDrop"
         @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
-          @remove-y-axis="(idx) => { if (Array.isArray(chartConfig.yAxis)) chartConfig.yAxis.splice(idx, 1) }"
+        @remove-y-axis="(idx) => { if (Array.isArray(chartConfig.yAxis)) chartConfig.yAxis.splice(idx, 1) }"
+        @remove-stacked-dimension="(idx) => { if (Array.isArray(chartConfig.stackedDimension)) chartConfig.stackedDimension.splice(idx, 1) }"
         @add-or-update-chart="addOrUpdateChart"
         @cancel-edit="cancelEdit"
           @chart-type-drag-start="onChartTypeDragStart"
@@ -583,6 +584,7 @@ const chartConfig = reactive({
   xAxis: [] as string[],
   yAxis: [] as string[],
   horizontal: false,
+  stackedDimension: [] as string[],
   // Pie chart specific
   category: '',
   value: '',
@@ -1046,7 +1048,7 @@ const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSource
   }
 }
 
-const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric') => {
+const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric' | 'stackedDimension') => {
   event.preventDefault()
   if (!event.dataTransfer) return
   try {
@@ -1078,6 +1080,8 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
     } else if (target === 'yAxis') {
       // For line/scatter, always set as single-element array
       chartConfig.yAxis = [fieldData.name]
+    } else if (target === 'stackedDimension') {
+      chartConfig.stackedDimension = [fieldData.name]
     } else if (target === 'category') {
       chartConfig.category = fieldData.name
     } else if (target === 'value') {

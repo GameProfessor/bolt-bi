@@ -110,6 +110,25 @@
               <span v-else>Drop Y-axis fields here (numbers only)</span>
             </div>
           </div>
+          <!-- Dimension (stacked) -->
+          <div class="mt-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Dimension (stacked)</label>
+            <div
+              @drop="$emit('field-drop', $event, 'stackedDimension')"
+              @dragover.prevent
+              @dragenter.prevent
+              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+              :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0 }"
+            >
+              <template v-if="Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0">
+                <span v-for="(field, idx) in chartConfig.stackedDimension" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                  {{ field }}
+                  <button @click.stop="$emit('remove-stacked-dimension', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+                </span>
+              </template>
+              <span v-else>Drop stacked dimension fields here</span>
+            </div>
+          </div>
           <div class="flex items-center gap-2 mt-2">
             <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
             <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
@@ -251,7 +270,8 @@ const emit = defineEmits([
   'remove-y-axis',
   'add-or-update-chart',
   'cancel-edit',
-  'chart-type-drag-start'
+  'chart-type-drag-start',
+  'remove-stacked-dimension'
 ])
 
 function onChartTypeDragStart(type: string, event: DragEvent) {
