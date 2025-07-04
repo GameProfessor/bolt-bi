@@ -170,8 +170,17 @@ const filteredResults = computed(() => {
   )
 })
 
-function addToShareListWithPermission(item: ShareItem, permission: 'viewer' | 'designer') {
-  shareListState.value.push({ ...item, permission })
+watch(filteredResults, (results) => {
+  results.forEach(item => {
+    const key = item.type + '-' + item.id
+    if (!permissionSelections.value[key]) {
+      permissionSelections.value[key] = 'viewer'
+    }
+  })
+})
+
+function addToShareListWithPermission(item: ShareItem, permission: 'viewer' | 'designer' = 'viewer') {
+  shareListState.value.push({ ...item, permission: permission || 'viewer' })
   // Remove from permissionSelections
   delete permissionSelections.value[item.type + '-' + item.id]
   searchQuery.value = ''
