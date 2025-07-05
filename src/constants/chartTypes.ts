@@ -13,7 +13,7 @@ export const CHART_TYPES: Record<ChartType, { label: string; icon: string; descr
   },
   line: {
     label: 'Line Chart', 
-    icon: 'ChartLineIcon',
+    icon: 'PresentationChartLineIcon',
     description: 'Hiển thị xu hướng dữ liệu theo thời gian'
   },
   pie: {
@@ -23,52 +23,52 @@ export const CHART_TYPES: Record<ChartType, { label: string; icon: string; descr
   },
   doughnut: {
     label: 'Doughnut Chart',
-    icon: 'ChartDonutIcon',
+    icon: 'ChartPieIcon',
     description: 'Biểu đồ tròn có lỗ ở giữa'
   },
   area: {
     label: 'Area Chart',
-    icon: 'ChartAreaIcon',
+    icon: 'PresentationChartLineIcon',
     description: 'Biểu đồ đường có tô màu vùng bên dưới'
   },
   scatter: {
     label: 'Scatter Plot',
-    icon: 'ChartScatterIcon', 
+    icon: 'CircleStackIcon', 
     description: 'Hiển thị mối quan hệ giữa hai biến số'
   },
   bubble: {
     label: 'Bubble Chart',
-    icon: 'ChartBubbleIcon',
+    icon: 'CircleStackIcon',
     description: 'Biểu đồ scatter với kích thước bong bóng'
   },
   radar: {
     label: 'Radar Chart',
-    icon: 'ChartRadarIcon',
+    icon: 'ChartBarIcon',
     description: 'Biểu đồ hình sao đa chiều'
   },
   polarArea: {
     label: 'Polar Area Chart', 
-    icon: 'ChartPolarIcon',
+    icon: 'ChartPieIcon',
     description: 'Biểu đồ vùng cực'
   },
   gauge: {
     label: 'Gauge Chart',
-    icon: 'ChartGaugeIcon',
+    icon: 'ChartBarIcon',
     description: 'Biểu đồ đồng hồ đo'
   },
   funnel: {
     label: 'Funnel Chart',
-    icon: 'ChartFunnelIcon', 
+    icon: 'ChartBarIcon', 
     description: 'Biểu đồ phễu chuyển đổi'
   },
   heatmap: {
     label: 'Heatmap',
-    icon: 'ChartHeatmapIcon',
+    icon: 'Squares2X2Icon',
     description: 'Bản đồ nhiệt hiển thị mật độ dữ liệu'
   },
   treemap: {
     label: 'Treemap',
-    icon: 'ChartTreemapIcon',
+    icon: 'Squares2X2Icon',
     description: 'Biểu đồ cây phân cấp'
   },
   card: {

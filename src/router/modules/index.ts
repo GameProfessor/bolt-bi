@@ -7,6 +7,7 @@ import designRoutes from './design'
 import adminRoutes from './admin'
 import settingsRoutes from './settings'
 import errorRoutes from './error'
+import demoRoutes from './demo'
 
 // Combine all routes
 export const allRoutes: RouteRecordRaw[] = [
@@ -15,6 +16,7 @@ export const allRoutes: RouteRecordRaw[] = [
   ...designRoutes,
   ...adminRoutes,
   ...settingsRoutes,
+  ...demoRoutes,
   ...errorRoutes // Error routes phải đặt cuối cùng
 ]
 

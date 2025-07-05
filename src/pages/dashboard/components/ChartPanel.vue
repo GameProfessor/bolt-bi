@@ -206,7 +206,7 @@
           </select>
           <!-- Color scheme preview -->
           <div class="flex items-center gap-1 mt-2">
-            <span v-for="(color, idx) in colorPalettes[chartConfig?.colorScheme || 'default'] && colorPalettes[chartConfig?.colorScheme || 'default'].slice(0, 8)" :key="color + idx"
+            <span v-for="(color, idx) in colorPalettes[chartConfig?.colorScheme || 'DEFAULT'] && colorPalettes[chartConfig?.colorScheme || 'DEFAULT'].slice(0, 8)" :key="color + idx"
               class="w-5 h-5 rounded-full border border-gray-200" :style="{ background: color }"></span>
           </div>
         </div>
@@ -248,14 +248,14 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { DataSourceColumn } from '@/stores'
-import type { ChartConfig } from '@/types/chartConfig'
-import { 
-  isBarChartConfig, 
-  isPieChartConfig, 
-  isLineChartConfig, 
-  isScatterChartConfig, 
-  isCardChartConfig 
-} from '@/types/chartConfig'
+import type { ChartConfig } from '@/types/chart'
+import {
+  isBarChartConfig,
+  isPieChartConfig,
+  isLineChartConfig,
+  isScatterChartConfig,
+  isCardChartConfig
+} from '@/types/chart'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -325,7 +325,7 @@ const chartTitle = computed({
 })
 
 const chartColorScheme = computed({
-  get: () => props.chartConfig?.colorScheme || 'default',
+      get: () => props.chartConfig?.colorScheme || 'DEFAULT',
   set: (value: string) => {
     if (props.chartConfig) props.chartConfig.colorScheme = value
   }
