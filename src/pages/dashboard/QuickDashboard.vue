@@ -754,6 +754,13 @@ const addChart = async () => {
   if (!currentDashboardId.value) {
     createTemporaryDashboard()
   }
+  
+  // Ensure we have a dashboard ID
+  if (!currentDashboardId.value) {
+    console.error('Failed to create temporary dashboard')
+    return
+  }
+  
   let newChart: DashboardChart
   switch (chartConfig.value.type) {
     case 'bar':
@@ -1333,8 +1340,13 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
         chartConfig.value = createDefaultChartConfig(chartType);
   
   if (!currentDashboardId.value) {
-    const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
-    currentDashboardId.value = tempDashboard.id
+    createTemporaryDashboard()
+  }
+  
+  // Ensure we have a dashboard ID
+  if (!currentDashboardId.value) {
+    console.error('Failed to create temporary dashboard')
+    return
   }
   
   let gridX = 0

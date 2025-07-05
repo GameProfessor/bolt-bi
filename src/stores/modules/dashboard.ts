@@ -31,6 +31,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
             createdAt: new Date(chart.createdAt),
             updatedAt: chart.updatedAt ? new Date(chart.updatedAt) : undefined
           })) || [],
+          tabs: dashboard.tabs || [{ id: nanoid(), name: 'Tab 1', chartIds: [] }],
           dataSourceIds: dashboard.dataSourceIds || []
         }))
       } catch (e) {
@@ -43,7 +44,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     localStorage.setItem('bi-dashboards', JSON.stringify(dashboards.value))
   }
 
-  const createDashboard = (name: string, description?: string, dataSourceIds?: string[], category?: string) => {
+  const createDashboard = (name: string, description?: string, dataSourceIds?: string[], category?: string, saveToStorageImmediately: boolean = true) => {
     const dashboard: Dashboard = {
       id: nanoid(),
       name,
@@ -55,7 +56,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       category
     }
     dashboards.value.push(dashboard)
-    saveToStorage()
+    if (saveToStorageImmediately) {
+      saveToStorage()
+    }
     return dashboard
   }
 

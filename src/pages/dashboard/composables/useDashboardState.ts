@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { nanoid } from 'nanoid'
 import { useDataSourceStore, useDashboardStore } from '@/stores'
 import type { DataSourceColumn } from '@/stores/modules/dataSource'
-import type { DashboardTab } from '@/types/dashboard'
+import type { DashboardTab, DashboardChart } from '@/types/dashboard'
 
 export function useDashboardState() {
   const router = useRouter()
@@ -47,37 +47,35 @@ export function useDashboardState() {
       const dataSourceIds = selectedDataSources.value.map(ds => ds.id)
 
       if (currentDashboardId.value) {
-        console.log(`Updating dashboard with ID: ${currentDashboardId.value}`)
-        // Update existing dashboard
-        const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
-        if (dashboard) {
-          console.log(`Updating dashboard with ID: ${currentDashboardId.value}, name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
-          // Update dashboard properties
-          dashboardStore.updateDashboard(currentDashboardId.value, {
-            name: dashboardName.value,
-            description: dashboardDescription.value,
-            category: dashboardCategory.value,
-            dataSourceIds,
-            showDashboardTabs: showDashboardTabs.value
-          })
+        // Update existing dashboard in store
+        dashboardStore.updateDashboard(currentDashboardId.value, {
+          name: dashboardName.value,
+          description: dashboardDescription.value,
+          category: dashboardCategory.value,
+          dataSourceIds,
+          showDashboardTabs: showDashboardTabs.value,
+          tabs: dashboardTabs.value
+        })
 
-          // Update tabs
-          dashboard.tabs = dashboardTabs.value
-
-          showToastNotification('success', 'Dashboard Updated', 'Your dashboard has been successfully updated.')
-        }
+        showToastNotification('success', 'Dashboard Saved', 'Your dashboard has been successfully saved.')
       } else {
-        // Create new dashboard
-        console.log(`Creating new dashboard with name: ${dashboardName.value}, description: ${dashboardDescription.value}, category: ${dashboardCategory.value}, dataSourceIds: ${dataSourceIds.join(', ')}`)
-        const dashboard = dashboardStore.createDashboard(dashboardName.value, dashboardDescription.value, dataSourceIds, dashboardCategory.value)
+        // This shouldn't happen, but create a new dashboard as fallback
+        const dashboard = dashboardStore.createDashboard(
+          dashboardName.value, 
+          dashboardDescription.value, 
+          dataSourceIds, 
+          dashboardCategory.value
+        )
         currentDashboardId.value = dashboard.id
-
-        // Update tabs
-        dashboard.tabs = dashboardTabs.value
-        dashboard.showDashboardTabs = showDashboardTabs.value
-
+        
+        dashboardStore.updateDashboard(dashboard.id, {
+          tabs: dashboardTabs.value,
+          showDashboardTabs: showDashboardTabs.value
+        })
+        
         showToastNotification('success', 'Dashboard Created', 'Your dashboard has been successfully created.')
       }
+      
       hasUnsavedChanges.value = false
     } catch (error) {
       console.error('Error saving dashboard:', error)
@@ -115,9 +113,25 @@ export function useDashboardState() {
 
   const createTemporaryDashboard = () => {
     if (!currentDashboardId.value) {
-      const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
+      // Create a dashboard in the store but don't save to storage
+      const dashboardNameToUse = dashboardName.value || 'Untitled Dashboard'
+      const tempDashboard = dashboardStore.createDashboard(
+        dashboardNameToUse, 
+        dashboardDescription.value, 
+        selectedDataSources.value.map(ds => ds.id), 
+        dashboardCategory.value,
+        false // Don't save to storage immediately
+      )
       currentDashboardId.value = tempDashboard.id
-      dashboardName.value = tempDashboard.name
+      
+      // Only set dashboardName if it's empty (preserve user's input)
+      if (!dashboardName.value) {
+        dashboardName.value = tempDashboard.name
+      }
+      
+      // Set up tabs
+      tempDashboard.tabs = dashboardTabs.value
+      tempDashboard.showDashboardTabs = showDashboardTabs.value
     }
   }
 
@@ -171,10 +185,7 @@ export function useDashboardState() {
     dashboardDescription.value = description
   }
 
-  // Watchers
-  watch(dashboardCategory, (newVal, oldVal) => {
-    console.log('dashboardCategory changed from', oldVal, 'to', newVal)
-  })
+
 
   // Mark unsaved changes for chart and tab mutations
   function markUnsaved() {
