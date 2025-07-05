@@ -173,7 +173,7 @@
         :chartConfig="chartConfig"
         :colorSchemes="colorSchemes"
         :colorPalettes="colorPalettes"
-        :isChartConfigValid="isChartConfigValid"
+        :isChartConfigValid="isCurrentChartConfigValid"
         :editingChartId="editingChartId"
         :selectedDataSources="selectedDataSources"
         :width="chartTypeColWidth"
@@ -181,9 +181,25 @@
         :alwaysShowProperties="true"
         @update:selectedChartType="selectedChartType = $event"
         @field-drop="onFieldDrop"
-        @remove-x-axis="(idx) => { if (Array.isArray(chartConfig.xAxis)) chartConfig.xAxis.splice(idx, 1) }"
-        @remove-y-axis="(idx) => { if (Array.isArray(chartConfig.yAxis)) chartConfig.yAxis.splice(idx, 1) }"
-        @remove-stacked-dimension="(idx) => { if (Array.isArray(chartConfig.stackedDimension)) chartConfig.stackedDimension.splice(idx, 1) }"
+        @remove-x-axis="(idx) => { 
+          if (chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.xAxis)) {
+            chartConfig.xAxis.splice(idx, 1)
+          } else if (chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) && Array.isArray(chartConfig.xAxis)) {
+            chartConfig.xAxis.splice(idx, 1)
+          }
+        }"
+        @remove-y-axis="(idx) => { 
+          if (chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.yAxis)) {
+            chartConfig.yAxis.splice(idx, 1)
+          } else if (chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) && Array.isArray(chartConfig.yAxis)) {
+            chartConfig.yAxis.splice(idx, 1)
+          }
+        }"
+        @remove-stacked-dimension="(idx) => { 
+          if (chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.stackedDimension)) {
+            chartConfig.stackedDimension.splice(idx, 1)
+          }
+        }"
         @add-or-update-chart="addOrUpdateChart"
         @cancel-edit="cancelEdit"
           @chart-type-drag-start="onChartTypeDragStart"
@@ -389,7 +405,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave, RouteLocationNormalizedLoaded, NavigationGuardNext } from 'vue-router'
 import { nanoid } from 'nanoid'
 import {
@@ -409,6 +425,18 @@ import type { DataSourceColumn } from '@/stores/modules/dataSource'
 import type { DashboardChart } from '@/types/dashboard'
 import type { ChartType } from '@/types/chart'
 import { createBarChart, createPieChart, createLineChart, createScatterChart, createCardChart, CHART_TYPE_DEFAULT_LAYOUT } from '@/types/dashboard'
+import type { 
+  ChartConfig
+} from '@/types/chartConfig'
+import { 
+  createDefaultChartConfig,
+  isChartConfigValid,
+  isBarChartConfig,
+  isPieChartConfig,
+  isLineChartConfig,
+  isScatterChartConfig,
+  isCardChartConfig
+} from '@/types/chartConfig'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
 import DataPanel from './components/DataPanel.vue'
 import ChartPanel from './components/ChartPanel.vue'
@@ -573,30 +601,11 @@ const cleanupAllGridStacks = () => {
   tabGridStacks.value.clear()
 }
 
-// Chart configuration for editing
-const chartConfig = reactive({
-  title: '',
-  dataSourceId: '',
-  backgroundColor: '#3b82f6',
-  borderColor: '#1d4ed8',
-  colorScheme: 'default',
-  // Bar chart specific
-  xAxis: [] as string[],
-  yAxis: [] as string[],
-  horizontal: false,
-  stackedDimension: [] as string[],
-  // Pie chart specific
-  category: '',
-  value: '',
-  // Line chart specific
-  smooth: false,
-  fillArea: false,
-  // Card specific
-  keyMetric: '',
-  previousMetric: '',
-  differenceType: 'percentage' as 'absolute' | 'percentage',
-  aggregation: 'sum' as 'sum' | 'avg' | 'count' | 'min' | 'max'
-})
+
+
+
+// Chart configuration for editing - type-safe
+const chartConfig = ref<ChartConfig | null>(null)
 
 const leftSidebarWidth = ref(240)
 const chartTypeColWidth = ref(260)
@@ -652,24 +661,11 @@ const handleClickOutside = (event: Event) => {
 
 const resetChartConfig = () => {
   selectedChartType.value = ''
-  chartConfig.title = ''
-  chartConfig.dataSourceId = ''
-  chartConfig.backgroundColor = '#3b82f6'
-  chartConfig.borderColor = '#1d4ed8'
-  chartConfig.colorScheme = 'default'
-  chartConfig.xAxis = []
-  chartConfig.yAxis = []
-  chartConfig.horizontal = false
-  chartConfig.smooth = false
-  chartConfig.fillArea = false
-  chartConfig.keyMetric = ''
-  chartConfig.previousMetric = ''
-  chartConfig.differenceType = 'percentage'
-  chartConfig.aggregation = 'sum'
+  chartConfig.value = null
 }
 
 const addOrUpdateChart = () => {
-  if (!isChartConfigValid.value) return
+  if (!chartConfig.value || !isCurrentChartConfigValid.value) return
   if (editingChartId.value) {
     if (!currentDashboardId.value) return
     const dashboard = dashboardStore.getDashboardById(currentDashboardId.value)
@@ -678,28 +674,58 @@ const addOrUpdateChart = () => {
       if (chart) {
         const updates: Partial<DashboardChart> = {
           base: {
-        title: chartConfig.title,
-            dataSourceId: chartConfig.dataSourceId,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-            colorScheme: chartConfig.colorScheme
+            title: chartConfig.value.title,
+            dataSourceId: chartConfig.value.dataSourceId,
+            backgroundColor: chartConfig.value.backgroundColor,
+            borderColor: chartConfig.value.borderColor,
+            colorScheme: chartConfig.value.colorScheme
           }
         }
-        switch (selectedChartType.value) {
+        switch (chartConfig.value.type) {
           case 'bar':
-            updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
+            updates.properties = { 
+              bar: { 
+                xAxis: chartConfig.value.xAxis, 
+                yAxis: chartConfig.value.yAxis, 
+                horizontal: chartConfig.value.horizontal 
+              } 
+            }
             break
           case 'line':
-            updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '', smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+            updates.properties = { 
+              line: { 
+                xAxis: chartConfig.value.xAxis[0] || '', 
+                yAxis: chartConfig.value.yAxis[0] || '', 
+                smooth: chartConfig.value.smooth, 
+                fillArea: chartConfig.value.fillArea 
+              } 
+            }
             break
           case 'pie':
-            updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
+            updates.properties = { 
+              pie: { 
+                category: chartConfig.value.category, 
+                value: chartConfig.value.value 
+              } 
+            }
             break
           case 'scatter':
-            updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '' } }
+            updates.properties = { 
+              scatter: { 
+                xAxis: chartConfig.value.xAxis[0] || '', 
+                yAxis: chartConfig.value.yAxis[0] || '' 
+              } 
+            }
             break
           case 'card':
-            updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
+            updates.properties = { 
+              card: { 
+                keyMetric: chartConfig.value.keyMetric, 
+                previousMetric: chartConfig.value.previousMetric, 
+                differenceType: chartConfig.value.differenceType, 
+                aggregation: chartConfig.value.aggregation 
+              } 
+            }
             break
         }
         dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
@@ -723,70 +749,70 @@ const addOrUpdateChart = () => {
 }
 
 const addChart = async () => {
-  if (!isChartConfigValid.value) return
+  if (!chartConfig.value || !isCurrentChartConfigValid.value) return
   if (!currentDashboardId.value) {
     createTemporaryDashboard()
   }
   let newChart: DashboardChart
-  switch (selectedChartType.value) {
+  switch (chartConfig.value.type) {
     case 'bar':
       newChart = createBarChart({
-      title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis,
-        yAxis: chartConfig.yAxis,
-        horizontal: chartConfig.horizontal,
-      backgroundColor: chartConfig.backgroundColor,
-      borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
+        title: chartConfig.value.title,
+        dataSourceId: chartConfig.value.dataSourceId,
+        xAxis: chartConfig.value.xAxis,
+        yAxis: chartConfig.value.yAxis,
+        horizontal: chartConfig.value.horizontal,
+        backgroundColor: chartConfig.value.backgroundColor,
+        borderColor: chartConfig.value.borderColor,
+        colorScheme: chartConfig.value.colorScheme
       })
       break
     case 'line':
       newChart = createLineChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis[0] || '',
-        smooth: chartConfig.smooth,
-        fillArea: chartConfig.fillArea,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
+        title: chartConfig.value.title,
+        dataSourceId: chartConfig.value.dataSourceId,
+        xAxis: chartConfig.value.xAxis[0] || '',
+        yAxis: chartConfig.value.yAxis[0] || '',
+        smooth: chartConfig.value.smooth,
+        fillArea: chartConfig.value.fillArea,
+        backgroundColor: chartConfig.value.backgroundColor,
+        borderColor: chartConfig.value.borderColor,
+        colorScheme: chartConfig.value.colorScheme
       })
       break
     case 'pie':
       newChart = createPieChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        category: chartConfig.category || '',
-        value: chartConfig.value || '',
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
+        title: chartConfig.value.title,
+        dataSourceId: chartConfig.value.dataSourceId,
+        category: chartConfig.value.category || '',
+        value: chartConfig.value.value || '',
+        backgroundColor: chartConfig.value.backgroundColor,
+        borderColor: chartConfig.value.borderColor,
+        colorScheme: chartConfig.value.colorScheme
       })
       break
     case 'scatter':
       newChart = createScatterChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis[0] || '',
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
+        title: chartConfig.value.title,
+        dataSourceId: chartConfig.value.dataSourceId,
+        xAxis: chartConfig.value.xAxis[0] || '',
+        yAxis: chartConfig.value.yAxis[0] || '',
+        backgroundColor: chartConfig.value.backgroundColor,
+        borderColor: chartConfig.value.borderColor,
+        colorScheme: chartConfig.value.colorScheme
       })
       break
     case 'card':
       newChart = createCardChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        keyMetric: chartConfig.keyMetric || '',
-        previousMetric: chartConfig.previousMetric,
-        differenceType: chartConfig.differenceType,
-        aggregation: chartConfig.aggregation,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
+        title: chartConfig.value.title,
+        dataSourceId: chartConfig.value.dataSourceId,
+        keyMetric: chartConfig.value.keyMetric || '',
+        previousMetric: chartConfig.value.previousMetric,
+        differenceType: chartConfig.value.differenceType,
+        aggregation: chartConfig.value.aggregation,
+        backgroundColor: chartConfig.value.backgroundColor,
+        borderColor: chartConfig.value.borderColor,
+        colorScheme: chartConfig.value.colorScheme
       })
       break
     default:
@@ -815,48 +841,52 @@ const editChart = (chart: DashboardChart) => {
   editingChartId.value = chart.id
   selectedChartType.value = chart.type
   
-  chartConfig.title = chart.base.title
-  chartConfig.dataSourceId = chart.base.dataSourceId
-  chartConfig.backgroundColor = chart.base.backgroundColor || '#3b82f6'
-  chartConfig.borderColor = chart.base.borderColor || '#1d4ed8'
-  chartConfig.colorScheme = chart.base.colorScheme || 'default'
+  // Create new chart config based on chart type
+  chartConfig.value = createDefaultChartConfig(chart.type)
+  
+  // Set base properties
+  chartConfig.value.title = chart.base.title
+  chartConfig.value.dataSourceId = chart.base.dataSourceId
+  chartConfig.value.backgroundColor = chart.base.backgroundColor || '#3b82f6'
+  chartConfig.value.borderColor = chart.base.borderColor || '#1d4ed8'
+  chartConfig.value.colorScheme = chart.base.colorScheme || 'default'
   
   switch (chart.type) {
     case 'bar':
-      if (chart.properties.bar) {
-        chartConfig.xAxis = chart.properties.bar.xAxis
-        chartConfig.yAxis = Array.isArray(chart.properties.bar.yAxis)
+      if (chart.properties.bar && isBarChartConfig(chartConfig.value)) {
+        chartConfig.value.xAxis = chart.properties.bar.xAxis
+        chartConfig.value.yAxis = Array.isArray(chart.properties.bar.yAxis)
           ? chart.properties.bar.yAxis
           : [chart.properties.bar.yAxis].filter(Boolean)
-        chartConfig.horizontal = chart.properties.bar.horizontal || false
+        chartConfig.value.horizontal = chart.properties.bar.horizontal || false
       }
       break
     case 'line':
-      if (chart.properties.line) {
-        chartConfig.xAxis = [chart.properties.line.xAxis]
-        chartConfig.yAxis = [chart.properties.line.yAxis]
-        chartConfig.smooth = chart.properties.line.smooth || false
-        chartConfig.fillArea = chart.properties.line.fillArea || false
+      if (chart.properties.line && isLineChartConfig(chartConfig.value)) {
+        chartConfig.value.xAxis = [chart.properties.line.xAxis]
+        chartConfig.value.yAxis = [chart.properties.line.yAxis]
+        chartConfig.value.smooth = chart.properties.line.smooth || false
+        chartConfig.value.fillArea = chart.properties.line.fillArea || false
       }
       break
     case 'pie':
-      if (chart.properties.pie) {
-        chartConfig.category = chart.properties.pie.category
-        chartConfig.value = chart.properties.pie.value
+      if (chart.properties.pie && isPieChartConfig(chartConfig.value)) {
+        chartConfig.value.category = chart.properties.pie.category
+        chartConfig.value.value = chart.properties.pie.value
       }
       break
     case 'scatter':
-      if (chart.properties.scatter) {
-        chartConfig.xAxis = [chart.properties.scatter.xAxis]
-        chartConfig.yAxis = [chart.properties.scatter.yAxis]
+      if (chart.properties.scatter && isScatterChartConfig(chartConfig.value)) {
+        chartConfig.value.xAxis = [chart.properties.scatter.xAxis]
+        chartConfig.value.yAxis = [chart.properties.scatter.yAxis]
       }
       break
     case 'card':
-      if (chart.properties.card) {
-        chartConfig.keyMetric = chart.properties.card.keyMetric || ''
-        chartConfig.previousMetric = chart.properties.card.previousMetric || ''
-        chartConfig.differenceType = chart.properties.card.differenceType || 'percentage'
-        chartConfig.aggregation = chart.properties.card.aggregation || 'sum'
+      if (chart.properties.card && isCardChartConfig(chartConfig.value)) {
+        chartConfig.value.keyMetric = chart.properties.card.keyMetric || ''
+        chartConfig.value.previousMetric = chart.properties.card.previousMetric || ''
+        chartConfig.value.differenceType = chart.properties.card.differenceType || 'percentage'
+        chartConfig.value.aggregation = chart.properties.card.aggregation || 'sum'
       }
       break
   }
@@ -959,23 +989,9 @@ const toggleChartMenu = (id: string) => {
   openChartMenuId.value = openChartMenuId.value === id ? null : id
 }
 
-const isChartConfigValid = computed(() => {
-  if (!selectedChartType.value) return false
-  
-  switch (selectedChartType.value) {
-    case 'bar':
-      return true
-    case 'line':
-      return true
-    case 'pie':
-      return true
-    case 'scatter':
-      return true
-    case 'card':
-      return true
-    default:
-      return false
-  }
+const isCurrentChartConfigValid = computed(() => {
+  if (!chartConfig.value) return false
+  return isChartConfigValid(chartConfig.value)
 })
 
 const addTab = () => {
@@ -1050,7 +1066,7 @@ const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSource
 
 const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric' | 'stackedDimension') => {
   event.preventDefault()
-  if (!event.dataTransfer) return
+  if (!event.dataTransfer || !chartConfig.value) return
   try {
     const fieldData = JSON.parse(event.dataTransfer.getData('text/plain'))
     
@@ -1059,65 +1075,94 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
       return
     }
 
-    if (chartConfig.dataSourceId && chartConfig.dataSourceId !== fieldData.dataSourceId) {
-      if (selectedChartType.value === 'bar' && chartConfig.xAxis.length > 0) {
+    if (chartConfig.value.dataSourceId && chartConfig.value.dataSourceId !== fieldData.dataSourceId) {
+      if (isBarChartConfig(chartConfig.value) && chartConfig.value.xAxis.length > 0) {
         alert('Cannot mix fields from different data sources in the same chart')
         return
       }
     }
 
-    if (target === 'xAxis' && selectedChartType.value === 'bar') {
-      if (!chartConfig.xAxis.includes(fieldData.name)) {
-        chartConfig.xAxis.push(fieldData.name)
+    // Use type guards for type-safe access
+    if (target === 'xAxis' && isBarChartConfig(chartConfig.value)) {
+      if (!chartConfig.value.xAxis.includes(fieldData.name)) {
+        chartConfig.value.xAxis.push(fieldData.name)
       }
-    } else if (target === 'xAxis') {
-      // For line/scatter, always set as single-element array
-      chartConfig.xAxis = [fieldData.name]
-    } else if (target === 'yAxis' && selectedChartType.value === 'bar') {
-      if (!chartConfig.yAxis.includes(fieldData.name)) {
-        chartConfig.yAxis.push(fieldData.name)
+    } else if (target === 'xAxis' && (isLineChartConfig(chartConfig.value) || isScatterChartConfig(chartConfig.value))) {
+      chartConfig.value.xAxis = [fieldData.name]
+    } else if (target === 'yAxis' && isBarChartConfig(chartConfig.value)) {
+      if (!chartConfig.value.yAxis.includes(fieldData.name)) {
+        chartConfig.value.yAxis.push(fieldData.name)
       }
-    } else if (target === 'yAxis') {
-      // For line/scatter, always set as single-element array
-      chartConfig.yAxis = [fieldData.name]
-    } else if (target === 'stackedDimension') {
-      chartConfig.stackedDimension = [fieldData.name]
-    } else if (target === 'category') {
-      chartConfig.category = fieldData.name
-    } else if (target === 'value') {
-      chartConfig.value = fieldData.name
-    } else if (target === 'keyMetric') {
-      chartConfig.keyMetric = fieldData.name
+    } else if (target === 'yAxis' && (isLineChartConfig(chartConfig.value) || isScatterChartConfig(chartConfig.value))) {
+      chartConfig.value.yAxis = [fieldData.name]
+    } else if (target === 'stackedDimension' && isBarChartConfig(chartConfig.value)) {
+      chartConfig.value.stackedDimension = [fieldData.name]
+    } else if (target === 'category' && isPieChartConfig(chartConfig.value)) {
+      chartConfig.value.category = fieldData.name
+    } else if (target === 'value' && isPieChartConfig(chartConfig.value)) {
+      chartConfig.value.value = fieldData.name
+    } else if (target === 'keyMetric' && isCardChartConfig(chartConfig.value)) {
+      chartConfig.value.keyMetric = fieldData.name
     }
     
-    chartConfig.dataSourceId = fieldData.dataSourceId
+    chartConfig.value.dataSourceId = fieldData.dataSourceId
 
     // Real-time update: if editing a chart, update it immediately
     if (editingChartId.value && currentDashboardId.value) {
       const updates: Partial<DashboardChart> = {
         base: {
-          title: chartConfig.title,
-          dataSourceId: chartConfig.dataSourceId,
-          backgroundColor: chartConfig.backgroundColor,
-          borderColor: chartConfig.borderColor,
-          colorScheme: chartConfig.colorScheme
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
         }
       }
-      switch (selectedChartType.value) {
+      switch (chartConfig.value.type) {
         case 'bar':
-          updates.properties = { bar: { xAxis: chartConfig.xAxis, yAxis: chartConfig.yAxis, horizontal: chartConfig.horizontal } }
+          updates.properties = { 
+            bar: { 
+              xAxis: chartConfig.value.xAxis, 
+              yAxis: chartConfig.value.yAxis, 
+              horizontal: chartConfig.value.horizontal 
+            } 
+          }
           break
         case 'line':
-          updates.properties = { line: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '', smooth: chartConfig.smooth, fillArea: chartConfig.fillArea } }
+          updates.properties = { 
+            line: { 
+              xAxis: chartConfig.value.xAxis[0] || '', 
+              yAxis: chartConfig.value.yAxis[0] || '', 
+              smooth: chartConfig.value.smooth, 
+              fillArea: chartConfig.value.fillArea 
+            } 
+          }
           break
         case 'pie':
-          updates.properties = { pie: { category: chartConfig.category, value: chartConfig.value } }
+          updates.properties = { 
+            pie: { 
+              category: chartConfig.value.category, 
+              value: chartConfig.value.value 
+            } 
+          }
           break
         case 'scatter':
-          updates.properties = { scatter: { xAxis: chartConfig.xAxis[0] || '', yAxis: chartConfig.yAxis[0] || '' } }
+          updates.properties = { 
+            scatter: { 
+              xAxis: chartConfig.value.xAxis[0] || '', 
+              yAxis: chartConfig.value.yAxis[0] || '' 
+            } 
+          }
           break
         case 'card':
-          updates.properties = { card: { keyMetric: chartConfig.keyMetric, previousMetric: chartConfig.previousMetric, differenceType: chartConfig.differenceType, aggregation: chartConfig.aggregation } }
+          updates.properties = { 
+            card: { 
+              keyMetric: chartConfig.value.keyMetric, 
+              previousMetric: chartConfig.value.previousMetric, 
+              differenceType: chartConfig.value.differenceType, 
+              aggregation: chartConfig.value.aggregation 
+            } 
+          }
           break
       }
       dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
@@ -1261,6 +1306,10 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
   // Reset config to empty for new chart
   resetChartConfig();
   selectedChartType.value = chartType;
+  
+  // Create default config for the selected chart type
+  chartConfig.value = createDefaultChartConfig(chartType);
+  
   if (!currentDashboardId.value) {
     const tempDashboard = dashboardStore.createDashboard('Untitled Dashboard')
     currentDashboardId.value = tempDashboard.id
@@ -1296,66 +1345,96 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
   
   let newChart: DashboardChart
   
+  if (!chartConfig.value) {
+    console.error('Failed to create chart config for type:', chartType)
+    return
+  }
+  
   switch (chartType) {
     case 'bar':
-      newChart = createBarChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis,
-        yAxis: chartConfig.yAxis,
-        horizontal: chartConfig.horizontal,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
-      })
+      if (isBarChartConfig(chartConfig.value)) {
+        newChart = createBarChart({
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          xAxis: chartConfig.value.xAxis,
+          yAxis: chartConfig.value.yAxis,
+          horizontal: chartConfig.value.horizontal,
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
+        })
+      } else {
+        console.error('Invalid bar chart config')
+        return
+      }
       break
     case 'line':
-      newChart = createLineChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis[0] || '',
-        smooth: chartConfig.smooth,
-        fillArea: chartConfig.fillArea,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
-      })
+      if (isLineChartConfig(chartConfig.value)) {
+        newChart = createLineChart({
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          xAxis: chartConfig.value.xAxis[0] || '',
+          yAxis: chartConfig.value.yAxis[0] || '',
+          smooth: chartConfig.value.smooth,
+          fillArea: chartConfig.value.fillArea,
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
+        })
+      } else {
+        console.error('Invalid line chart config')
+        return
+      }
       break
     case 'pie':
-      newChart = createPieChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        category: chartConfig.category || '',
-        value: chartConfig.value || '',
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
-      })
+      if (isPieChartConfig(chartConfig.value)) {
+        newChart = createPieChart({
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          category: chartConfig.value.category || '',
+          value: chartConfig.value.value || '',
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
+        })
+      } else {
+        console.error('Invalid pie chart config')
+        return
+      }
       break
     case 'scatter':
-      newChart = createScatterChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        xAxis: chartConfig.xAxis[0] || '',
-        yAxis: chartConfig.yAxis[0] || '',
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
-      })
+      if (isScatterChartConfig(chartConfig.value)) {
+        newChart = createScatterChart({
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          xAxis: chartConfig.value.xAxis[0] || '',
+          yAxis: chartConfig.value.yAxis[0] || '',
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
+        })
+      } else {
+        console.error('Invalid scatter chart config')
+        return
+      }
       break
     case 'card':
-      newChart = createCardChart({
-        title: chartConfig.title,
-        dataSourceId: chartConfig.dataSourceId,
-        keyMetric: chartConfig.keyMetric || '',
-        previousMetric: chartConfig.previousMetric,
-        differenceType: chartConfig.differenceType,
-        aggregation: chartConfig.aggregation,
-        backgroundColor: chartConfig.backgroundColor,
-        borderColor: chartConfig.borderColor,
-        colorScheme: chartConfig.colorScheme
-      })
+      if (isCardChartConfig(chartConfig.value)) {
+        newChart = createCardChart({
+          title: chartConfig.value.title,
+          dataSourceId: chartConfig.value.dataSourceId,
+          keyMetric: chartConfig.value.keyMetric || '',
+          previousMetric: chartConfig.value.previousMetric,
+          differenceType: chartConfig.value.differenceType,
+          aggregation: chartConfig.value.aggregation,
+          backgroundColor: chartConfig.value.backgroundColor,
+          borderColor: chartConfig.value.borderColor,
+          colorScheme: chartConfig.value.colorScheme
+        })
+      } else {
+        console.error('Invalid card chart config')
+        return
+      }
       break
     default:
       console.error('Unknown chart type:', chartType)
@@ -1380,48 +1459,50 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
   
     selectedChartType.value = chartType as 'bar' | 'line' | 'pie' | 'scatter' | 'card'
   
-    chartConfig.title = newChart.base.title
-    chartConfig.dataSourceId = newChart.base.dataSourceId
-    chartConfig.backgroundColor = newChart.base.backgroundColor || '#3b82f6'
-    chartConfig.borderColor = newChart.base.borderColor || '#1d4ed8'
-    chartConfig.colorScheme = newChart.base.colorScheme || 'default'
+    // Update chartConfig with the saved chart data
+    chartConfig.value = createDefaultChartConfig(chartType);
+    chartConfig.value.title = newChart.base.title
+    chartConfig.value.dataSourceId = newChart.base.dataSourceId
+    chartConfig.value.backgroundColor = newChart.base.backgroundColor || '#3b82f6'
+    chartConfig.value.borderColor = newChart.base.borderColor || '#1d4ed8'
+    chartConfig.value.colorScheme = newChart.base.colorScheme || 'default'
     
     switch (chartType) {
       case 'bar':
-        if (newChart.properties.bar) {
-          chartConfig.xAxis = newChart.properties.bar.xAxis
-          chartConfig.yAxis = Array.isArray(newChart.properties.bar.yAxis)
+        if (newChart.properties.bar && isBarChartConfig(chartConfig.value)) {
+          chartConfig.value.xAxis = newChart.properties.bar.xAxis
+          chartConfig.value.yAxis = Array.isArray(newChart.properties.bar.yAxis)
             ? newChart.properties.bar.yAxis
             : [newChart.properties.bar.yAxis].filter(Boolean)
-          chartConfig.horizontal = newChart.properties.bar.horizontal || false
+          chartConfig.value.horizontal = newChart.properties.bar.horizontal || false
         }
         break
       case 'line':
-        if (newChart.properties.line) {
-          chartConfig.xAxis = [newChart.properties.line.xAxis]
-          chartConfig.yAxis = [newChart.properties.line.yAxis]
-          chartConfig.smooth = newChart.properties.line.smooth || false
-          chartConfig.fillArea = newChart.properties.line.fillArea || false
+        if (newChart.properties.line && isLineChartConfig(chartConfig.value)) {
+          chartConfig.value.xAxis = [newChart.properties.line.xAxis]
+          chartConfig.value.yAxis = [newChart.properties.line.yAxis]
+          chartConfig.value.smooth = newChart.properties.line.smooth || false
+          chartConfig.value.fillArea = newChart.properties.line.fillArea || false
         }
         break
       case 'pie':
-        if (newChart.properties.pie) {
-          chartConfig.category = newChart.properties.pie.category
-          chartConfig.value = newChart.properties.pie.value
+        if (newChart.properties.pie && isPieChartConfig(chartConfig.value)) {
+          chartConfig.value.category = newChart.properties.pie.category
+          chartConfig.value.value = newChart.properties.pie.value
         }
         break
       case 'scatter':
-        if (newChart.properties.scatter) {
-          chartConfig.xAxis = [newChart.properties.scatter.xAxis]
-          chartConfig.yAxis = [newChart.properties.scatter.yAxis]
+        if (newChart.properties.scatter && isScatterChartConfig(chartConfig.value)) {
+          chartConfig.value.xAxis = [newChart.properties.scatter.xAxis]
+          chartConfig.value.yAxis = [newChart.properties.scatter.yAxis]
         }
         break
       case 'card':
-        if (newChart.properties.card) {
-          chartConfig.keyMetric = newChart.properties.card.keyMetric || ''
-          chartConfig.previousMetric = newChart.properties.card.previousMetric || ''
-          chartConfig.differenceType = newChart.properties.card.differenceType || 'percentage'
-          chartConfig.aggregation = newChart.properties.card.aggregation || 'sum'
+        if (newChart.properties.card && isCardChartConfig(chartConfig.value)) {
+          chartConfig.value.keyMetric = newChart.properties.card.keyMetric || ''
+          chartConfig.value.previousMetric = newChart.properties.card.previousMetric || ''
+          chartConfig.value.differenceType = newChart.properties.card.differenceType || 'percentage'
+          chartConfig.value.aggregation = newChart.properties.card.aggregation || 'sum'
         }
         break
     }
@@ -1442,21 +1523,21 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
 }
 
 const isFieldInUse = (fieldName: string, dataSourceId: string) => {
-  if (!selectedChartType.value || !chartConfig.dataSourceId) return false
+  if (!chartConfig.value || !chartConfig.value.dataSourceId) return false
   
-  if (chartConfig.dataSourceId !== dataSourceId) return false
+  if (chartConfig.value.dataSourceId !== dataSourceId) return false
 
-  if (selectedChartType.value === 'pie') {
-    return chartConfig.category === fieldName || chartConfig.value === fieldName
-  } else if (selectedChartType.value === 'bar') {
+  if (isPieChartConfig(chartConfig.value)) {
+    return chartConfig.value.category === fieldName || chartConfig.value.value === fieldName
+  } else if (isBarChartConfig(chartConfig.value)) {
     return (
-      chartConfig.xAxis.includes(fieldName) ||
-      chartConfig.yAxis.includes(fieldName)
+      chartConfig.value.xAxis.includes(fieldName) ||
+      chartConfig.value.yAxis.includes(fieldName)
     )
-  } else if (selectedChartType.value === 'line' || selectedChartType.value === 'scatter') {
-    return chartConfig.xAxis.includes(fieldName) || chartConfig.yAxis.includes(fieldName)
-  } else if (selectedChartType.value === 'card') {
-    return chartConfig.keyMetric === fieldName || chartConfig.previousMetric === fieldName
+  } else if (isLineChartConfig(chartConfig.value) || isScatterChartConfig(chartConfig.value)) {
+    return chartConfig.value.xAxis.includes(fieldName) || chartConfig.value.yAxis.includes(fieldName)
+  } else if (isCardChartConfig(chartConfig.value)) {
+    return chartConfig.value.keyMetric === fieldName || chartConfig.value.previousMetric === fieldName
   }
   return false
 }
@@ -1605,7 +1686,7 @@ function openShareModal() {
 function closeShareModal() {
   showShareModal.value = false
 }
-function saveShareList(newList) {
+function saveShareList(newList: any) {
   shareList.value = newList
   showShareModal.value = false
 }

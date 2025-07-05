@@ -40,7 +40,7 @@
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Chart Title</label>
           <input
-            v-model="chartConfig.title"
+            v-model="chartTitle"
             type="text"
             placeholder="Enter chart title"
             class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
@@ -55,9 +55,9 @@
             @dragover.prevent
             @dragenter.prevent
             class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-            :class="{ 'border-primary-400 bg-primary-50': chartConfig.keyMetric }"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isCardChartConfig(chartConfig) && chartConfig.keyMetric }"
           >
-            {{ chartConfig.keyMetric || 'Drop KPI field here (numbers only)' }}
+            {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.keyMetric : '') || 'Drop KPI field here (numbers only)' }}
           </div>
         </div>
 
@@ -69,9 +69,9 @@
             @dragover.prevent
             @dragenter.prevent
             class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-            :class="{ 'border-primary-400 bg-primary-50': chartConfig.category }"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isPieChartConfig(chartConfig) && chartConfig.category }"
           >
-            {{ chartConfig.category || 'Drop category field here' }}
+            {{ (chartConfig && isPieChartConfig(chartConfig) ? chartConfig.category : '') || 'Drop category field here' }}
           </div>
         </div>
 
@@ -82,9 +82,9 @@
             @dragover.prevent
             @dragenter.prevent
             class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
-            :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 }"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0 }"
           >
-            <template v-if="Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0">
+            <template v-if="chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.xAxis) && chartConfig.xAxis.length > 0">
               <span v-for="(field, idx) in chartConfig.xAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
                 {{ field }}
                 <button @click.stop="$emit('remove-x-axis', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
@@ -98,11 +98,11 @@
               @drop="$emit('field-drop', $event, 'yAxis')"
               @dragover.prevent
               @dragenter.prevent
-              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
-              :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0 }"
-            >
-              <template v-if="Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0">
-                <span v-for="(field, idx) in chartConfig.yAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                          class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0 }"
+          >
+            <template v-if="chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.yAxis) && chartConfig.yAxis.length > 0">
+              <span v-for="(field, idx) in chartConfig.yAxis" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
                   {{ field }}
                   <button @click.stop="$emit('remove-y-axis', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
                 </span>
@@ -117,11 +117,11 @@
               @drop="$emit('field-drop', $event, 'stackedDimension')"
               @dragover.prevent
               @dragenter.prevent
-              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
-              :class="{ 'border-primary-400 bg-primary-50': Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0 }"
-            >
-              <template v-if="Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0">
-                <span v-for="(field, idx) in chartConfig.stackedDimension" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                          class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0 }"
+          >
+            <template v-if="chartConfig && isBarChartConfig(chartConfig) && Array.isArray(chartConfig.stackedDimension) && chartConfig.stackedDimension.length > 0">
+              <span v-for="(field, idx) in chartConfig.stackedDimension" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
                   {{ field }}
                   <button @click.stop="$emit('remove-stacked-dimension', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
                 </span>
@@ -130,32 +130,32 @@
             </div>
           </div>
           <div class="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="horizontalBar" v-model="chartConfig.horizontal" class="form-checkbox" />
+            <input type="checkbox" id="horizontalBar" v-model="barHorizontal" class="form-checkbox" />
             <label for="horizontalBar" class="text-xs font-medium text-gray-600">Flip to horizontal bar chart</label>
           </div>
           <div class="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="stackedBar" v-model="chartConfig.stacked" class="form-checkbox" />
+            <input type="checkbox" id="stackedBar" v-model="barStacked" class="form-checkbox" />
             <label for="stackedBar" class="text-xs font-medium text-gray-600">Stacked</label>
           </div>
           <div class="mt-2">
             <label class="block text-xs font-bold text-gray-700 mb-1">Sort X-Axis by</label>
             <select
-              v-model="chartConfig.sortXAxisBy"
+              v-model="barSortXAxisBy"
               class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
             >
               <option value="">--</option>
-              <option v-for="field in chartConfig.xAxis" :key="field" :value="field">{{ field }}</option>
+              <option v-for="field in (chartConfig && isBarChartConfig(chartConfig) ? chartConfig.xAxis : [])" :key="field" :value="field">{{ field }}</option>
             </select>
           </div>
           <div class="flex items-center gap-2 mt-1">
-            <input type="checkbox" id="sortDescending" v-model="chartConfig.sortDescending" class="form-checkbox" />
+            <input type="checkbox" id="sortDescending" v-model="barSortDescending" class="form-checkbox" />
             <label for="sortDescending" class="text-xs font-medium text-gray-600">Descending</label>
           </div>
           <div class="mt-3">
             <label class="block text-xs font-bold text-gray-700 mb-1">Filter</label>
             <label class="block text-xs font-medium text-gray-600 mb-1">Filter expression</label>
             <input
-              v-model="chartConfig.filter"
+              v-model="barFilter"
               type="text"
               placeholder="eg (col_time > 10)  AND (col_data <10)"
               class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
@@ -164,7 +164,7 @@
           </div>
           <div class="mt-3">
             <label class="block text-xs font-bold text-gray-700 mb-1">Legend</label>
-            <input type="checkbox" id="showLegend" v-model="chartConfig.showLegend" class="form-checkbox" />
+            <input type="checkbox" id="showLegend" v-model="barShowLegend" class="form-checkbox" />
             <label for="showLegend" class="text-xs font-medium text-gray-600 ml-2">Show legend</label>
           </div>
         </div>
@@ -177,22 +177,22 @@
                 @drop="$emit('field-drop', $event, 'xAxis')"
                 @dragover.prevent
                 @dragenter.prevent
-                class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-                :class="{ 'border-primary-400 bg-primary-50': chartConfig.xAxis }"
-              >
-                {{ chartConfig.xAxis || 'Drop X-axis field here' }}
-              </div>
+                              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+              :class="{ 'border-primary-400 bg-primary-50': chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) && chartConfig.xAxis }"
+            >
+              {{ (chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) ? chartConfig.xAxis : '') || 'Drop X-axis field here' }}
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Y-Axis</label>
-              <div
-                @drop="$emit('field-drop', $event, 'yAxis')"
-                @dragover.prevent
-                @dragenter.prevent
-                class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-                :class="{ 'border-primary-400 bg-primary-50': chartConfig.yAxis }"
-              >
-                {{ chartConfig.yAxis || 'Drop Y-axis field here (numbers only)' }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Y-Axis</label>
+            <div
+              @drop="$emit('field-drop', $event, 'yAxis')"
+              @dragover.prevent
+              @dragenter.prevent
+              class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
+              :class="{ 'border-primary-400 bg-primary-50': chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) && chartConfig.yAxis }"
+            >
+              {{ (chartConfig && (isLineChartConfig(chartConfig) || isScatterChartConfig(chartConfig)) ? chartConfig.yAxis : '') || 'Drop Y-axis field here (numbers only)' }}
               </div>
             </div>
           </div>
@@ -201,12 +201,12 @@
         <!-- Chart Configuration Options - Always show -->
         <div v-if="selectedChartType === 'bar'" class="mt-2">
           <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
-          <select v-model="chartConfig.colorScheme" class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400">
+          <select v-model="chartColorScheme" class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400">
             <option v-for="scheme in colorSchemes" :key="scheme.value" :value="scheme.value">{{ scheme.label }}</option>
           </select>
           <!-- Color scheme preview -->
           <div class="flex items-center gap-1 mt-2">
-            <span v-for="(color, idx) in colorPalettes[chartConfig.colorScheme] && colorPalettes[chartConfig.colorScheme].slice(0, 8)" :key="color + idx"
+            <span v-for="(color, idx) in colorPalettes[chartConfig?.colorScheme || 'default'] && colorPalettes[chartConfig?.colorScheme || 'default'].slice(0, 8)" :key="color + idx"
               class="w-5 h-5 rounded-full border border-gray-200" :style="{ background: color }"></span>
           </div>
         </div>
@@ -215,7 +215,7 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Background</label>
             <input
-              v-model="chartConfig.backgroundColor"
+              v-model="chartBackgroundColor"
               type="color"
               class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
@@ -223,7 +223,7 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Border</label>
             <input
-              v-model="chartConfig.borderColor"
+              v-model="chartBorderColor"
               type="color"
               class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
@@ -248,12 +248,20 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { DataSourceColumn } from '@/stores'
+import type { ChartConfig } from '@/types/chartConfig'
+import { 
+  isBarChartConfig, 
+  isPieChartConfig, 
+  isLineChartConfig, 
+  isScatterChartConfig, 
+  isCardChartConfig 
+} from '@/types/chartConfig'
 import { computed } from 'vue'
 
 const props = defineProps<{
   chartTypes: ReadonlyArray<{ value: string; label: string; icon: any }>
   selectedChartType: string
-  chartConfig: any
+  chartConfig: ChartConfig | null
   colorSchemes: Array<{ value: string; label: string }>
   colorPalettes: Record<string, string[]>
   isChartConfigValid: boolean
@@ -307,4 +315,76 @@ const chartTypeCols = computed(() => {
 const chartTypeButtonClass =
   'w-12 h-12 flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative bg-white'
 const chartTypeIconClass = 'h-5 w-5'
+
+// Computed properties for two-way binding with type safety
+const chartTitle = computed({
+  get: () => props.chartConfig?.title || '',
+  set: (value: string) => {
+    if (props.chartConfig) props.chartConfig.title = value
+  }
+})
+
+const chartColorScheme = computed({
+  get: () => props.chartConfig?.colorScheme || 'default',
+  set: (value: string) => {
+    if (props.chartConfig) props.chartConfig.colorScheme = value
+  }
+})
+
+const chartBackgroundColor = computed({
+  get: () => props.chartConfig?.backgroundColor || '#3b82f6',
+  set: (value: string) => {
+    if (props.chartConfig) props.chartConfig.backgroundColor = value
+  }
+})
+
+const chartBorderColor = computed({
+  get: () => props.chartConfig?.borderColor || '#1d4ed8',
+  set: (value: string) => {
+    if (props.chartConfig) props.chartConfig.borderColor = value
+  }
+})
+
+// For bar chart specific properties
+const barHorizontal = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.horizontal : false),
+  set: (value: boolean) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.horizontal = value
+  }
+})
+
+const barStacked = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.stacked : false),
+  set: (value: boolean) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.stacked = value
+  }
+})
+
+const barSortXAxisBy = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.sortXAxisBy : ''),
+  set: (value: string) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.sortXAxisBy = value
+  }
+})
+
+const barSortDescending = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.sortDescending : false),
+  set: (value: boolean) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.sortDescending = value
+  }
+})
+
+const barFilter = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.filter : ''),
+  set: (value: string) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.filter = value
+  }
+})
+
+const barShowLegend = computed({
+  get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.showLegend : false),
+  set: (value: boolean) => {
+    if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.showLegend = value
+  }
+})
 </script> 
