@@ -25,9 +25,7 @@ import {
   Squares2X2Icon
 } from '@heroicons/vue/24/outline'
 import type { DashboardChart } from '@/types/dashboard'
-import type { CardChartConfig } from '@/types/chart'
 import { ChartUtils } from '@/strategies'
-import CardChart from '@/components/charts/types/CardChart.vue'
 import { useDataSourceStore } from '@/stores'
 
 interface Props {
@@ -35,7 +33,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const dataSourceStore = useDataSourceStore()
+//const dataSourceStore = useDataSourceStore()
 
 const error = computed(() => {
   if (!props.chart) return ''
@@ -49,36 +47,6 @@ const chartComponent = computed(() => {
   return ChartUtils.getChartComponent(props.chart.type) || null
 })
 
-// Special handling for card chart
-const isCardChart = computed(() => props.chart && props.chart.type === 'card')
-
-const cardOptions = computed(() => {
-  if (!isCardChart.value || !props.chart) return null
-  // Get data source rows
-  const dsId = props.chart.base.dataSourceId
-  const dataSource = dsId ? dataSourceStore.getDataSourceById(dsId) : null
-  const rows = dataSource ? dataSource.rows : []
-  // Get config
-  const cardProps = (props.chart.properties.card || {}) as Partial<CardChartConfig>
-  const config = {
-    ...props.chart.base,
-    ...cardProps,
-    field: typeof cardProps?.field === 'string' ? cardProps.field : '',
-    aggregation: cardProps?.aggregation || 'sum',
-    prefix: cardProps?.prefix || '',
-    suffix: cardProps?.suffix || '',
-    decimalPlaces: typeof cardProps?.decimalPlaces === 'number' ? cardProps.decimalPlaces : 0,
-    color: cardProps?.color || '#3B82F6',
-    backgroundColor: cardProps?.backgroundColor || '#EFF6FF',
-    borderColor: props.chart.base.borderColor || '#1d4ed8',
-    colorScheme: props.chart.base.colorScheme || 'DEFAULT',
-    type: 'card' as const
-  }
-  // Use strategy to process data and build options
-  const strategy = ChartUtils.getChartTypeInfo('card')
-  const value = strategy ? strategy.processData(rows, config) : null
-  return strategy ? strategy.transformToChartOptions(value, config) : null
-})
 </script>
 
 <style scoped>

@@ -16,11 +16,12 @@
       </div>
       <div v-else class="flex flex-col items-center justify-center flex-1">
         <div :class="cardStyle.valueRowClass">
-          <span v-if="chartData.prefix" :class="cardStyle.prefixClass">{{ chartData.prefix }}</span>
           <span :class="cardStyle.valueClass">
             {{ formattedValueOnly }}
           </span>
-          <span v-if="chartData.suffix" :class="cardStyle.suffixClass">{{ chartData.suffix }}</span>
+        </div>
+        <div v-if="chartData.subHeader" class="mt-1 text-xs text-gray-500 text-center w-full">
+          {{ chartData.subHeader }}
         </div>
       </div>
     </div>
@@ -109,21 +110,19 @@ const chartData = computed(() => {
   return {
     title: base.title,
     dataSourceId: base.dataSourceId,
-    backgroundColor: cardProps.backgroundColor || '',
-    color: cardProps.color || '',
     colorScheme: cardProps.colorScheme || 'default',
     field: typeof cardProps.field === 'string' ? cardProps.field : '',
     aggregation: cardProps.aggregation || 'sum',
-    prefix: cardProps.prefix || '',
-    suffix: cardProps.suffix || '',
-    decimalPlaces: typeof cardProps.decimalPlaces === 'number' ? cardProps.decimalPlaces : 0
+    decimalPlaces: typeof cardProps.decimalPlaces === 'number' ? cardProps.decimalPlaces : 0,
+    filter: cardProps.filter || '',
+    subHeader: cardProps.subHeader || ''
   }
 })
 
 const cardStyle = computed(() => {
   const scheme = cardColorSchemes[chartData.value.colorScheme as keyof typeof cardColorSchemes] || cardColorSchemes.default
   return {
-    containerStyle: { backgroundColor: chartData.value.backgroundColor || scheme.backgroundColor },
+    containerStyle: { backgroundColor: scheme.backgroundColor },
     containerClass: scheme.containerClass,
     innerClass: scheme.innerClass,
     titleClass: scheme.titleClass,

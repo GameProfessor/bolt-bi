@@ -23,8 +23,6 @@ export type ChartType =
 export interface BaseChartConfig {
   title: string
   dataSourceId: string
-  backgroundColor: string
-  borderColor: string
   colorScheme: string
 }
 
@@ -72,11 +70,10 @@ export interface CardChartConfig extends BaseChartConfig {
   type: 'card'
   field: string
   aggregation: 'sum' | 'avg' | 'min' | 'max'
-  prefix?: string
-  suffix?: string
   decimalPlaces?: number
-  color: string
-  backgroundColor: string
+  colorScheme: string
+  filter: string
+  subHeader?: string
 }
 
 // Union type for all chart configurations
@@ -92,8 +89,6 @@ export function createDefaultChartConfig(type: ChartType): ChartConfig {
   const baseConfig = {
     title: '',
     dataSourceId: '',
-    backgroundColor: '#3b82f6',
-    borderColor: '#1d4ed8',
     colorScheme: 'DEFAULT'
   }
 
@@ -147,8 +142,10 @@ export function createDefaultChartConfig(type: ChartType): ChartConfig {
         type: 'card',
         field: '',
         aggregation: 'sum',
-        color: '#3B82F6',
-        backgroundColor: '#EFF6FF'
+        decimalPlaces: 0,
+        colorScheme: 'DEFAULT',
+        filter: '',
+        subHeader: ''
       }
     
     default:

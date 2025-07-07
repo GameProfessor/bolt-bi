@@ -18,13 +18,9 @@ export class CardChartStrategy implements ChartStrategy {
       dataSourceId: '',
       field: '',
       aggregation: 'sum', // sum | avg | min | max
-      prefix: '',
-      suffix: '',
       decimalPlaces: 0,
-      color: '#3B82F6',
-      backgroundColor: '#EFF6FF',
-      borderColor: '#1E40AF',
-      colorScheme: 'default'
+      colorScheme: 'default',
+      filter: ''
     }
   }
 
@@ -40,7 +36,7 @@ export class CardChartStrategy implements ChartStrategy {
   }
 
   getOptionalFields(): string[] {
-    return ['aggregation', 'prefix', 'suffix', 'decimalPlaces', 'color', 'backgroundColor']
+    return ['aggregation', 'decimalPlaces', 'colorScheme', 'filter']
   }
 
   getSupportedDataTypes(): ('string' | 'number' | 'date')[] {
@@ -79,7 +75,16 @@ export class CardChartStrategy implements ChartStrategy {
   processData(data: any[], config: ChartConfig): any {
     if (config.type !== 'card') return null
     const cardConfig = config as CardChartConfig
-    const values = data.map(row => Number(row[cardConfig.field])).filter(v => !isNaN(v))
+    // Apply filter if present (simple JS eval, production should use safe parser)
+    let filtered = data
+    if (cardConfig.filter && cardConfig.filter.trim()) {
+      try {
+        filtered = data.filter(row => eval(cardConfig.filter.replace(/\b(\w+)\b/g, 'row.$1')))
+      } catch (e) {
+        // ignore filter error, fallback to all data
+      }
+    }
+    const values = filtered.map(row => Number(row[cardConfig.field])).filter(v => !isNaN(v))
     if (!values.length) return null
     let value = 0
     switch (cardConfig.aggregation) {
@@ -109,11 +114,8 @@ export class CardChartStrategy implements ChartStrategy {
     return {
       value: processedData,
       title: cardConfig.title,
-      prefix: cardConfig.prefix,
-      suffix: cardConfig.suffix,
       decimalPlaces: cardConfig.decimalPlaces,
-      color: cardConfig.color,
-      backgroundColor: cardConfig.backgroundColor
+      colorScheme: cardConfig.colorScheme
     }
   }
 
@@ -138,7 +140,7 @@ export class CardChartStrategy implements ChartStrategy {
   } {
     return {
       required: ['field'],
-      optional: ['aggregation', 'prefix', 'suffix', 'decimalPlaces'],
+      optional: ['aggregation', 'decimalPlaces'],
       constraints: {
         field: { type: 'number' },
         aggregation: { enum: ['sum', 'avg', 'min', 'max'] },
@@ -182,9 +184,9 @@ export class CardChartStrategy implements ChartStrategy {
           title: 'Tổng doanh thu',
           field: 'revenue',
           aggregation: 'sum',
-          prefix: '',
-          suffix: ' VNĐ',
-          decimalPlaces: 0
+          decimalPlaces: 0,
+          colorScheme: 'default',
+          filter: ''
         }
       },
       {
@@ -194,9 +196,9 @@ export class CardChartStrategy implements ChartStrategy {
           title: 'Giá trị đơn hàng TB',
           field: 'orderValue',
           aggregation: 'avg',
-          prefix: '',
-          suffix: ' VNĐ',
-          decimalPlaces: 2
+          decimalPlaces: 2,
+          colorScheme: 'success',
+          filter: ''
         }
       }
     ]

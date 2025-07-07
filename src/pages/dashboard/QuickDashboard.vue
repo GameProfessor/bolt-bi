@@ -298,7 +298,7 @@
         <div class="flex-1 min-h-0 p-6 overflow-y-auto bg-white rounded-lg shadow-sm">
           <!-- Tab-specific containers -->
           <div v-for="tab in dashboardTabs" :key="tab.id" 
-               v-show="activeTabId === tab.id"
+               vshow="activeTabId === tab.id"
                :data-tab-id="tab.id"
                class="tab-container">
             
@@ -331,7 +331,6 @@
               >
                 <div 
                   class="grid-stack-item-content shadow-lg"
-                  :style="chart.type === 'card' ? { backgroundColor: chart.base.backgroundColor } : {}"
                 >
                   <div class="chart-header flex justify-end items-center gap-2">
                     <!-- 3-dot menu -->
@@ -678,8 +677,7 @@ const addOrUpdateChart = () => {
           base: {
             title: chartConfig.value.title,
             dataSourceId: chartConfig.value.dataSourceId,
-            backgroundColor: chartConfig.value.backgroundColor,
-            borderColor: chartConfig.value.borderColor,
+
             colorScheme: chartConfig.value.colorScheme
           },
           properties: {
@@ -736,12 +734,10 @@ const addOrUpdateChart = () => {
                 card: {
                   field: chartConfig.value.field,
                   aggregation: chartConfig.value.aggregation,
-                  prefix: chartConfig.value.prefix,
-                  suffix: chartConfig.value.suffix,
                   decimalPlaces: chartConfig.value.decimalPlaces,
-                  color: chartConfig.value.color,
-                  backgroundColor: chartConfig.value.backgroundColor,
-                  colorScheme: chartConfig.value.colorScheme
+                  colorScheme: chartConfig.value.colorScheme,
+                  filter: chartConfig.value.filter,
+                  subHeader: chartConfig.value.subHeader
                 }
               }
             }
@@ -793,9 +789,6 @@ const addChart = async () => {
     base: {
       title: chartConfig.value.title,
       dataSourceId: chartConfig.value.dataSourceId,
-      backgroundColor: chartConfig.value.backgroundColor,
-      borderColor: chartConfig.value.borderColor,
-      colorScheme: chartConfig.value.colorScheme
     },
     properties: {
       [selectedChartType.value]: JSON.parse(JSON.stringify(chartConfig.value))
@@ -832,9 +825,6 @@ const editChart = (chart: DashboardChart) => {
   if (chartConfig.value) {
     chartConfig.value.title = chart.base.title
     chartConfig.value.dataSourceId = chart.base.dataSourceId
-    chartConfig.value.backgroundColor = chart.base.backgroundColor || '#3b82f6'
-    chartConfig.value.borderColor = chart.base.borderColor || '#1d4ed8'
-    chartConfig.value.colorScheme = chart.base.colorScheme || 'DEFAULT'
   
   switch (chart.type) {
     case 'bar':
@@ -870,12 +860,10 @@ const editChart = (chart: DashboardChart) => {
       if (chart.properties.card && isCardChartConfig(chartConfig.value)) {
         chartConfig.value.field = chart.properties.card.field || ''
         chartConfig.value.aggregation = chart.properties.card.aggregation || 'sum'
-        chartConfig.value.prefix = chart.properties.card.prefix || ''
-        chartConfig.value.suffix = chart.properties.card.suffix || ''
         chartConfig.value.decimalPlaces = chart.properties.card.decimalPlaces || 0
-        chartConfig.value.color = chart.properties.card.color || '#3b82f6'
-        chartConfig.value.backgroundColor = chart.properties.card.backgroundColor || '#3b82f6'
         chartConfig.value.colorScheme = chart.properties.card.colorScheme || 'default'
+        chartConfig.value.filter = chart.properties.card.filter || ''
+        chartConfig.value.subHeader = chart.properties.card.subHeader || ''
       }
       break
   }
@@ -1135,9 +1123,6 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
         base: {
           title: chartConfig.value.title,
           dataSourceId: chartConfig.value.dataSourceId,
-          backgroundColor: chartConfig.value.backgroundColor,
-          borderColor: chartConfig.value.borderColor,
-          colorScheme: chartConfig.value.colorScheme
         },
         properties: {
           [selectedChartType.value]: JSON.parse(JSON.stringify(chartConfig.value))
@@ -1193,12 +1178,10 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
               card: {
                 field: chartConfig.value.field,
                 aggregation: chartConfig.value.aggregation,
-                prefix: chartConfig.value.prefix,
-                suffix: chartConfig.value.suffix,
                 decimalPlaces: chartConfig.value.decimalPlaces,
-                color: chartConfig.value.color,
-                backgroundColor: chartConfig.value.backgroundColor,
-                colorScheme: chartConfig.value.colorScheme
+                colorScheme: chartConfig.value.colorScheme,
+                filter: chartConfig.value.filter,
+                subHeader: chartConfig.value.subHeader
               }
             }
           }
@@ -1381,9 +1364,6 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
     base: {
       title: chartConfig.value.title,
       dataSourceId: chartConfig.value.dataSourceId,
-      backgroundColor: chartConfig.value.backgroundColor,
-      borderColor: chartConfig.value.borderColor,
-      colorScheme: chartConfig.value.colorScheme
     },
     properties: {
       [chartType]: JSON.parse(JSON.stringify(chartConfig.value))
@@ -1402,9 +1382,6 @@ const createEmptyChart = async (chartType: ChartType, mouseX?: number, mouseY?: 
     if (chartConfig.value) {
       chartConfig.value.title = newChart.base.title
       chartConfig.value.dataSourceId = newChart.base.dataSourceId
-      chartConfig.value.backgroundColor = newChart.base.backgroundColor || '#3b82f6'
-      chartConfig.value.borderColor = newChart.base.borderColor || '#1d4ed8'
-      chartConfig.value.colorScheme = newChart.base.colorScheme || 'DEFAULT'
     }
     editingChartId.value = savedChart.id
     await nextTick()
@@ -1601,9 +1578,6 @@ const currentChartForPreview = computed(() => {
       base: {
         title: chartConfig.value.title,
         dataSourceId: chartConfig.value.dataSourceId,
-        backgroundColor: chartConfig.value.backgroundColor,
-        borderColor: chartConfig.value.borderColor,
-        colorScheme: chartConfig.value.colorScheme,
         createdAt: new Date(),
         updatedAt: new Date()
       },

@@ -121,8 +121,6 @@ export interface DashboardTab {
 export interface BaseChartProperties {
   title: string
   dataSourceId: string
-  backgroundColor?: string
-  borderColor?: string
   colorScheme?: string
 }
 
@@ -178,12 +176,10 @@ export interface ChartTypeProperties {
   card?: {
     field: string
     aggregation?: 'sum' | 'avg' | 'min' | 'max'
-    prefix?: string
-    suffix?: string
     decimalPlaces?: number
-    color?: string
-    backgroundColor?: string
     colorScheme?: string
+    filter?: string
+    subHeader?: string
   }
 }
 

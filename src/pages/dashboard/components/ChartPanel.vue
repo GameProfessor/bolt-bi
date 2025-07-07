@@ -42,7 +42,7 @@
           <input
             v-model="chartTitle"
             type="text"
-            placeholder="Enter chart title"
+            placeholder="Header"
             class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
           />
         </div>
@@ -59,6 +59,16 @@
           >
             {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.field : '') || 'Drop KPI field here' }}
           </div>
+          <!-- Sub-Header input -->
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Sub-Header</label>
+            <input
+              v-model="cardSubHeader"
+              type="text"
+              placeholder="Enter sub-header (optional)"
+              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
           <!-- Color Scheme Dropdown for Card Chart -->
           <div class="mt-3">
             <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
@@ -72,6 +82,17 @@
               <option value="info">Info</option>
               <option value="dark">Dark</option>
             </select>
+          </div>
+          <!-- Filter Expression for Card Chart -->
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Filter Expression</label>
+            <input
+              v-model="cardFilter"
+              type="text"
+              placeholder="e.g. revenue > 1000 && region === 'HCM'"
+              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+            <!-- <div class="text-xs text-gray-500 mt-1">Sử dụng tên trường dữ liệu, ví dụ: <span class="font-mono">revenue &gt; 1000 &amp;&amp; region === 'HCM'</span></div> -->
           </div>
         </div>
 
@@ -225,25 +246,6 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Background</label>
-            <input
-              v-model="chartBackgroundColor"
-              type="color"
-              class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Border</label>
-            <input
-              v-model="chartBorderColor"
-              type="color"
-              class="w-full h-8 rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            />
-          </div>
-        </div>
-
         <button
           @click="$emit('add-or-update-chart')"
           :disabled="!isChartConfigValid"
@@ -345,20 +347,6 @@ const chartColorScheme = computed({
   }
 })
 
-const chartBackgroundColor = computed({
-  get: () => props.chartConfig?.backgroundColor || '#3b82f6',
-  set: (value: string) => {
-    if (props.chartConfig) props.chartConfig.backgroundColor = value
-  }
-})
-
-const chartBorderColor = computed({
-  get: () => props.chartConfig?.borderColor || '#1d4ed8',
-  set: (value: string) => {
-    if (props.chartConfig) props.chartConfig.borderColor = value
-  }
-})
-
 // For bar chart specific properties
 const barHorizontal = computed({
   get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.horizontal : false),
@@ -406,6 +394,20 @@ const cardColorScheme = computed({
   get: () => (props.chartConfig && isCardChartConfig(props.chartConfig)) ? (props.chartConfig.colorScheme || 'default') : 'default',
   set: (value: string) => {
     if (props.chartConfig && isCardChartConfig(props.chartConfig)) props.chartConfig.colorScheme = value
+  }
+})
+
+const cardFilter = computed({
+  get: () => (props.chartConfig && isCardChartConfig(props.chartConfig)) ? (props.chartConfig.filter || '') : '',
+  set: (value: string) => {
+    if (props.chartConfig && isCardChartConfig(props.chartConfig)) props.chartConfig.filter = value
+  }
+})
+
+const cardSubHeader = computed({
+  get: () => (props.chartConfig && isCardChartConfig(props.chartConfig)) ? (props.chartConfig.subHeader || '') : '',
+  set: (value: string) => {
+    if (props.chartConfig && isCardChartConfig(props.chartConfig)) props.chartConfig.subHeader = value
   }
 })
 </script> 
