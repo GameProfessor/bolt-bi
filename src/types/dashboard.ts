@@ -3,17 +3,7 @@
  * Định nghĩa các type cho Dashboard
  */
 
-import { nanoid } from 'nanoid'
 import type { ChartType } from './chart'
-
-export const CHART_TYPE_DEFAULT_LAYOUT: Record<string, { w: number; h: number }> = {
-  bar:     { w: 4, h: 3 },
-  line:    { w: 4, h: 3 },
-  pie:     { w: 3, h: 3 },
-  scatter: { w: 4, h: 3 },
-  card:    { w: 2, h: 3 },
-  // Add more types as needed
-}
 
 export interface Dashboard {
   id: string
@@ -186,10 +176,13 @@ export interface ChartTypeProperties {
   
   // Card/KPI specific
   card?: {
-    keyMetric: string
-    previousMetric?: string
-    differenceType?: 'absolute' | 'percentage'
-    aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max'
+    field: string
+    aggregation?: 'sum' | 'avg' | 'min' | 'max'
+    prefix?: string
+    suffix?: string
+    decimalPlaces?: number
+    color?: string
+    backgroundColor?: string
   }
 }
 
@@ -247,190 +240,5 @@ export function isCardChart(chart: DashboardChart): chart is DashboardChart & { 
   return chart.type === 'card' && !!chart.properties.card
 }
 
-// Type-safe chart creation helpers
-export function createBarChart(config: {
-  title: string
-  dataSourceId: string
-  xAxis: string[]
-  yAxis: string[]
-  horizontal?: boolean
-  backgroundColor?: string
-  borderColor?: string
-  colorScheme?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '', // Will be set when added to dashboard
-    type: 'bar',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#3B82F6',
-      borderColor: config.borderColor || '#1E40AF',
-      colorScheme: config.colorScheme || 'default'
-    },
-    properties: {
-      bar: {
-        xAxis: config.xAxis,
-        yAxis: config.yAxis,
-        horizontal: config.horizontal || false
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.bar },
-    createdAt: new Date()
-  }
-}
-
-export function createPieChart(config: {
-  title: string
-  dataSourceId: string
-  category: string
-  value: string
-  donut?: boolean
-  backgroundColor?: string
-  borderColor?: string
-  colorScheme?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '',
-    type: 'pie',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#3B82F6',
-      borderColor: config.borderColor || '#1E40AF',
-      colorScheme: config.colorScheme || 'default'
-    },
-    properties: {
-      pie: {
-        category: config.category,
-        value: config.value,
-        donut: config.donut || false
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.pie },
-    createdAt: new Date()
-  }
-}
-
-export function createLineChart(config: {
-  title: string
-  dataSourceId: string
-  xAxis: string
-  yAxis: string
-  smooth?: boolean
-  fillArea?: boolean
-  backgroundColor?: string
-  borderColor?: string
-  colorScheme?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '',
-    type: 'line',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#3B82F6',
-      borderColor: config.borderColor || '#1E40AF',
-      colorScheme: config.colorScheme || 'default'
-    },
-    properties: {
-      line: {
-        xAxis: config.xAxis,
-        yAxis: config.yAxis,
-        smooth: config.smooth || false,
-        fillArea: config.fillArea || false
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.line },
-    createdAt: new Date()
-  }
-}
-
-export function createScatterChart(config: {
-  title: string
-  dataSourceId: string
-  xAxis: string
-  yAxis: string
-  size?: string
-  backgroundColor?: string
-  borderColor?: string
-  colorScheme?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '',
-    type: 'scatter',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#3B82F6',
-      borderColor: config.borderColor || '#1E40AF',
-      colorScheme: config.colorScheme || 'default'
-    },
-    properties: {
-      scatter: {
-        xAxis: config.xAxis,
-        yAxis: config.yAxis,
-        size: config.size
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.scatter },
-    createdAt: new Date()
-  }
-}
-
-export function createCardChart(config: {
-  title: string
-  dataSourceId: string
-  keyMetric: string
-  previousMetric?: string
-  differenceType?: 'absolute' | 'percentage'
-  aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max'
-  backgroundColor?: string
-  borderColor?: string
-  colorScheme?: string
-}): DashboardChart {
-  return {
-    id: nanoid(),
-    dashboardId: '',
-    type: 'card',
-    base: {
-      title: config.title,
-      dataSourceId: config.dataSourceId,
-      backgroundColor: config.backgroundColor || '#3B82F6',
-      borderColor: config.borderColor || '#1E40AF',
-      colorScheme: config.colorScheme || 'default'
-    },
-    properties: {
-      card: {
-        keyMetric: config.keyMetric,
-        previousMetric: config.previousMetric,
-        differenceType: config.differenceType || 'percentage',
-        aggregation: config.aggregation || 'sum'
-      }
-    },
-    layout: { x: 0, y: 0, ...CHART_TYPE_DEFAULT_LAYOUT.card },
-    createdAt: new Date()
-  }
-}
-
-// Generic chart creation function
-export function createChart(type: ChartType, config: any): DashboardChart {
-  switch (type) {
-    case 'bar':
-      return createBarChart(config)
-    case 'pie':
-      return createPieChart(config)
-    case 'line':
-      return createLineChart(config)
-    case 'scatter':
-      return createScatterChart(config)
-    case 'card':
-      return createCardChart(config)
-    default:
-      throw new Error(`Unsupported chart type: ${type}`)
-  }
-}
+// Note: Chart creation functions have been moved to the Strategy Pattern
+// Use ChartUtils.createDefaultConfig() and ChartUtils.getChartTypeInfo() instead

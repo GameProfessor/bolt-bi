@@ -142,6 +142,8 @@ import {
 import { GridStack } from 'gridstack'
 import ChartPanel from '../dashboard/components/ChartPanel.vue'
 import ChartPreview from '@/components/charts/ChartPreview.vue'
+import { ChartUtils } from '@/strategies'
+import type { ChartConfig } from '@/types/chart'
 
 const router = useRouter()
 const chartTypeColWidth = ref(260)
@@ -213,16 +215,7 @@ const colorPalettes: Record<string, string[]> = {
 }
 
 const selectedChartType = ref<ChartType>('bar')
-const chartConfig = reactive<ChartConfigLike>({
-  title: '',
-  xAxis: [],
-  yAxis: '',
-  category: '',
-  backgroundColor: '#3b82f6',
-  borderColor: '#1d4ed8',
-  horizontal: false,
-  colorScheme: 'default'
-})
+const chartConfig = ref<ChartConfig | null>(ChartUtils.createDefaultConfig('bar'))
 
 const charts = ref<ChartItem[]>([])
 

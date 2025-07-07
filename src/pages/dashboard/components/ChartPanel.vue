@@ -57,7 +57,7 @@
             class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
             :class="{ 'border-primary-400 bg-primary-50': chartConfig && isCardChartConfig(chartConfig) && chartConfig.keyMetric }"
           >
-            {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.keyMetric : '') || 'Drop KPI field here (numbers only)' }}
+            {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.keyMetric : '') || 'Drop KPI field here' }}
           </div>
         </div>
 

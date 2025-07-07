@@ -16,3 +16,6 @@ export { default as LineChart } from './types/LineChart.vue'
 export { default as PieChart } from './types/PieChart.vue'
 export { default as ScatterChart } from './types/ScatterChart.vue'
 export { default as CardChart } from './types/CardChart.vue'
+
+// Export strategy utilities
+export { ChartUtils } from '@/strategies'

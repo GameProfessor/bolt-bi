@@ -1,2 +1,3 @@
 export { ChartConfigFactory } from './ChartConfigFactory'
-export { ChartComponentFactory } from './ChartComponentFactory'
+// ChartComponentFactory has been replaced by the Strategy Pattern
+// Use ChartUtils.getChartComponent() instead

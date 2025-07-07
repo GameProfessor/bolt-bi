@@ -70,10 +70,13 @@ export interface ScatterChartConfig extends BaseChartConfig {
 // Card/KPI chart specific configuration
 export interface CardChartConfig extends BaseChartConfig {
   type: 'card'
-  keyMetric: string
-  previousMetric: string
-  differenceType: 'absolute' | 'percentage'
-  aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max'
+  field: string
+  aggregation: 'sum' | 'avg' | 'min' | 'max'
+  prefix?: string
+  suffix?: string
+  decimalPlaces?: number
+  color: string
+  backgroundColor: string
 }
 
 // Union type for all chart configurations
@@ -142,10 +145,10 @@ export function createDefaultChartConfig(type: ChartType): ChartConfig {
       return {
         ...baseConfig,
         type: 'card',
-        keyMetric: '',
-        previousMetric: '',
-        differenceType: 'percentage',
-        aggregation: 'sum'
+        field: '',
+        aggregation: 'sum',
+        color: '#3B82F6',
+        backgroundColor: '#EFF6FF'
       }
     
     default:
@@ -198,7 +201,7 @@ export function isChartConfigValid(config: ChartConfig): boolean {
       return config.xAxis.length > 0 && config.yAxis.length > 0
     
     case 'card':
-      return !!config.keyMetric
+      return !!config.field
     
     default:
       return false
