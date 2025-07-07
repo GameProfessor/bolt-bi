@@ -55,9 +55,23 @@
             @dragover.prevent
             @dragenter.prevent
             class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex items-center justify-center hover:border-primary-400 transition-colors duration-200"
-            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isCardChartConfig(chartConfig) && chartConfig.keyMetric }"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isCardChartConfig(chartConfig) && chartConfig.field }"
           >
-            {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.keyMetric : '') || 'Drop KPI field here' }}
+            {{ (chartConfig && isCardChartConfig(chartConfig) ? chartConfig.field : '') || 'Drop KPI field here' }}
+          </div>
+          <!-- Color Scheme Dropdown for Card Chart -->
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
+            <select
+              v-model="cardColorScheme"
+              class="block w-full border border-gray-300 rounded-md focus:border-primary-500 focus:ring-primary-500 text-sm text-gray-900 bg-white px-3 py-2 transition placeholder-gray-400"
+            >
+              <option value="default">Default</option>
+              <option value="success">Success</option>
+              <option value="danger">Danger</option>
+              <option value="info">Info</option>
+              <option value="dark">Dark</option>
+            </select>
           </div>
         </div>
 
@@ -385,6 +399,13 @@ const barShowLegend = computed({
   get: () => (props.chartConfig && isBarChartConfig(props.chartConfig) ? props.chartConfig.showLegend : false),
   set: (value: boolean) => {
     if (props.chartConfig && isBarChartConfig(props.chartConfig)) props.chartConfig.showLegend = value
+  }
+})
+
+const cardColorScheme = computed({
+  get: () => (props.chartConfig && isCardChartConfig(props.chartConfig)) ? (props.chartConfig.colorScheme || 'default') : 'default',
+  set: (value: string) => {
+    if (props.chartConfig && isCardChartConfig(props.chartConfig)) props.chartConfig.colorScheme = value
   }
 })
 </script> 

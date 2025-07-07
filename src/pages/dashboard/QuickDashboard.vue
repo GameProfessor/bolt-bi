@@ -740,7 +740,8 @@ const addOrUpdateChart = () => {
                   suffix: chartConfig.value.suffix,
                   decimalPlaces: chartConfig.value.decimalPlaces,
                   color: chartConfig.value.color,
-                  backgroundColor: chartConfig.value.backgroundColor
+                  backgroundColor: chartConfig.value.backgroundColor,
+                  colorScheme: chartConfig.value.colorScheme
                 }
               }
             }
@@ -874,6 +875,7 @@ const editChart = (chart: DashboardChart) => {
         chartConfig.value.decimalPlaces = chart.properties.card.decimalPlaces || 0
         chartConfig.value.color = chart.properties.card.color || '#3b82f6'
         chartConfig.value.backgroundColor = chart.properties.card.backgroundColor || '#3b82f6'
+        chartConfig.value.colorScheme = chart.properties.card.colorScheme || 'default'
       }
       break
   }
@@ -1195,7 +1197,8 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
                 suffix: chartConfig.value.suffix,
                 decimalPlaces: chartConfig.value.decimalPlaces,
                 color: chartConfig.value.color,
-                backgroundColor: chartConfig.value.backgroundColor
+                backgroundColor: chartConfig.value.backgroundColor,
+                colorScheme: chartConfig.value.colorScheme
               }
             }
           }

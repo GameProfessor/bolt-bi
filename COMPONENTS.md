@@ -1,8 +1,13 @@
-# BI Dashboard - Components Documentation
+# BI Dashboard - Components Documentation (Cập nhật theo Strategy Pattern)
 
 ## 📋 Tổng quan Components
 
 BI Dashboard sử dụng kiến trúc component-based với Vue 3 Composition API, được tổ chức theo tính năng và mức độ tái sử dụng.
+
+- Mỗi chart component nhận prop duy nhất: `chart: DashboardChart`, tự trích xuất config/data
+- Không còn truyền options rời cho chart component
+- Mỗi loại chart có component riêng, tự xử lý logic
+- Quy trình thêm chart mới, cập nhật chart đều tuân thủ pattern này
 
 ## 🏗️ Cấu trúc Components
 
@@ -126,10 +131,7 @@ interface Props {
 **Props**:
 ```typescript
 interface Props {
-  type: 'line' | 'bar' | 'pie' | 'doughnut'
-  data?: ChartData
-  options?: ChartOptions
-  height?: number
+  chart: DashboardChart
 }
 ```
 
@@ -167,10 +169,7 @@ interface Props {
 **Props**:
 ```typescript
 interface Props {
-  chartConfig: ChartConfig
-  position: { x: number, y: number }
-  size: { width: number, height: number }
-  editable?: boolean
+  chart: DashboardChart
 }
 ```
 
@@ -432,3 +431,15 @@ onMounted(() => {
 ---
 
 **Components được thiết kế để tái sử dụng, dễ bảo trì và có performance cao.**
+
+### 4. **Quy trình thêm chart mới (chuẩn hóa)**
+- [ ] Định nghĩa interface/config mới (nếu cần)
+- [ ] Tạo component render (MyChart.vue, nhận prop chart)
+- [ ] Tạo strategy class (MyChartStrategy.ts)
+- [ ] Đăng ký strategy (registry/index.ts)
+- [ ] Cập nhật constants/factory/types/UI (nếu cần)
+- [ ] Test & hoàn thiện
+
+## 🔧 Best Practices
+- Mọi chart mới đều nhận prop chart, tự xử lý logic, không phụ thuộc factory ngoài
+- Kiến trúc này giúp maintain dễ, mở rộng nhanh, type safety cao

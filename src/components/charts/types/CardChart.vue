@@ -1,19 +1,26 @@
 <template>
-  <div class="h-full w-full flex flex-col p-4 rounded-lg shadow-sm" :style="{ backgroundColor: chartData.backgroundColor }">
-    <div v-if="chartData.title" class="mb-3">
-      <h3 class="text-sm font-medium text-gray-900 truncate">{{ chartData.title }}</h3>
-    </div>
-    <div v-if="error" class="flex items-center justify-center h-full text-red-500 text-sm">
-      <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
-      {{ error }}
-    </div>
-    <div v-else class="flex-1 flex flex-col justify-center">
-      <div class="text-center mb-2">
-        <div class="text-2xl font-bold" :style="{ color: chartData.color }">
-          {{ formattedValue }}
-        </div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide">
-          {{ chartData.suffix }}
+  <div
+    class="h-full w-full flex flex-col justify-between rounded-2xl shadow-lg transition-all duration-200"
+    :style="cardStyle.containerStyle"
+    :class="cardStyle.containerClass"
+  >
+    <div :class="cardStyle.innerClass" class="flex-1 flex flex-col justify-center items-center px-6 py-4">
+      <div v-if="chartData.title" class="mb-2 w-full flex items-center justify-center">
+        <h3 :class="cardStyle.titleClass">
+          {{ chartData.title }}
+        </h3>
+      </div>
+      <div v-if="error" class="flex flex-col items-center justify-center h-full text-red-500 text-base font-medium py-8">
+        <ExclamationTriangleIcon class="h-8 w-8 mb-2" />
+        <span>{{ error }}</span>
+      </div>
+      <div v-else class="flex flex-col items-center justify-center flex-1">
+        <div :class="cardStyle.valueRowClass">
+          <span v-if="chartData.prefix" :class="cardStyle.prefixClass">{{ chartData.prefix }}</span>
+          <span :class="cardStyle.valueClass">
+            {{ formattedValueOnly }}
+          </span>
+          <span v-if="chartData.suffix" :class="cardStyle.suffixClass">{{ chartData.suffix }}</span>
         </div>
       </div>
     </div>
@@ -33,19 +40,97 @@ interface Props {
 const props = defineProps<Props>()
 const dataSourceStore = useDataSourceStore()
 
+const cardColorSchemes = {
+  default: {
+    backgroundColor: '#EFF6FF',
+    color: '#3B82F6',
+    titleClass: 'text-base font-semibold text-gray-800 text-center',
+    valueClass: 'text-4xl md:text-5xl font-extrabold text-center',
+    valueRowClass: 'flex items-baseline gap-2 mb-1 justify-center',
+    prefixClass: 'text-lg font-medium text-gray-500',
+    suffixClass: 'text-lg font-medium text-gray-500',
+    containerClass: '',
+    innerClass: '',
+    containerStyle: {},
+  },
+  success: {
+    backgroundColor: '#ECFDF5',
+    color: '#10B981',
+    titleClass: 'text-base font-semibold text-green-900 text-center',
+    valueClass: 'text-4xl md:text-5xl font-extrabold text-center text-green-700',
+    valueRowClass: 'flex items-baseline gap-2 mb-1 justify-center',
+    prefixClass: 'text-lg font-medium text-green-500',
+    suffixClass: 'text-lg font-medium text-green-500',
+    containerClass: '',
+    innerClass: '',
+    containerStyle: {},
+  },
+  danger: {
+    backgroundColor: '#FEF2F2',
+    color: '#EF4444',
+    titleClass: 'text-base font-semibold text-red-900 text-center',
+    valueClass: 'text-4xl md:text-5xl font-extrabold text-center text-red-700',
+    valueRowClass: 'flex items-baseline gap-2 mb-1 justify-center',
+    prefixClass: 'text-lg font-medium text-red-500',
+    suffixClass: 'text-lg font-medium text-red-500',
+    containerClass: '',
+    innerClass: '',
+    containerStyle: {},
+  },
+  info: {
+    backgroundColor: '#F0F9FF',
+    color: '#0EA5E9',
+    titleClass: 'text-base font-semibold text-sky-900 text-center',
+    valueClass: 'text-4xl md:text-5xl font-extrabold text-center text-sky-700',
+    valueRowClass: 'flex items-baseline gap-2 mb-1 justify-center',
+    prefixClass: 'text-lg font-medium text-sky-500',
+    suffixClass: 'text-lg font-medium text-sky-500',
+    containerClass: '',
+    innerClass: '',
+    containerStyle: {},
+  },
+  dark: {
+    backgroundColor: '#1E293B',
+    color: '#F1F5F9',
+    titleClass: 'text-base font-semibold text-slate-100 text-center',
+    valueClass: 'text-4xl md:text-5xl font-extrabold text-center text-white',
+    valueRowClass: 'flex items-baseline gap-2 mb-1 justify-center',
+    prefixClass: 'text-lg font-medium text-slate-300',
+    suffixClass: 'text-lg font-medium text-slate-300',
+    containerClass: '',
+    innerClass: '',
+    containerStyle: {},
+  },
+}
+
 const chartData = computed(() => {
   const base = props.chart.base
   const cardProps = (props.chart.properties.card || {}) as Partial<CardChartConfig>
   return {
     title: base.title,
     dataSourceId: base.dataSourceId,
-    backgroundColor: cardProps.backgroundColor || '#EFF6FF',
-    color: cardProps.color || '#3B82F6',
+    backgroundColor: cardProps.backgroundColor || '',
+    color: cardProps.color || '',
+    colorScheme: cardProps.colorScheme || 'default',
     field: typeof cardProps.field === 'string' ? cardProps.field : '',
     aggregation: cardProps.aggregation || 'sum',
     prefix: cardProps.prefix || '',
     suffix: cardProps.suffix || '',
     decimalPlaces: typeof cardProps.decimalPlaces === 'number' ? cardProps.decimalPlaces : 0
+  }
+})
+
+const cardStyle = computed(() => {
+  const scheme = cardColorSchemes[chartData.value.colorScheme as keyof typeof cardColorSchemes] || cardColorSchemes.default
+  return {
+    containerStyle: { backgroundColor: chartData.value.backgroundColor || scheme.backgroundColor },
+    containerClass: scheme.containerClass,
+    innerClass: scheme.innerClass,
+    titleClass: scheme.titleClass,
+    valueClass: scheme.valueClass,
+    valueRowClass: scheme.valueRowClass,
+    prefixClass: scheme.prefixClass,
+    suffixClass: scheme.suffixClass,
   }
 })
 
@@ -84,10 +169,17 @@ const value = computed(() => {
   }
 })
 
-const formattedValue = computed(() => {
-  if (value.value == null || isNaN(value.value as number)) return '--'
-  const val = value.value as number
-  const dp = chartData.value.decimalPlaces ?? 0
-  return `${chartData.value.prefix ?? ''}${val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}${chartData.value.suffix ?? ''}`
+const formattedValueOnly = computed(() => {
+  if (value.value == null || (typeof value.value === 'number' && isNaN(value.value))) return '--'
+  const val = value.value as number | string
+  if (typeof val === 'number') {
+    const dp = chartData.value.decimalPlaces ?? 0
+    return val.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })
+  }
+  return val
 })
 </script>
+
+<style scoped>
+/* Responsive, modern card style */
+</style>

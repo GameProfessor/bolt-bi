@@ -183,10 +183,11 @@ export interface ChartTypeProperties {
     decimalPlaces?: number
     color?: string
     backgroundColor?: string
+    colorScheme?: string
   }
 }
 
-// Generic DashboardChart interface
+// Generic DashboardChart interface. Đại diện cho 1 instance của chart trong mỗi dashboard.
 export interface DashboardChart {
   id: string
   dashboardId: string

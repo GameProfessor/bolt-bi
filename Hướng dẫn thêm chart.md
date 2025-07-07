@@ -1,8 +1,50 @@
 # 📊 Hướng dẫn thêm Chart Type mới
 
-## Tổng quan
+## Checklist các bước chuẩn hóa
+- [ ] Định nghĩa interface/config mới (nếu cần)
+- [ ] Tạo component render (MyChart.vue)
+- [ ] Tạo strategy class (MyChartStrategy.ts)
+- [ ] Đăng ký strategy (registry/index.ts)
+- [ ] Cập nhật constants/factory/types/UI (nếu cần)
+- [ ] Test & hoàn thiện
 
-Tài liệu này hướng dẫn cách thêm một loại chart mới vào hệ thống dashboard. Hệ thống sử dụng **Strategy Pattern** và **Factory Pattern** để đảm bảo tính mở rộng và dễ bảo trì.
+---
+
+## Tổng quan
+- Hệ thống sử dụng **Strategy Pattern** cho mỗi loại biểu đồ.
+- Mỗi loại chart có một strategy class riêng, tự xử lý config, data, render.
+- Tất cả chart component đều nhận prop duy nhất: `chart: DashboardChart`.
+
+---
+
+## Các Bước Thêm Biểu Đồ Mới (Chuẩn hóa)
+
+### 1. Định nghĩa interface/config mới (nếu cần)
+- Thêm interface mới vào `src/types/chart.ts`.
+
+### 2. Tạo component render
+- Tạo file: `src/components/charts/types/MyChart.vue`
+- Nhận prop: `chart: DashboardChart`
+- Tự trích xuất config/data từ `chart`
+
+### 3. Tạo strategy class
+- Tạo file: `src/strategies/MyChartStrategy.ts`
+- Kế thừa `ChartStrategy`, cài đặt các method cần thiết
+
+### 4. Đăng ký strategy
+- Thêm vào registry trong `src/strategies/index.ts`
+
+### 5. Cập nhật constants/factory/types/UI (nếu cần)
+- Thêm vào danh sách chart types, cập nhật factory, constants, types, UI selector...
+
+### 6. Test & hoàn thiện
+- Kéo thả, cấu hình, kiểm tra preview, lưu dashboard
+
+---
+
+**Lưu ý:**
+- Mọi chart mới đều tuân thủ: nhận prop `chart`, tự xử lý logic, không phụ thuộc vào factory bên ngoài.
+- Có thể tham khảo ví dụ AreaChart ở phần dưới để thực hiện từng bước.
 
 ## 🎯 Ví dụ: Thêm Area Chart
 
