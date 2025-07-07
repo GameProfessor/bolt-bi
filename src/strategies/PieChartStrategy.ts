@@ -15,8 +15,6 @@ export class PieChartStrategy implements ChartStrategy {
       type: 'pie',
       title: 'Pie Chart',
       dataSourceId: '',
-      backgroundColor: '#3B82F6',
-      borderColor: '#1E40AF',
       colorScheme: 'default',
       category: '',
       value: '',
@@ -36,28 +34,8 @@ export class PieChartStrategy implements ChartStrategy {
     )
   }
 
-  getRequiredFields(): string[] {
-    return ['category', 'value']
-  }
-
-  getOptionalFields(): string[] {
-    return ['donut', 'backgroundColor', 'borderColor', 'colorScheme']
-  }
-
-  getSupportedDataTypes(): ('string' | 'number' | 'date')[] {
-    return ['string', 'number']
-  }
-
   getDefaultLayout(): { w: number; h: number } {
-    return { w: 4, h: 4 }
-  }
-
-  getMinLayout(): { w: number; h: number } {
     return { w: 3, h: 3 }
-  }
-
-  getMaxLayout(): { w: number; h: number } {
-    return { w: 8, h: 8 }
   }
 
   getComponent(): any {
@@ -66,10 +44,6 @@ export class PieChartStrategy implements ChartStrategy {
 
   getPreviewComponent(): any {
     return ChartPreview
-  }
-
-  getChartLibrary(): string {
-    return 'chartjs'
   }
 
   processData(data: any[], config: ChartConfig): any {
@@ -134,35 +108,6 @@ export class PieChartStrategy implements ChartStrategy {
     }
   }
 
-  getDataRequirements(): {
-    minRows: number
-    maxRows: number
-    minColumns: number
-    maxColumns: number
-  } {
-    return {
-      minRows: 1,
-      maxRows: 50,
-      minColumns: 2,
-      maxColumns: 10
-    }
-  }
-
-  getValidationRules(): {
-    required: string[]
-    optional: string[]
-    constraints: Record<string, any>
-  } {
-    return {
-      required: ['category', 'value'],
-      optional: ['donut'],
-      constraints: {
-        category: { type: 'string' },
-        value: { type: 'number' }
-      }
-    }
-  }
-
   exportConfig(config: ChartConfig): any {
     if (config.type !== 'pie') return config
     return {
@@ -177,20 +122,6 @@ export class PieChartStrategy implements ChartStrategy {
       ...this.createDefaultConfig(),
       ...data
     }
-  }
-
-  getHelpText(): string {
-    return `
-      Pie Chart là biểu đồ tròn hiển thị tỷ lệ phần trăm của các phần.
-      
-      Cách sử dụng:
-      1. Chọn trường dữ liệu cho danh mục (Category)
-      2. Chọn trường dữ liệu cho giá trị (Value)
-      3. Tùy chỉnh màu sắc và bố cục
-      4. Bật tùy chọn "Donut" để tạo biểu đồ hình vòng
-      
-      Lưu ý: Pie chart phù hợp cho dữ liệu có ít hơn 10 danh mục
-    `
   }
 
   getExamples(): Array<{
@@ -211,7 +142,7 @@ export class PieChartStrategy implements ChartStrategy {
       },
       {
         name: 'Tỷ lệ sản phẩm bán ra',
-        description: 'Biểu đồ donut hiển thị tỷ lệ các sản phẩm bán ra',
+        description: 'Biểu đồ vòng hiển thị tỷ lệ các sản phẩm bán ra',
         config: {
           title: 'Tỷ lệ sản phẩm bán ra',
           category: 'product',
@@ -222,25 +153,17 @@ export class PieChartStrategy implements ChartStrategy {
     ]
   }
 
+  // Helper: lấy màu cho từng phần
   private getColors(count: number): string[] {
-    const colors = [
-      '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-      '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+    const palette = [
+      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
     ]
-    return colors.slice(0, count)
+    return palette.slice(0, count)
   }
 
+  // Helper: làm tối màu
   private darkenColor(color: string): string {
-    const num = parseInt(color.replace('#', ''), 16)
-    const amt = Math.round(2.55 * -20)
-    const R = (num >> 16) + amt
-    const G = (num >> 8 & 0x00FF) + amt
-    const B = (num & 0x0000FF) + amt
-    return '#' + (
-      0x1000000 +
-      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
-      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
-      (B < 255 ? (B < 1 ? 0 : B) : 255)
-    ).toString(16).slice(1)
+    return color
   }
 }

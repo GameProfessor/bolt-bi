@@ -5,18 +5,16 @@ import ChartPreview from '@/components/charts/ChartPreview.vue'
 
 export class ScatterChartStrategy implements ChartStrategy {
   type = 'scatter' as const
-  label = 'Scatter Plot'
+  label = 'Scatter Chart'
   description = 'Hiển thị mối quan hệ giữa hai biến số'
   icon = 'CircleStackIcon'
-  category = 'ADVANCED' as const
+  category = 'BASIC' as const
 
   createDefaultConfig(): ScatterChartConfig {
     return {
       type: 'scatter',
-      title: 'Scatter Plot',
+      title: 'Scatter Chart',
       dataSourceId: '',
-      backgroundColor: '#3B82F6',
-      borderColor: '#1E40AF',
       colorScheme: 'default',
       xAxis: [],
       yAxis: [],
@@ -38,28 +36,8 @@ export class ScatterChartStrategy implements ChartStrategy {
     )
   }
 
-  getRequiredFields(): string[] {
-    return ['xAxis', 'yAxis']
-  }
-
-  getOptionalFields(): string[] {
-    return ['size', 'backgroundColor', 'borderColor', 'colorScheme']
-  }
-
-  getSupportedDataTypes(): ('string' | 'number' | 'date')[] {
-    return ['number']
-  }
-
   getDefaultLayout(): { w: number; h: number } {
-    return { w: 6, h: 4 }
-  }
-
-  getMinLayout(): { w: number; h: number } {
     return { w: 4, h: 3 }
-  }
-
-  getMaxLayout(): { w: number; h: number } {
-    return { w: 10, h: 6 }
   }
 
   getComponent(): any {
@@ -70,99 +48,58 @@ export class ScatterChartStrategy implements ChartStrategy {
     return ChartPreview
   }
 
-  getChartLibrary(): string {
-    return 'chartjs'
-  }
-
   processData(data: any[], config: ChartConfig): any {
     if (config.type !== 'scatter') return data
-    
     const scatterConfig = config as ScatterChartConfig
     
     // Filter out invalid data points
-    const validData = data.filter(row => {
+    return data.filter(row => {
       const xVal = Number(row[scatterConfig.xAxis[0]])
       const yVal = Number(row[scatterConfig.yAxis[0]])
       return !isNaN(xVal) && !isNaN(yVal)
     })
-
-    // Transform to chart.js scatter format
-    const datasets = [{
-      label: `${scatterConfig.yAxis[0]} vs ${scatterConfig.xAxis[0]}`,
-      data: validData.map(row => ({
-        x: Number(row[scatterConfig.xAxis[0]]),
-        y: Number(row[scatterConfig.yAxis[0]]),
-        r: scatterConfig.size ? Number(row[scatterConfig.size]) || 5 : 5
-      })),
-      backgroundColor: scatterConfig.backgroundColor,
-      borderColor: scatterConfig.borderColor,
-      borderWidth: 1,
-      pointRadius: scatterConfig.size ? undefined : 5,
-      pointHoverRadius: scatterConfig.size ? undefined : 8
-    }]
-
-    return {
-      datasets
-    }
   }
 
   transformToChartOptions(processedData: any, config: ChartConfig): any {
     if (config.type !== 'scatter') return {}
     const scatterConfig = config as ScatterChartConfig
+    
+    const datasets = scatterConfig.yAxis.map((yField, index) => ({
+      label: yField,
+      data: processedData.map((item: any) => ({
+        x: Number(item[scatterConfig.xAxis[0]]),
+        y: Number(item[yField])
+      })),
+      backgroundColor: this.getColor(index),
+      borderColor: this.getColor(index),
+      borderWidth: 1,
+      pointRadius: scatterConfig.size ? 6 : 4
+    }))
+    
     return {
       type: 'scatter',
       data: {
-        datasets: [{
-          label: `${scatterConfig.yAxis[0]} vs ${scatterConfig.xAxis[0]}`,
-          data: processedData,
-          backgroundColor: scatterConfig.backgroundColor,
-          borderColor: scatterConfig.borderColor,
-          borderWidth: 1,
-          pointRadius: scatterConfig.size ? undefined : 5,
-          pointHoverRadius: scatterConfig.size ? undefined : 8
-        }]
+        datasets
       },
       options: {
         plugins: {
-          legend: { display: true, position: 'top' },
+          legend: { display: true },
           title: { display: true, text: scatterConfig.title }
         },
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { beginAtZero: false, title: { display: true, text: scatterConfig.xAxis[0] } },
-          y: { beginAtZero: false, title: { display: true, text: scatterConfig.yAxis[0] } }
+          x: { 
+            type: 'linear',
+            position: 'bottom',
+            beginAtZero: true
+          },
+          y: { 
+            type: 'linear',
+            position: 'left',
+            beginAtZero: true
+          }
         }
-      }
-    }
-  }
-
-  getDataRequirements(): {
-    minRows: number
-    maxRows: number
-    minColumns: number
-    maxColumns: number
-  } {
-    return {
-      minRows: 5,
-      maxRows: 10000,
-      minColumns: 2,
-      maxColumns: 10
-    }
-  }
-
-  getValidationRules(): {
-    required: string[]
-    optional: string[]
-    constraints: Record<string, any>
-  } {
-    return {
-      required: ['xAxis', 'yAxis'],
-      optional: ['size'],
-      constraints: {
-        xAxis: { minLength: 1, maxLength: 1, type: 'number' },
-        yAxis: { minLength: 1, maxLength: 1, type: 'number' },
-        size: { type: 'number', optional: true }
       }
     }
   }
@@ -183,23 +120,6 @@ export class ScatterChartStrategy implements ChartStrategy {
     }
   }
 
-  getHelpText(): string {
-    return `
-      Scatter Plot là biểu đồ phân tán hiển thị mối quan hệ giữa hai biến số.
-      
-      Cách sử dụng:
-      1. Chọn trường dữ liệu số cho trục X
-      2. Chọn trường dữ liệu số cho trục Y
-      3. Tùy chọn: Chọn trường dữ liệu cho kích thước điểm (Size)
-      4. Tùy chỉnh màu sắc và bố cục
-      
-      Lưu ý: 
-      - Scatter plot phù hợp cho dữ liệu số liên tục
-      - Cần ít nhất 5 điểm dữ liệu để có ý nghĩa
-      - Có thể phát hiện mối tương quan giữa các biến
-    `
-  }
-
   getExamples(): Array<{
     name: string
     description: string
@@ -207,25 +127,34 @@ export class ScatterChartStrategy implements ChartStrategy {
   }> {
     return [
       {
-        name: 'Tương quan giá và doanh số',
-        description: 'Biểu đồ phân tán hiển thị mối tương quan giữa giá và doanh số',
+        name: 'Mối quan hệ giá và số lượng',
+        description: 'Biểu đồ scatter hiển thị mối quan hệ giữa giá và số lượng bán',
         config: {
-          title: 'Tương quan giá và doanh số',
+          title: 'Mối quan hệ giá và số lượng',
           xAxis: ['price'],
-          yAxis: ['sales'],
+          yAxis: ['quantity'],
           size: ''
         }
       },
       {
-        name: 'Phân tích khách hàng',
-        description: 'Biểu đồ phân tán với kích thước điểm theo giá trị đơn hàng',
+        name: 'Phân tích tuổi và thu nhập',
+        description: 'Biểu đồ scatter phân tích mối quan hệ giữa tuổi và thu nhập',
         config: {
-          title: 'Phân tích khách hàng',
+          title: 'Phân tích tuổi và thu nhập',
           xAxis: ['age'],
           yAxis: ['income'],
-          size: 'orderValue'
+          size: 'experience'
         }
       }
     ]
+  }
+
+  // Helper: lấy màu cho từng dataset
+  private getColor(index: number): string {
+    const palette = [
+      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
+    ]
+    return palette[index % palette.length]
   }
 }

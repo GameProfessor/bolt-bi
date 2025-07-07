@@ -17,8 +17,6 @@ export class BarChartStrategy implements ChartStrategy {
       type: 'bar',
       title: 'Bar Chart',
       dataSourceId: '',
-      backgroundColor: '#3B82F6',
-      borderColor: '#1E40AF',
       colorScheme: 'default',
       xAxis: [],
       yAxis: [],
@@ -47,28 +45,8 @@ export class BarChartStrategy implements ChartStrategy {
     )
   }
 
-  getRequiredFields(): string[] {
-    return ['xAxis', 'yAxis']
-  }
-
-  getOptionalFields(): string[] {
-    return ['horizontal', 'stacked', 'backgroundColor', 'borderColor', 'colorScheme']
-  }
-
-  getSupportedDataTypes(): ('string' | 'number' | 'date')[] {
-    return ['string', 'number', 'date']
-  }
-
   getDefaultLayout(): { w: number; h: number } {
-    return { w: 6, h: 4 }
-  }
-
-  getMinLayout(): { w: number; h: number } {
-    return { w: 3, h: 3 }
-  }
-
-  getMaxLayout(): { w: number; h: number } {
-    return { w: 12, h: 8 }
+    return { w: 4, h: 3 }
   }
 
   getComponent(): any {
@@ -77,11 +55,6 @@ export class BarChartStrategy implements ChartStrategy {
 
   getPreviewComponent(): any {
     return ChartPreview
-  }
-
-  // Xác định thư viện chart sử dụng để render (ở đây là Chart.js)
-  getChartLibrary(): string {
-    return 'chartjs'
   }
 
   /**
@@ -151,37 +124,6 @@ export class BarChartStrategy implements ChartStrategy {
     }
   }
 
-  // Yêu cầu dữ liệu tối thiểu/tối đa
-  getDataRequirements(): {
-    minRows: number
-    maxRows: number
-    minColumns: number
-    maxColumns: number
-  } {
-    return {
-      minRows: 1,
-      maxRows: 1000,
-      minColumns: 2,
-      maxColumns: 10
-    }
-  }
-
-  // Quy tắc validation cho config
-  getValidationRules(): {
-    required: string[]
-    optional: string[]
-    constraints: Record<string, any>
-  } {
-    return {
-      required: ['xAxis', 'yAxis'],
-      optional: ['horizontal', 'stacked'],
-      constraints: {
-        xAxis: { minLength: 1, maxLength: 1 },
-        yAxis: { minLength: 1, maxLength: 5 }
-      }
-    }
-  }
-
   // Export config (dùng cho export/import dashboard)
   exportConfig(config: ChartConfig): any {
     if (config.type !== 'bar') return config
@@ -198,20 +140,6 @@ export class BarChartStrategy implements ChartStrategy {
       ...this.createDefaultConfig(),
       ...data
     }
-  }
-
-  // Text hướng dẫn sử dụng
-  getHelpText(): string {
-    return `
-      Bar Chart là biểu đồ cột dọc hoặc ngang để so sánh các giá trị.
-      
-      Cách sử dụng:
-      1. Chọn trường dữ liệu cho trục X (danh mục)
-      2. Chọn một hoặc nhiều trường dữ liệu cho trục Y (giá trị)
-      3. Tùy chỉnh màu sắc và bố cục
-      4. Bật tùy chọn "Ngang" để hiển thị cột ngang
-      5. Bật tùy chọn "Xếp chồng" để xếp các cột lên nhau
-    `
   }
 
   // Ví dụ cấu hình chart

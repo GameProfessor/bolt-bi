@@ -5,7 +5,7 @@
 ```
 DataSource (raw data)
    ↓
-DashboardChart (model lưu trong dashboard)
+DashboardChart (model chart lưu trong dashboard)
    ↓
 ChartProperties (cấu hình đặc thù từng loại chart)
    ↓

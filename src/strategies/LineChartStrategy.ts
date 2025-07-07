@@ -15,8 +15,6 @@ export class LineChartStrategy implements ChartStrategy {
       type: 'line',
       title: 'Line Chart',
       dataSourceId: '',
-      backgroundColor: '#3B82F6',
-      borderColor: '#1E40AF',
       colorScheme: 'default',
       xAxis: [],
       yAxis: [],
@@ -39,28 +37,8 @@ export class LineChartStrategy implements ChartStrategy {
     )
   }
 
-  getRequiredFields(): string[] {
-    return ['xAxis', 'yAxis']
-  }
-
-  getOptionalFields(): string[] {
-    return ['smooth', 'fillArea', 'backgroundColor', 'borderColor', 'colorScheme']
-  }
-
-  getSupportedDataTypes(): ('string' | 'number' | 'date')[] {
-    return ['string', 'number', 'date']
-  }
-
   getDefaultLayout(): { w: number; h: number } {
-    return { w: 8, h: 4 }
-  }
-
-  getMinLayout(): { w: number; h: number } {
     return { w: 4, h: 3 }
-  }
-
-  getMaxLayout(): { w: number; h: number } {
-    return { w: 12, h: 6 }
   }
 
   getComponent(): any {
@@ -71,63 +49,36 @@ export class LineChartStrategy implements ChartStrategy {
     return ChartPreview
   }
 
-  getChartLibrary(): string {
-    return 'chartjs'
-  }
-
   processData(data: any[], config: ChartConfig): any {
     if (config.type !== 'line') return data
-    
     const lineConfig = config as LineChartConfig
     
     // Sort data by x-axis field
-    const sortedData = data.sort((a, b) => {
+    const sortedData = [...data].sort((a, b) => {
       const aVal = a[lineConfig.xAxis[0]]
       const bVal = b[lineConfig.xAxis[0]]
-      
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return aVal.localeCompare(bVal)
-      }
-      
-      return (aVal || 0) - (bVal || 0)
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
     })
-
-    // Extract labels and datasets
-    const labels = sortedData.map(row => row[lineConfig.xAxis[0]])
     
-    const datasets = lineConfig.yAxis.map((yField, index) => ({
-      label: yField,
-      data: sortedData.map(row => Number(row[yField]) || 0),
-      borderColor: this.getColor(index),
-      backgroundColor: lineConfig.fillArea ? this.getColor(index, 0.2) : 'transparent',
-      borderWidth: 2,
-      fill: lineConfig.fillArea,
-      tension: lineConfig.smooth ? 0.4 : 0,
-      pointRadius: 4,
-      pointHoverRadius: 6
-    }))
-
-    return {
-      labels,
-      datasets
-    }
+    return sortedData
   }
 
   transformToChartOptions(processedData: any, config: ChartConfig): any {
     if (config.type !== 'line') return {}
     const lineConfig = config as LineChartConfig
-    const labels = processedData.map((item: any) => item.label)
+    
+    const labels = processedData.map((item: any) => item[lineConfig.xAxis[0]])
     const datasets = lineConfig.yAxis.map((yField, index) => ({
       label: yField,
       data: processedData.map((item: any) => item[yField] || 0),
       borderColor: this.getColor(index),
-      backgroundColor: lineConfig.fillArea ? this.getColor(index, 0.2) : 'transparent',
+      backgroundColor: this.getColor(index) + '20',
       borderWidth: 2,
       fill: lineConfig.fillArea,
       tension: lineConfig.smooth ? 0.4 : 0,
-      pointRadius: 4,
-      pointHoverRadius: 6
+      pointRadius: 4
     }))
+    
     return {
       type: 'line',
       data: {
@@ -136,47 +87,15 @@ export class LineChartStrategy implements ChartStrategy {
       },
       options: {
         plugins: {
-          legend: { display: true, position: 'top' },
+          legend: { display: true },
           title: { display: true, text: lineConfig.title }
         },
         responsive: true,
         maintainAspectRatio: false,
-        elements: {
-          line: { tension: lineConfig.smooth ? 0.4 : 0 }
-        },
         scales: {
-          x: { beginAtZero: false },
+          x: { beginAtZero: true },
           y: { beginAtZero: true }
         }
-      }
-    }
-  }
-
-  getDataRequirements(): {
-    minRows: number
-    maxRows: number
-    minColumns: number
-    maxColumns: number
-  } {
-    return {
-      minRows: 2,
-      maxRows: 1000,
-      minColumns: 2,
-      maxColumns: 10
-    }
-  }
-
-  getValidationRules(): {
-    required: string[]
-    optional: string[]
-    constraints: Record<string, any>
-  } {
-    return {
-      required: ['xAxis', 'yAxis'],
-      optional: ['smooth', 'fillArea'],
-      constraints: {
-        xAxis: { minLength: 1, maxLength: 1 },
-        yAxis: { minLength: 1, maxLength: 5 }
       }
     }
   }
@@ -219,10 +138,10 @@ export class LineChartStrategy implements ChartStrategy {
   }> {
     return [
       {
-        name: 'Doanh số theo thời gian',
+        name: 'Doanh số theo tháng',
         description: 'Biểu đồ đường hiển thị xu hướng doanh số theo tháng',
         config: {
-          title: 'Doanh số theo thời gian',
+          title: 'Doanh số theo tháng',
           xAxis: ['month'],
           yAxis: ['sales'],
           smooth: true,
@@ -230,12 +149,12 @@ export class LineChartStrategy implements ChartStrategy {
         }
       },
       {
-        name: 'Nhiều chỉ số theo thời gian',
-        description: 'Biểu đồ đường hiển thị nhiều chỉ số cùng lúc',
+        name: 'So sánh nhiều sản phẩm',
+        description: 'Biểu đồ đường so sánh doanh số nhiều sản phẩm',
         config: {
-          title: 'Nhiều chỉ số theo thời gian',
+          title: 'So sánh nhiều sản phẩm',
           xAxis: ['date'],
-          yAxis: ['revenue', 'cost', 'profit'],
+          yAxis: ['product_a', 'product_b', 'product_c'],
           smooth: false,
           fillArea: true
         }
@@ -243,21 +162,12 @@ export class LineChartStrategy implements ChartStrategy {
     ]
   }
 
-  private getColor(index: number, alpha: number = 1): string {
-    const colors = [
-      '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-      '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+  // Helper: lấy màu cho từng dataset
+  private getColor(index: number): string {
+    const palette = [
+      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
     ]
-    const color = colors[index % colors.length]
-    
-    if (alpha < 1) {
-      // Convert hex to rgba
-      const r = parseInt(color.slice(1, 3), 16)
-      const g = parseInt(color.slice(3, 5), 16)
-      const b = parseInt(color.slice(5, 7), 16)
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`
-    }
-    
-    return color
+    return palette[index % palette.length]
   }
 }

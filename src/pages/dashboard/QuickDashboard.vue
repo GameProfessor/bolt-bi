@@ -298,7 +298,7 @@
         <div class="flex-1 min-h-0 p-6 overflow-y-auto bg-white rounded-lg shadow-sm">
           <!-- Tab-specific containers -->
           <div v-for="tab in dashboardTabs" :key="tab.id" 
-               vshow="activeTabId === tab.id"
+               v-show="activeTabId === tab.id"
                :data-tab-id="tab.id"
                class="tab-container">
             
@@ -1659,7 +1659,7 @@ watch(
 
 .grid-stack-item-content {
   position: relative;
-  /* height: 100%; */
+  height: 100%;
   cursor: move;
 }
 

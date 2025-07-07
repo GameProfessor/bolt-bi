@@ -16,7 +16,7 @@
       </div>
       <div v-else class="flex flex-col items-center justify-center flex-1">
         <div :class="cardStyle.valueRowClass">
-          <span :class="cardStyle.valueClass">
+          <span :class="cardStyle.valueClass + ' auto-resize-metric'">
             {{ formattedValueOnly }}
           </span>
         </div>
@@ -181,4 +181,13 @@ const formattedValueOnly = computed(() => {
 
 <style scoped>
 /* Responsive, modern card style */
+.auto-resize-metric {
+  font-size: clamp(1rem, 4vw, 2.5rem);
+  width: 100%;
+  display: block;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 </style>
