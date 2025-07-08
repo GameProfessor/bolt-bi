@@ -43,7 +43,7 @@ const dataSourceStore = useDataSourceStore()
 
 const cardColorSchemes = {
   default: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#fff',
     color: '#3B82F6',
     titleClass: 'text-base font-semibold text-gray-800 text-center',
     valueClass: 'text-4xl md:text-5xl font-extrabold text-center',

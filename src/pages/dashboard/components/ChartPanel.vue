@@ -247,15 +247,24 @@
         </div>
 
         <button
+          v-if="!editingChartId"
           @click="$emit('add-or-update-chart')"
           :disabled="!isChartConfigValid"
           class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
         >
-          <PlusIcon v-if="!editingChartId" class="h-4 w-4 mr-2" />
-          <span v-if="editingChartId">Update Chart</span>
-          <span v-else>Add to Dashboard</span>
+          <PlusIcon class="h-4 w-4 mr-2" />
+          <span>Add to Dashboard</span>
         </button>
-        <!-- <button v-if="editingChartId" @click="$emit('cancel-edit')" class="w-full mt-2 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button> -->
+        
+        <!-- Real-time update indicator when editing -->
+        <!-- <div v-if="editingChartId" class="mt-3 p-2 bg-green-50 border border-green-200 rounded-md">
+          <div class="flex items-center text-sm text-green-700">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Changes applied in real-time</span>
+          </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -272,7 +281,7 @@ import {
   isScatterChartConfig,
   isCardChartConfig
 } from '@/types/chart'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps<{
   chartTypes: ReadonlyArray<{ value: string; label: string; icon: any }>
@@ -295,7 +304,8 @@ const emit = defineEmits([
   'add-or-update-chart',
   'cancel-edit',
   'chart-type-drag-start',
-  'remove-stacked-dimension'
+  'remove-stacked-dimension',
+  'real-time-update'
 ])
 
 function onChartTypeDragStart(type: string, event: DragEvent) {
@@ -331,6 +341,23 @@ const chartTypeCols = computed(() => {
 const chartTypeButtonClass =
   'w-12 h-12 flex flex-col items-center justify-center p-2 border rounded-lg transition-colors duration-200 min-h-[3rem] relative bg-white'
 const chartTypeIconClass = 'h-5 w-5'
+
+// Generic real-time update function
+const triggerRealTimeUpdate = () => {
+  if (props.editingChartId && props.chartConfig && props.selectedChartType) {
+    emit('real-time-update', {
+      type: props.selectedChartType,
+      properties: JSON.parse(JSON.stringify(props.chartConfig))
+    })
+  }
+}
+
+// Watch for changes in chartConfig and trigger real-time updates
+watch(() => props.chartConfig, () => {
+  if (props.editingChartId) {
+    triggerRealTimeUpdate()
+  }
+}, { deep: true })
 
 // Computed properties for two-way binding with type safety
 const chartTitle = computed({

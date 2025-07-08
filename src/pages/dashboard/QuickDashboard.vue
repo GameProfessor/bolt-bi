@@ -202,7 +202,8 @@
         }"
         @add-or-update-chart="addOrUpdateChart"
         @cancel-edit="cancelEdit"
-          @chart-type-drag-start="onChartTypeDragStart"
+        @chart-type-drag-start="onChartTypeDragStart"
+        @real-time-update="onRealTimeUpdate"
       />
       </transition>
 
@@ -1519,6 +1520,23 @@ function handleLeaveCancel() {
 const onChartTypeDragStart = (chartType: string) => {
   // Store the dragged chart type when drag starts
   draggedChartType.value = chartType
+}
+
+const onRealTimeUpdate = (update: { type: string; properties: any }) => {
+  if (editingChartId.value && currentDashboardId.value) {
+    // Update chart-specific properties
+    let updates: Partial<DashboardChart> = {
+      base: {
+        title: chartConfig.value?.title || '',
+        dataSourceId: chartConfig.value?.dataSourceId || '',
+      },
+      properties: {
+        [update.type]: update.properties
+      }
+    }
+    dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
+    markUnsaved()
+  }
 }
 
 const comingFromPreview = ref(false)
