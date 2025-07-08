@@ -92,8 +92,6 @@ Tài liệu này mô tả chi tiết các luồng xử lý chính trong hệ th�
           dataSourceId: '',
           xAxis: [],
           yAxis: '',
-          backgroundColor: '#3b82f6',
-          borderColor: '#1d4ed8',
           colorScheme: 'default'
         })
         break
@@ -139,8 +137,6 @@ Tài liệu này mô tả chi tiết các luồng xử lý chính trong hệ th�
           xAxis: chartConfig.xAxis,
           yAxis: chartConfig.yAxis,
           horizontal: chartConfig.horizontal,
-          backgroundColor: chartConfig.backgroundColor,
-          borderColor: chartConfig.borderColor,
           colorScheme: chartConfig.colorScheme
         })
         break

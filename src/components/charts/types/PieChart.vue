@@ -87,8 +87,6 @@ const chartData = computed(() => {
   return {
     title: props.chart.base.title,
     dataSourceId: props.chart.base.dataSourceId,
-    backgroundColor: props.chart.base.backgroundColor,
-    borderColor: props.chart.base.borderColor,
     colorScheme: props.chart.base.colorScheme,
     category: props.chart.properties.pie?.category || '',
     value: props.chart.properties.pie?.value || ''
@@ -148,7 +146,7 @@ const createChart = async () => {
       datasets: [{
         data: values,
         backgroundColor: getPalette(chartData.value.colorScheme || 'default', labels.length),
-        borderColor: chartData.value.borderColor || '#ffffff',
+        borderColor:  '#ffffff',
         borderWidth: 1
       }]
     }

@@ -72,23 +72,7 @@
               placeholder="Enter data source ID"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
-            <input 
-              v-model="chartConfig.backgroundColor" 
-              type="color" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Border Color</label>
-            <input 
-              v-model="chartConfig.borderColor" 
-              type="color" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          </div>          
         </div>
       </div>
 

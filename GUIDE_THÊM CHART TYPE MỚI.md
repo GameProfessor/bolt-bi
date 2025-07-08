@@ -1,4 +1,4 @@
-# 📊 Hướng dẫn thêm Chart Type mới
+# 📊 Hướng dẫn thêm Chart Type mới (Chart Type mới có thể dùng 1 thư viện khác, hoặc là 1 kiểu chart khác hẳn như filter, table,...)
 
 ## Checklist các bước chuẩn hóa
 - [ ] Định nghĩa interface/config mới (nếu cần)
@@ -14,6 +14,7 @@
 - Hệ thống sử dụng **Strategy Pattern** cho mỗi loại biểu đồ.
 - Mỗi loại chart có một strategy class riêng, tự xử lý config, data, render.
 - Tất cả chart component đều nhận prop duy nhất: `chart: DashboardChart`.
+- Sử dụng **ChartStrategyRegistry** để quản lý tất cả strategies.
 
 ---
 
@@ -29,7 +30,7 @@
 
 ### 3. Tạo strategy class
 - Tạo file: `src/strategies/MyChartStrategy.ts`
-- Kế thừa `ChartStrategy`, cài đặt các method cần thiết
+- Implement interface `ChartStrategy`, cài đặt các method cần thiết
 
 ### 4. Đăng ký strategy
 - Thêm vào registry trong `src/strategies/index.ts`
@@ -141,34 +142,24 @@ export function isChartConfigValid(config: ChartConfig): boolean {
 ### 2.1 Tạo file `src/strategies/AreaChartStrategy.ts`
 
 ```typescript
-import { ChartStrategy } from './ChartStrategy'
+import type { ChartStrategy } from './ChartStrategy'
 import type { ChartType, ChartConfig, AreaChartConfig } from '@/types/chart'
+import AreaChart from '@/components/charts/types/AreaChart.vue'
+import ChartPreview from '@/components/charts/ChartPreview.vue'
 
 export class AreaChartStrategy implements ChartStrategy {
-  getType(): ChartType {
-    return 'area'
-  }
+  type = 'area' as const
+  label = 'Area Chart'
+  description = 'Shows data as filled areas, useful for showing trends over time'
+  icon = 'PresentationChartLineIcon'
+  category = 'BASIC' as const
 
-  getDisplayName(): string {
-    return 'Area Chart'
-  }
-
-  getDescription(): string {
-    return 'Shows data as filled areas, useful for showing trends over time'
-  }
-
-  getIcon(): string {
-    return 'PresentationChartLineIcon' // Sử dụng icon có sẵn
-  }
-
-  getDefaultConfig(): AreaChartConfig {
+  createDefaultConfig(): AreaChartConfig {
     return {
       type: 'area',
       title: 'Area Chart',
       dataSourceId: '',
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
-      colorScheme: 'DEFAULT',
+      colorScheme: 'default',
       xAxis: [],
       yAxis: [],
       smooth: false,
@@ -181,9 +172,9 @@ export class AreaChartStrategy implements ChartStrategy {
     if (config.type !== 'area') return false
     
     const areaConfig = config as AreaChartConfig
-    return (
-      typeof areaConfig.title === 'string' &&
-      typeof areaConfig.dataSourceId === 'string' &&
+    return !!(
+      areaConfig.title &&
+      areaConfig.dataSourceId &&
       Array.isArray(areaConfig.xAxis) &&
       Array.isArray(areaConfig.yAxis) &&
       areaConfig.xAxis.length > 0 &&
@@ -191,16 +182,98 @@ export class AreaChartStrategy implements ChartStrategy {
     )
   }
 
-  getSupportedDataTypes(): ("string" | "number" | "date")[] {
-    return ['string', 'number', 'date']
+  getDefaultLayout(): { w: number; h: number } {
+    return { w: 4, h: 3 }
   }
 
-  getRequiredFields(): string[] {
-    return ['xAxis', 'yAxis']
+  getComponent(): any {
+    return AreaChart
   }
 
-  getOptionalFields(): string[] {
-    return ['smooth', 'fillOpacity', 'gradient']
+  getPreviewComponent(): any {
+    return ChartPreview
+  }
+
+  processData(data: any[], config: ChartConfig): any {
+    if (config.type !== 'area') return data
+    const areaConfig = config as AreaChartConfig
+    
+    // Xử lý dữ liệu cho area chart
+    const processedData = data.map(row => ({
+      x: row[areaConfig.xAxis[0]],
+      y: row[areaConfig.yAxis[0]]
+    })).filter(item => item.x != null && item.y != null)
+    
+    return processedData
+  }
+
+  transformToChartOptions(processedData: any, config: ChartConfig): any {
+    if (config.type !== 'area') return {}
+    const areaConfig = config as AreaChartConfig
+    
+    const labels = processedData.map((item: any) => item.x)
+    const datasets = [{
+      label: areaConfig.yAxis[0],
+      data: processedData.map((item: any) => item.y),
+      backgroundColor: `rgba(59, 130, 246, ${areaConfig.fillOpacity || 0.3})`,
+      borderColor: '#3b82f6',
+      borderWidth: 2,
+      fill: true,
+      tension: areaConfig.smooth ? 0.4 : 0
+    }]
+    
+    return {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true },
+          title: { display: true, text: areaConfig.title }
+        },
+        scales: {
+          x: { beginAtZero: true },
+          y: { beginAtZero: true }
+        }
+      }
+    }
+  }
+
+  exportConfig(config: ChartConfig): any {
+    if (config.type !== 'area') return config
+    return {
+      ...config,
+      exportVersion: '1.0',
+      exportDate: new Date().toISOString()
+    }
+  }
+
+  importConfig(data: any): AreaChartConfig {
+    return {
+      ...this.createDefaultConfig(),
+      ...data
+    }
+  }
+
+  getExamples(): Array<{
+    name: string
+    description: string
+    config: Partial<ChartConfig>
+  }> {
+    return [
+      {
+        name: 'Doanh số theo thời gian',
+        description: 'Biểu đồ area hiển thị xu hướng doanh số',
+        config: {
+          title: 'Doanh số theo thời gian',
+          xAxis: ['date'],
+          yAxis: ['sales'],
+          smooth: true,
+          fillOpacity: 0.3
+        }
+      }
+    ]
   }
 }
 ```
@@ -212,7 +285,7 @@ Cập nhật `src/strategies/index.ts`:
 ```typescript
 import { AreaChartStrategy } from './AreaChartStrategy'
 
-export class ChartStrategyRegistry {
+class ChartStrategyRegistry {
   private strategies = new Map<ChartType, ChartStrategy>()
 
   constructor() {
@@ -233,7 +306,7 @@ export class ChartStrategyRegistry {
 
 ## 📋 Bước 3: Tạo Chart Component
 
-### 3.1 Tạo file `src/components/charts/AreaChart.vue`
+### 3.1 Tạo file `src/components/charts/types/AreaChart.vue`
 
 ```vue
 <template>
@@ -243,51 +316,65 @@ export class ChartStrategyRegistry {
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { Chart as ChartJS } from 'chart.js/auto'
+import type { DashboardChart } from '@/types/dashboard'
 import type { AreaChartConfig } from '@/types/chart'
 
 interface Props {
-  config: AreaChartConfig
-  data: any[]
+  chart: DashboardChart
 }
 
 const props = defineProps<Props>()
 const chartCanvas = ref<HTMLCanvasElement>()
+let chartInstance: ChartJS | null = null
+
+// Extract config and data from chart prop
+const chartData = computed(() => {
+  if (props.chart.type !== 'area') return null
+  return {
+    config: props.chart.properties.area as AreaChartConfig,
+    base: props.chart.base,
+    data: [] // Will be populated from data source
+  }
+})
 
 onMounted(() => {
   renderChart()
 })
 
-watch(() => props.config, renderChart, { deep: true })
-watch(() => props.data, renderChart, { deep: true })
+watch(() => props.chart, renderChart, { deep: true })
 
-function renderChart() {
-  if (!chartCanvas.value || !props.data.length) return
+async function renderChart() {
+  if (!chartCanvas.value || !chartData.value) return
   
-  // Implement chart rendering logic here
-  // Sử dụng Chart.js, D3.js, hoặc thư viện chart khác
-  console.log('Rendering Area Chart with config:', props.config)
+  // Destroy existing chart
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
   
-  // Ví dụ với Chart.js:
-  // const ctx = chartCanvas.value.getContext('2d')
-  // new Chart(ctx, {
-  //   type: 'line',
-  //   data: {
-  //     labels: props.data.map(d => d[props.config.xAxis[0]]),
-  //     datasets: props.config.yAxis.map((field, index) => ({
-  //       label: field,
-  //       data: props.data.map(d => d[field]),
-  //       fill: true,
-  //       backgroundColor: `rgba(59, 130, 246, ${props.config.fillOpacity})`,
-  //       borderColor: props.config.backgroundColor,
-  //       tension: props.config.smooth ? 0.4 : 0
-  //     }))
-  //   },
-  //   options: {
-  //     responsive: true,
-  //     maintainAspectRatio: false
-  //   }
-  // })
+  // Get data from data source (simplified)
+  const data = getChartData()
+  
+  // Use strategy to process data
+  const strategy = new AreaChartStrategy()
+  const processedData = strategy.processData(data, chartData.value.config)
+  const chartOptions = strategy.transformToChartOptions(processedData, chartData.value.config)
+  
+  await nextTick()
+  if (chartCanvas.value) {
+    chartInstance = new ChartJS(chartCanvas.value, chartOptions)
+  }
+}
+
+function getChartData() {
+  // Simplified - in real implementation, get from data source
+  return [
+    { date: 'Jan', sales: 100 },
+    { date: 'Feb', sales: 150 },
+    { date: 'Mar', sales: 120 },
+    { date: 'Apr', sales: 200 }
+  ]
 }
 </script>
 
@@ -299,48 +386,11 @@ function renderChart() {
 </style>
 ```
 
-### 3.2 Cập nhật Component Factory
-
-Cập nhật `src/factories/ChartComponentFactory.ts`:
-
-```typescript
-import AreaChart from '@/components/charts/AreaChart.vue'
-
-const chartComponents: Record<ChartType, Component> = {
-  bar: BarChart,
-  pie: PieChart,
-  line: LineChart,
-  scatter: ScatterChart,
-  card: CardChart,
-  area: AreaChart  // <-- Thêm vào đây
-}
-```
-
 ---
 
-## 📋 Bước 4: Cập nhật Constants
+## 📋 Bước 4: Cập nhật Dashboard Types
 
-### 4.1 Cập nhật `src/constants/chartTypes.ts`
-
-```typescript
-export const CHART_TYPES: Record<ChartType, { label: string; icon: string; description: string }> = {
-  // ... existing types ...
-  
-  area: {
-    label: 'Area Chart',
-    icon: 'PresentationChartLineIcon',
-    description: 'Biểu đồ đường có tô màu vùng bên dưới'
-  },
-  
-  // ... rest of types ...
-}
-```
-
----
-
-## 📋 Bước 5: Cập nhật Dashboard Types
-
-### 5.1 Cập nhật `src/types/dashboard.ts`
+### 4.1 Cập nhật `src/types/dashboard.ts`
 
 ```typescript
 // Thêm area chart properties
@@ -352,58 +402,19 @@ export interface AreaChartProperties {
   gradient?: boolean
 }
 
-// Cập nhật ChartProperties union type
-export type ChartProperties = 
-  | { bar: BarChartProperties }
-  | { pie: PieChartProperties }
-  | { line: LineChartProperties }
-  | { scatter: ScatterChartProperties }
-  | { card: CardChartProperties }
-  | { area: AreaChartProperties }  // <-- Thêm vào đây
-
-// Thêm helper function
-export function createAreaChart(
-  title: string,
-  dataSourceId: string,
-  xAxis: string,
-  yAxis: string,
-  options: Partial<AreaChartProperties> = {}
-): DashboardChart {
-  return {
-    id: nanoid(),
-    type: 'area',
-    base: {
-      title,
-      dataSourceId,
-      backgroundColor: '#3b82f6',
-      borderColor: '#1d4ed8',
-      colorScheme: 'DEFAULT'
-    },
-    properties: {
-      area: {
-        xAxis,
-        yAxis,
-        smooth: false,
-        fillOpacity: 0.3,
-        gradient: true,
-        ...options
-      }
-    },
-    layout: {
-      x: 0,
-      y: 0,
-      w: 6,
-      h: 4
-    }
-  }
+// Cập nhật ChartTypeProperties
+export interface ChartTypeProperties {
+  // ... existing properties ...
+  
+  area?: AreaChartProperties  // <-- Thêm vào đây
 }
 ```
 
 ---
 
-## 📋 Bước 6: Cập nhật Chart Panel UI
+## 📋 Bước 5: Cập nhật Chart Panel UI
 
-### 6.1 Cập nhật `src/pages/dashboard/components/ChartPanel.vue`
+### 5.1 Cập nhật `src/pages/dashboard/components/ChartPanel.vue`
 
 Thêm controls cho area chart:
 
@@ -463,9 +474,9 @@ import {
 
 ---
 
-## 📋 Bước 7: Cập nhật QuickDashboard
+## 📋 Bước 6: Cập nhật QuickDashboard
 
-### 7.1 Cập nhật `src/pages/dashboard/QuickDashboard.vue`
+### 6.1 Cập nhật `src/pages/dashboard/QuickDashboard.vue`
 
 Thêm xử lý cho area chart:
 
@@ -500,26 +511,26 @@ case 'area':
 
 ---
 
-## 📋 Bước 8: Test và Validation
+## 📋 Bước 7: Test và Validation
 
-### 8.1 Test Chart Creation
+### 7.1 Test Chart Creation
 
 ```typescript
 // Test tạo area chart
-const areaConfig = createDefaultChartConfig('area')
+const strategy = new AreaChartStrategy()
+const areaConfig = strategy.createDefaultConfig()
 console.log('Area config:', areaConfig)
 
 // Test validation
-const isValid = isChartConfigValid(areaConfig)
+const isValid = strategy.validateConfig(areaConfig)
 console.log('Is valid:', isValid)
 
-// Test strategy
-const strategy = new AreaChartStrategy()
-console.log('Strategy type:', strategy.getType())
-console.log('Strategy name:', strategy.getDisplayName())
+// Test strategy properties
+console.log('Strategy type:', strategy.type)
+console.log('Strategy name:', strategy.label)
 ```
 
-### 8.2 Test UI Integration
+### 7.2 Test UI Integration
 
 1. Mở dashboard
 2. Chọn "Area Chart" từ chart type selector
@@ -536,13 +547,10 @@ console.log('Strategy name:', strategy.getDisplayName())
 - [ ] ✅ Cập nhật union type `ChartConfig`
 - [ ] ✅ Thêm type guard `isAreaChartConfig`
 - [ ] ✅ Cập nhật helper functions
-- [ ] ✅ Tạo `AreaChartStrategy` class
+- [ ] ✅ Tạo `AreaChartStrategy` class với đầy đủ methods
 - [ ] ✅ Đăng ký strategy trong registry
 - [ ] ✅ Tạo `AreaChart.vue` component
-- [ ] ✅ Cập nhật component factory
-- [ ] ✅ Cập nhật constants
 - [ ] ✅ Cập nhật dashboard types
-- [ ] ✅ Thêm helper function `createAreaChart`
 - [ ] ✅ Cập nhật ChartPanel UI
 - [ ] ✅ Cập nhật QuickDashboard logic
 - [ ] ✅ Test chart creation và validation
@@ -558,14 +566,14 @@ console.log('Strategy name:', strategy.getDisplayName())
 - IntelliSense support đầy đủ
 
 ### 2. **Maintainability**
-- Mỗi chart type có logic riêng biệt
+- Mỗi chart type có logic riêng biệt trong strategy class
 - Dễ test và debug từng strategy riêng lẻ
 - Code sạch, có cấu trúc rõ ràng
 
 ### 3. **Extensibility**
 - Thêm chart type mới chỉ cần tạo 1 strategy class + 1 component
 - Không cần sửa code ở nơi khác
-- Tự động được đăng ký và sử dụng
+- Tự động được đăng ký và sử dụng qua registry
 
 ### 4. **Performance**
 - Lazy loading chart components
@@ -581,7 +589,7 @@ console.log('Strategy name:', strategy.getDisplayName())
 
 ## 🚀 Kết luận
 
-Sau khi hoàn thành 8 bước trên, bạn sẽ có một chart type mới hoàn toàn tích hợp vào hệ thống với:
+Sau khi hoàn thành 7 bước trên, bạn sẽ có một chart type mới hoàn toàn tích hợp vào hệ thống với:
 
 - ✅ **Type safety** đầy đủ
 - ✅ **UI controls** tương ứng

@@ -56,8 +56,6 @@ const chartData = computed(() => {
   return {
     title: props.chart.base.title,
     dataSourceId: props.chart.base.dataSourceId,
-    backgroundColor: props.chart.base.backgroundColor,
-    borderColor: props.chart.base.borderColor,
     colorScheme: props.chart.base.colorScheme,
     xAxis: props.chart.properties.scatter?.xAxis || '',
     yAxis: props.chart.properties.scatter?.yAxis || ''
@@ -89,8 +87,12 @@ const createChart = async () => {
       chartInstance = null
     }
 
-    const xColumn = dataSource.columns.find(c => c.name === chartData.value.xAxis)
-    const yColumn = dataSource.columns.find(c => c.name === chartData.value.yAxis)
+    // Handle both string and array formats for xAxis and yAxis
+    const xAxisField = Array.isArray(chartData.value.xAxis) ? chartData.value.xAxis[0] : chartData.value.xAxis
+    const yAxisField = Array.isArray(chartData.value.yAxis) ? chartData.value.yAxis[0] : chartData.value.yAxis
+    
+    const xColumn = dataSource.columns.find(c => c.name === xAxisField)
+    const yColumn = dataSource.columns.find(c => c.name === yAxisField)
     
     if (!xColumn || !yColumn) {
       error.value = 'Required columns not found'
@@ -100,8 +102,8 @@ const createChart = async () => {
     // Filter out null/undefined values and ensure numeric y-values
     const validData = dataSource.rows
       .map((row) => ({
-        x: row[chartData.value.xAxis!],
-        y: Number(row[chartData.value.yAxis!])
+        x: row[xAxisField!],
+        y: Number(row[yAxisField!])
       }))
       .filter(item => item.x != null && item.x !== '' && !isNaN(item.y))
 
@@ -112,10 +114,8 @@ const createChart = async () => {
 
     const chartDataConfig = {
       datasets: [{
-        label: `${chartData.value.yAxis} vs ${chartData.value.xAxis}`,
+        label: `${yAxisField} vs ${xAxisField}`,
         data: validData,
-        backgroundColor: chartData.value.backgroundColor || '#3b82f6',
-        borderColor: chartData.value.borderColor || '#1d4ed8',
         pointRadius: 3,
         pointHoverRadius: 4
       }]
@@ -172,7 +172,7 @@ const createChart = async () => {
           beginAtZero: true,
           title: {
             display: true,
-            text: chartData.value.yAxis,
+            text: yAxisField,
             font: { size: 10 }
           },
           ticks: { font: { size: 9 } }
@@ -180,7 +180,7 @@ const createChart = async () => {
         x: {
           title: {
             display: true,
-            text: chartData.value.xAxis,
+            text: xAxisField,
             font: { size: 10 }
           },
           ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }

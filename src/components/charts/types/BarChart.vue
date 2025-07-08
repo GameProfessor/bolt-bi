@@ -91,8 +91,6 @@ const chartData = computed(() => {
   return {
     title: props.chart.base.title,
     dataSourceId: props.chart.base.dataSourceId,
-    backgroundColor: props.chart.base.backgroundColor,
-    borderColor: props.chart.base.borderColor,
     colorScheme: props.chart.base.colorScheme,
     xAxis: props.chart.properties.bar?.xAxis || [],
     yAxis: props.chart.properties.bar?.yAxis || [],

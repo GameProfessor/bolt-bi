@@ -686,17 +686,18 @@ const addOrUpdateChart = () => {
           }
         }
         switch (selectedChartType.value) {
-          case 'bar':
-            if (isBarChartConfig(chartConfig.value)) {
-              updates.properties = {
-                bar: {
-                  xAxis: chartConfig.value.xAxis,
-                  yAxis: chartConfig.value.yAxis,
-                  horizontal: chartConfig.value.horizontal
-                }
+                  case 'bar':
+          if (isBarChartConfig(chartConfig.value)) {
+            updates.properties = {
+              bar: {
+                xAxis: chartConfig.value.xAxis,
+                yAxis: chartConfig.value.yAxis,
+                horizontal: chartConfig.value.horizontal,
+                stacked: chartConfig.value.stacked || false
               }
             }
-            break
+          }
+          break
           case 'line':
             if (isLineChartConfig(chartConfig.value)) {
               updates.properties = {
@@ -783,6 +784,69 @@ const addChart = async () => {
     console.error(`No strategy found for chart type: ${selectedChartType.value}`)
     return
   }
+  // Build properties based on chart type
+  let properties: any = {}
+  switch (selectedChartType.value) {
+    case 'bar':
+      if (isBarChartConfig(chartConfig.value)) {
+        properties = {
+          bar: {
+            xAxis: chartConfig.value.xAxis,
+            yAxis: chartConfig.value.yAxis,
+            horizontal: chartConfig.value.horizontal,
+            stacked: chartConfig.value.stacked || false
+          }
+        }
+      }
+      break
+    case 'line':
+      if (isLineChartConfig(chartConfig.value)) {
+        properties = {
+          line: {
+            xAxis: Array.isArray(chartConfig.value.xAxis) ? chartConfig.value.xAxis[0] || '' : chartConfig.value.xAxis || '',
+            yAxis: Array.isArray(chartConfig.value.yAxis) ? chartConfig.value.yAxis[0] || '' : chartConfig.value.yAxis || '',
+            smooth: chartConfig.value.smooth,
+            fillArea: chartConfig.value.fillArea
+          }
+        }
+      }
+      break
+    case 'pie':
+      if (isPieChartConfig(chartConfig.value)) {
+        properties = {
+          pie: {
+            category: chartConfig.value.category,
+            value: chartConfig.value.value
+          }
+        }
+      }
+      break
+    case 'scatter':
+      if (isScatterChartConfig(chartConfig.value)) {
+        properties = {
+          scatter: {
+            xAxis: Array.isArray(chartConfig.value.xAxis) ? chartConfig.value.xAxis[0] || '' : chartConfig.value.xAxis || '',
+            yAxis: Array.isArray(chartConfig.value.yAxis) ? chartConfig.value.yAxis[0] || '' : chartConfig.value.yAxis || ''
+          }
+        }
+      }
+      break
+    case 'card':
+      if (isCardChartConfig(chartConfig.value)) {
+        properties = {
+          card: {
+            field: chartConfig.value.field,
+            aggregation: chartConfig.value.aggregation,
+            decimalPlaces: chartConfig.value.decimalPlaces,
+            colorScheme: chartConfig.value.colorScheme,
+            filter: chartConfig.value.filter,
+            subHeader: chartConfig.value.subHeader
+          }
+        }
+      }
+      break
+  }
+
   const newChart: DashboardChart = {
     id: '',
     dashboardId: currentDashboardId.value,
@@ -791,9 +855,7 @@ const addChart = async () => {
       title: chartConfig.value.title,
       dataSourceId: chartConfig.value.dataSourceId,
     },
-    properties: {
-      [selectedChartType.value]: JSON.parse(JSON.stringify(chartConfig.value))
-    },
+    properties: properties,
     layout: { x: 0, y: 0, ...strategy.getDefaultLayout() },
     createdAt: new Date()
   }
@@ -839,8 +901,8 @@ const editChart = (chart: DashboardChart) => {
       break
     case 'line':
       if (chart.properties.line && isLineChartConfig(chartConfig.value)) {
-        chartConfig.value.xAxis = [chart.properties.line.xAxis]
-        chartConfig.value.yAxis = [chart.properties.line.yAxis]
+        chartConfig.value.xAxis = [chart.properties.line.xAxis || '']
+        chartConfig.value.yAxis = [chart.properties.line.yAxis || '']
         chartConfig.value.smooth = chart.properties.line.smooth || false
         chartConfig.value.fillArea = chart.properties.line.fillArea || false
       }
@@ -853,8 +915,8 @@ const editChart = (chart: DashboardChart) => {
       break
     case 'scatter':
       if (chart.properties.scatter && isScatterChartConfig(chartConfig.value)) {
-        chartConfig.value.xAxis = [chart.properties.scatter.xAxis]
-        chartConfig.value.yAxis = [chart.properties.scatter.yAxis]
+        chartConfig.value.xAxis = [chart.properties.scatter.xAxis || '']
+        chartConfig.value.yAxis = [chart.properties.scatter.yAxis || '']
       }
       break
     case 'card':
@@ -1136,7 +1198,8 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
               bar: {
                 xAxis: chartConfig.value.xAxis,
                 yAxis: chartConfig.value.yAxis,
-                horizontal: chartConfig.value.horizontal
+                horizontal: chartConfig.value.horizontal,
+                stacked: chartConfig.value.stacked || false
               }
             }
           }
@@ -1145,8 +1208,8 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
           if (isLineChartConfig(chartConfig.value)) {
             updates.properties = {
               line: {
-                xAxis: chartConfig.value.xAxis[0] || '',
-                yAxis: chartConfig.value.yAxis[0] || '',
+                xAxis: Array.isArray(chartConfig.value.xAxis) ? chartConfig.value.xAxis[0] || '' : chartConfig.value.xAxis || '',
+                yAxis: Array.isArray(chartConfig.value.yAxis) ? chartConfig.value.yAxis[0] || '' : chartConfig.value.yAxis || '',
                 smooth: chartConfig.value.smooth,
                 fillArea: chartConfig.value.fillArea
               }
@@ -1167,8 +1230,8 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
           if (isScatterChartConfig(chartConfig.value)) {
             updates.properties = {
               scatter: {
-                xAxis: chartConfig.value.xAxis[0] || '',
-                yAxis: chartConfig.value.yAxis[0] || ''
+                xAxis: Array.isArray(chartConfig.value.xAxis) ? chartConfig.value.xAxis[0] || '' : chartConfig.value.xAxis || '',
+                yAxis: Array.isArray(chartConfig.value.yAxis) ? chartConfig.value.yAxis[0] || '' : chartConfig.value.yAxis || ''
               }
             }
           }

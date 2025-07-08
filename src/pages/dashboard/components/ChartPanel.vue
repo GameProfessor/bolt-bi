@@ -69,6 +69,17 @@
               class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
           </div>
+          <!-- Filter Expression for Card Chart -->
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Filter Expression</label>
+            <input
+              v-model="cardFilter"
+              type="text"
+              placeholder="e.g. revenue > 1000 && region === 'HCM'"
+              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+            <!-- <div class="text-xs text-gray-500 mt-1">Sử dụng tên trường dữ liệu, ví dụ: <span class="font-mono">revenue &gt; 1000 &amp;&amp; region === 'HCM'</span></div> -->
+          </div>
           <!-- Color Scheme Dropdown for Card Chart -->
           <div class="mt-3">
             <label class="block text-xs font-medium text-gray-600 mb-1">Color Scheme</label>
@@ -83,17 +94,7 @@
               <option value="dark">Dark</option>
             </select>
           </div>
-          <!-- Filter Expression for Card Chart -->
-          <div class="mt-3">
-            <label class="block text-xs font-medium text-gray-600 mb-1">Filter Expression</label>
-            <input
-              v-model="cardFilter"
-              type="text"
-              placeholder="e.g. revenue > 1000 && region === 'HCM'"
-              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            />
-            <!-- <div class="text-xs text-gray-500 mt-1">Sử dụng tên trường dữ liệu, ví dụ: <span class="font-mono">revenue &gt; 1000 &amp;&amp; region === 'HCM'</span></div> -->
-          </div>
+          
         </div>
 
         <!-- Pie chart config -->
