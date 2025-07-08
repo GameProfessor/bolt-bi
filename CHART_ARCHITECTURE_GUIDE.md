@@ -7,7 +7,9 @@ DataSource (raw data)
    ↓
 DashboardChart (model chart lưu trong dashboard)
    ↓
-ChartProperties (cấu hình đặc thù từng loại chart)
+ChartTypeProperties (object lưu config từng loại chart)
+   ↓
+ChartConfig (union type cho UI thao tác)
    ↓
 ChartStrategy (xử lý dữ liệu, sinh options, validate, ...)
    ↓
@@ -16,13 +18,75 @@ ChartComponent (nhận prop chart, tự render)
 
 - **DataSource**: Định nghĩa nguồn dữ liệu (bảng, cột, kiểu dữ liệu, ...)
 - **DashboardChart**: Đối tượng chart lưu trong dashboard, gồm type, base, properties, layout, ...
-- **ChartProperties**: Cấu hình đặc thù cho từng loại chart (bar, line, pie, card, ...)
+- **ChartTypeProperties**: Object có property cho từng loại chart, dùng để lưu trữ cấu hình chart trong dashboard, type-safe, dễ mở rộng.
+- **ChartConfig**: Union type cho từng loại chart, dùng cho UI ChartPanel để binding, validate, nhập liệu, thao tác khi tạo/sửa chart.
 - **ChartStrategy**: Lớp xử lý logic cho từng loại chart (tạo config, processData, transformToChartOptions, ...)
 - **ChartComponent**: Vue component nhận prop chart, tự trích xuất config/data, tự render
 
-## 2. Cấu Trúc Dữ Liệu Chính
+### Flow dữ liệu tổng quát:
+1. **UI ChartPanel** thao tác với ChartConfig (union type)
+2. Khi lưu, ChartConfig được map sang ChartTypeProperties (object lưu trữ)
+3. DashboardChart lưu properties dạng ChartTypeProperties
+4. Khi render, lấy properties từ DashboardChart, truyền vào ChartStrategy để xử lý dữ liệu và sinh options
+5. ChartComponent nhận prop chart, tự render dựa trên properties và strategy
 
-### DataSource
+---
+
+## 2. Các Cấu Trúc Dữ Liệu Chính
+
+### 2.1. ChartConfig (UI Config)
+- Union type cho từng loại chart (BarChartConfig, PieChartConfig, CardChartConfig, ...)
+- Dùng cho UI ChartPanel: binding dữ liệu, validate, nhập liệu
+- Ví dụ:
+  ```ts
+  export type ChartConfig = BarChartConfig | PieChartConfig | CardChartConfig | ...
+  ```
+- Khi người dùng chỉnh sửa chart, UI sẽ thao tác với ChartConfig
+
+### 2.2. ChartTypeProperties (Dashboard Storage)
+- Object có property cho từng loại chart, dùng để lưu trữ cấu hình chart trong dashboard
+- Đảm bảo type-safe, dễ mở rộng, mapping rõ ràng khi lưu/đọc chart
+- Ví dụ:
+  ```ts
+  export interface ChartTypeProperties {
+    bar?: BarChartConfig
+    pie?: PieChartConfig
+    card?: CardChartConfig
+    ...
+  }
+  ```
+- Khi lưu chart, ChartConfig sẽ được map sang ChartTypeProperties để lưu vào dashboard
+
+### 2.3. Sự khác biệt & luồng dữ liệu
+- **ChartConfig**: dùng cho UI, là union type, dễ validate, binding
+- **ChartTypeProperties**: dùng cho lưu trữ, là object, dễ mở rộng, đồng bộ với backend
+- Khi tạo/sửa chart:
+  - UI thao tác với ChartConfig
+  - Khi lưu, map sang ChartTypeProperties (ví dụ: `{ card: { ...config } }`)
+  - Khi render, lấy từ ChartTypeProperties để truyền vào component chart
+
+### 2.4. Ví dụ mapping
+```ts
+// Khi lưu chart Card:
+updates.properties = {
+  card: {
+    field: chartConfig.value.field,
+    aggregation: chartConfig.value.aggregation,
+    decimalPlaces: chartConfig.value.decimalPlaces,
+    colorScheme: chartConfig.value.colorScheme,
+    filter: chartConfig.value.filter,
+    subHeader: chartConfig.value.subHeader
+  }
+}
+```
+
+### 2.5. Lý do tồn tại hai lớp
+- Đảm bảo type-safe, dễ mở rộng khi thêm chart mới
+- Phân tách rõ UI (ChartConfig) và lưu trữ (ChartTypeProperties), tránh lỗi khi đồng bộ dữ liệu
+
+### 2.6. Các interface/type chính
+
+#### DataSource
 ```ts
 interface DataSource {
   id: string
@@ -32,7 +96,7 @@ interface DataSource {
 }
 ```
 
-### DashboardChart
+#### DashboardChart
 ```ts
 interface DashboardChart {
   id: string
@@ -46,7 +110,7 @@ interface DashboardChart {
 }
 ```
 
-### ChartProperties (ví dụ cho Bar, Card)
+#### ChartProperties (ví dụ cho Bar, Card)
 ```ts
 // Bar
 interface BarChartProperties {
@@ -66,7 +130,7 @@ interface CardChartProperties {
 }
 ```
 
-### ChartStrategy
+#### ChartStrategy
 ```ts
 interface ChartStrategy {
   type: ChartType
@@ -76,6 +140,8 @@ interface ChartStrategy {
   getComponent(): Component
 }
 ```
+
+---
 
 ## 3. Flow Xử Lý Khi Render Chart Lên Dashboard
 
