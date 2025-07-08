@@ -188,11 +188,164 @@ const options = strategy.transformToChartOptions(processed, chart.properties.car
 <CardChart :chart="chart" /> // Tự trích xuất config/data, gọi strategy, render value
 ```
 
-## 5. Lưu Ý
+---
+
+## 5. Luồng Xử Lý Real-time Updates
+
+### 5.1. Tổng Quan Real-time Flow
+
+Hệ thống hỗ trợ cập nhật real-time các thay đổi chart property, cho phép người dùng thấy kết quả ngay lập tức mà không cần click "Update Chart":
+
+```
+User Input (ChartPanel.vue)
+   ↓
+Vue Watcher (deep watch chartConfig)
+   ↓
+Emit real-time-update event
+   ↓
+QuickDashboard.vue onRealTimeUpdate handler
+   ↓
+DashboardStore.updateChart()
+   ↓
+Chart Component re-render (via Vue reactivity)
+   ↓
+Real-time preview trên dashboard
+```
+
+### 5.2. Chi Tiết Implementation
+
+#### 5.2.1. ChartPanel.vue - Real-time Trigger
+
+```typescript
+// Generic real-time update function
+const triggerRealTimeUpdate = () => {
+  if (props.editingChartId && props.chartConfig && props.selectedChartType) {
+    emit('real-time-update', {
+      type: props.selectedChartType,
+      properties: JSON.parse(JSON.stringify(props.chartConfig))
+    })
+  }
+}
+
+// Watch for changes in chartConfig and trigger real-time updates
+watch(() => props.chartConfig, () => {
+  if (props.editingChartId) {
+    triggerRealTimeUpdate()
+  }
+}, { deep: true })
+```
+
+**Cơ chế hoạt động:**
+- Sử dụng Vue `watch` với `deep: true` để theo dõi mọi thay đổi trong `chartConfig`
+- Khi có thay đổi và đang trong chế độ edit (`editingChartId` tồn tại), tự động emit event `real-time-update`
+- Event chứa type chart và properties đã được deep clone để tránh reference issues
+
+#### 5.2.2. QuickDashboard.vue - Real-time Handler
+
+```typescript
+const onRealTimeUpdate = (update: { type: string; properties: any }) => {
+  if (editingChartId.value && currentDashboardId.value) {
+    // Update chart-specific properties
+    let updates: Partial<DashboardChart> = {
+      base: {
+        title: chartConfig.value?.title || '',
+        dataSourceId: chartConfig.value?.dataSourceId || '',
+      },
+      properties: {
+        [update.type]: update.properties
+      }
+    }
+    dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
+    markUnsaved()
+  }
+}
+```
+
+**Cơ chế hoạt động:**
+- Nhận event từ ChartPanel
+- Tạo object `updates` với base properties và type-specific properties
+- Gọi `dashboardStore.updateChart()` để cập nhật chart trong store
+- Mark dashboard là unsaved để nhắc nhở lưu
+
+#### 5.2.3. Field Drop Real-time Update
+
+Khi kéo thả field vào chart, cũng có real-time update:
+
+```typescript
+// Trong onFieldDrop function
+chartConfig.value.dataSourceId = fieldData.dataSourceId
+
+// Real-time update: if editing a chart, update it immediately
+if (editingChartId.value && currentDashboardId.value) {
+  let updates: Partial<DashboardChart> = {
+    base: {
+      title: chartConfig.value.title,
+      dataSourceId: chartConfig.value.dataSourceId,
+    },
+    properties: {
+      [selectedChartType.value]: JSON.parse(JSON.stringify(chartConfig.value))
+    }
+  }
+  // Type-specific mapping...
+  dashboardStore.updateChart(currentDashboardId.value, editingChartId.value, updates)
+  markUnsaved()
+}
+```
+
+#### 5.2.4. Chart Component Reactivity
+
+Chart components tự động re-render khi props thay đổi:
+
+```typescript
+// Trong các chart components (BarChart.vue, CardChart.vue, ...)
+watch(() => chartData.value, () => {
+  if (hasValidData.value) {
+    createChart() // Re-create chart with new data
+  }
+}, { deep: true })
+
+// Watch for changes in data source
+watch(() => dataSourceStore.dataSources, () => {
+  if (hasValidData.value) {
+    createChart() // Re-create chart when data source changes
+  }
+}, { deep: true })
+```
+
+### 5.3. Lợi Ích Của Real-time Updates
+
+1. **UX Tốt Hơn**: Người dùng thấy kết quả ngay lập tức
+2. **Giảm Cognitive Load**: Không cần nhớ click "Update Chart"
+3. **Iterative Design**: Dễ dàng thử nghiệm các cấu hình khác nhau
+4. **Consistency**: Tất cả thay đổi đều được áp dụng real-time
+
+### 5.4. Performance Considerations
+
+1. **Debouncing**: Có thể thêm debounce để tránh quá nhiều updates
+2. **Deep Clone**: Sử dụng `JSON.parse(JSON.stringify())` để tránh reference issues
+3. **Conditional Updates**: Chỉ update khi đang edit chart
+4. **Chart Re-creation**: Chart components destroy và recreate chart instance để đảm bảo clean state
+
+### 5.5. Error Handling
+
+```typescript
+// Trong chart components
+try {
+  createChart()
+} catch (err) {
+  console.error('Error creating chart:', err)
+  error.value = 'Failed to create chart'
+}
+```
+
+---
+
+## 6. Lưu Ý
 - **Component chart** KHÔNG nhận options rời, chỉ nhận `chart`.
 - **Config** của mỗi chart lưu trong `chart.properties.<type>`.
 - **Tất cả logic đặc thù nằm trong strategy và component riêng.
 - **Flow dữ liệu xuyên suốt, type-safe, maintain dễ, mở rộng nhanh.**
+- **Real-time updates** hoạt động tự động khi edit chart, không cần manual trigger.
 
 ---
 
