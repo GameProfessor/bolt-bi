@@ -8,6 +8,7 @@ export { default as LineChart } from './LineChart.vue'
 export { default as PieChart } from './PieChart.vue'
 export { default as ScatterChart } from './ScatterChart.vue'
 export { default as CardChart } from './CardChart.vue'
+export { default as TableChart } from './TableChart.vue'
 
 // Export types nếu cần
 export type { DashboardChart } from '@/types/dashboard'

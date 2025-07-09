@@ -3,7 +3,6 @@
  * Export tất cả các constants
  */
 
-export * from './chartTypes'
 export * from './routes'
 
 // App constants

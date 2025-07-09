@@ -18,6 +18,7 @@ export type ChartType =
   | 'heatmap'
   | 'treemap'
   | 'card'
+  | 'table'
 
 // Base configuration that all chart types share
 export interface BaseChartConfig {
@@ -76,6 +77,14 @@ export interface CardChartConfig extends BaseChartConfig {
   subHeader?: string
 }
 
+// Table chart specific configuration
+export interface TableChartConfig extends BaseChartConfig {
+  type: 'table'
+  columns: string[]
+  rowLimit: number
+  filter: string
+}
+
 // Union type for all chart configurations
 export type ChartConfig = 
   | BarChartConfig 
@@ -83,6 +92,7 @@ export type ChartConfig =
   | LineChartConfig 
   | ScatterChartConfig 
   | CardChartConfig
+  | TableChartConfig
 
 // Helper function to create default config for a chart type
 export function createDefaultChartConfig(type: ChartType): ChartConfig {
@@ -148,6 +158,15 @@ export function createDefaultChartConfig(type: ChartType): ChartConfig {
         subHeader: ''
       }
     
+    case 'table':
+      return {
+        ...baseConfig,
+        type: 'table',
+        columns: [],
+        rowLimit: 10,
+        filter: ''
+      }
+    
     default:
       throw new Error(`Unsupported chart type: ${type}`)
   }
@@ -172,6 +191,10 @@ export function isScatterChartConfig(config: ChartConfig): config is ScatterChar
 
 export function isCardChartConfig(config: ChartConfig): config is CardChartConfig {
   return config.type === 'card'
+}
+
+export function isTableChartConfig(config: ChartConfig): config is TableChartConfig {
+  return config.type === 'table'
 }
 
 // Helper function to reset a chart config to defaults
@@ -200,6 +223,9 @@ export function isChartConfigValid(config: ChartConfig): boolean {
     case 'card':
       return !!config.field
     
+    case 'table':
+      //return config.columns.length > 0 && config.rowLimit > 0
+      return true
     default:
       return false
   }

@@ -135,27 +135,6 @@ interface Props {
 }
 ```
 
-#### `KPICard.vue`
-**Mục đích**: KPI metric display card
-**Features**:
-- Metric value với formatting
-- Trend indicators (up/down/neutral)
-- Color coding
-- Icon support
-- Comparison với previous period
-
-**Props**:
-```typescript
-interface Props {
-  title: string
-  value: number | string
-  trend?: 'up' | 'down' | 'neutral'
-  trendValue?: number
-  icon?: Component
-  color?: 'primary' | 'success' | 'warning' | 'danger'
-}
-```
-
 ### 4. **Dashboard Components** (`src/components/dashboard/`)
 
 #### `DashboardChart.vue`

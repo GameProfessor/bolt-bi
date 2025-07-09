@@ -339,8 +339,72 @@ try {
 ```
 
 ---
+## 6. Luồng cập nhật hiển thị chart khi kéo thả trường dữ liệu vào Chart properties
 
-## 6. Lưu Ý
+### Luồng cập nhật hiển thị Table Chart khi kéo thả trường dữ liệu vào cột Columns
+
+1. **Người dùng kéo thả trường dữ liệu vào khu vực Columns của Table chart**
+   - Trong giao diện ChartPanel, người dùng kéo một trường dữ liệu (ví dụ: "revenue", "name") và thả vào khu vực "Columns" của Table chart.
+   - Sự kiện này sẽ kích hoạt event `field-drop` với target là `'columns'`.
+
+2. **Hàm onFieldDrop cập nhật cấu hình chart**
+   - Component cha (ví dụ: `QuickDashboard.vue`) lắng nghe event `field-drop`.
+   - Trong handler `onFieldDrop`:
+     - Nếu target là `'columns'` và chart config là Table chart, tên trường được thêm vào mảng `chartConfig.value.columns`.
+
+3. **ChartConfig là đối tượng reactive**
+   - `chartConfig` là một đối tượng reactive (`ref` hoặc `reactive`).
+   - Khi `columns` được cập nhật, các component sử dụng config này sẽ tự động cập nhật theo.
+
+4. **TableChart.vue nhận config mới**
+   - Component Table chart preview (`TableChart.vue`) nhận prop chart (chứa config mới).
+   - Bên trong TableChart.vue:
+     - Tính toán lại `config` (lấy columns, rowLimit, filter...)
+     - Tính lại `tableColumns` (danh sách cột hiển thị dựa trên `config.columns`)
+     - Tính lại `tableRows` (dữ liệu thực tế để hiển thị)
+
+5. **Lấy dữ liệu từ DataSource**
+   - TableChart.vue sử dụng `dataSourceId` từ config để lấy đúng data source từ store (ví dụ: `useDataSourceStore().getDataSourceById(dataSourceId)`).
+   - Data source chứa:
+     - `columns`: tất cả các cột có trong nguồn dữ liệu
+     - `rows`: tất cả các dòng dữ liệu (object key-value)
+
+6. **Xử lý dữ liệu để hiển thị**
+   - Table chart strategy (`TableChartStrategy`) xử lý dữ liệu thô:
+     - Chỉ lấy các cột được chọn trong `config.columns`.
+     - Áp dụng filter và row limit nếu có.
+   - Kết quả là mảng các object chỉ chứa các trường đã chọn.
+
+7. **Render bảng dữ liệu**
+   - Các cột và dòng đã xử lý được truyền vào component bảng (ví dụ: `EasyDataTable`).
+   - Bảng hiển thị:
+     - Header: tên các cột từ `config.columns`
+     - Rows: dữ liệu tương ứng từng cột
+
+8. **Reactivity (Tính phản ứng)**
+   - Nếu người dùng thêm/xóa cột, thay đổi filter hoặc row limit, config sẽ cập nhật.
+   - Các computed property trong TableChart.vue sẽ tự động tính lại và bảng sẽ re-render.
+
+#### Sơ đồ luồng
+
+```mermaid
+flowchart TD
+    A[Người dùng kéo thả trường vào Columns] --> B[onFieldDrop thêm trường vào chartConfig.columns]
+    B --> C[TableChart.vue nhận config mới]
+    C --> D[Lấy data source theo dataSourceId]
+    D --> E[TableChartStrategy xử lý dữ liệu: chọn cột, filter, limit]
+    E --> F[TableChart.vue truyền columns/rows vào EasyDataTable]
+    F --> G[Bảng hiển thị dữ liệu các cột đã chọn]
+```
+
+**Nếu muốn debug hoặc mở rộng luồng này, tập trung vào:**
+- Logic `onFieldDrop` ở component cha
+- Các computed property và logic lấy dữ liệu trong TableChart.vue
+- Định dạng props và reactivity của component bảng
+
+---
+
+## 7. Lưu Ý
 - **Component chart** KHÔNG nhận options rời, chỉ nhận `chart`.
 - **Config** của mỗi chart lưu trong `chart.properties.<type>`.
 - **Tất cả logic đặc thù nằm trong strategy và component riêng.
@@ -349,14 +413,3 @@ try {
 
 ---
 
-# Hướng Dẫn Tạo Biểu Đồ Mới (How to Add a New Chart Type)
-
-## Checklist các bước chuẩn hóa
-- [ ] Định nghĩa interface/config mới (nếu cần)
-- [ ] Tạo component render (MyChart.vue)
-- [ ] Tạo strategy class (MyChartStrategy.ts)
-- [ ] Đăng ký strategy (registry/index.ts)
-- [ ] Cập nhật constants/factory/types/UI (nếu cần)
-- [ ] Test & hoàn thiện
-
-**Mọi chart mới đều tuân thủ: nhận prop `chart`, tự xử lý logic, không phụ thuộc vào factory bên ngoài.** 

@@ -5,6 +5,7 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">
         Chart Type
       </label>
+      <!-- <label class="block text-xs font-medium text-gray-600 mb-1"> Drag or click to create chart</label> -->
       <div class="grid gap-2" :style="`grid-template-columns: repeat(${chartTypeCols}, minmax(0, 1fr));`">
         <div v-for="type in chartTypes" :key="type.value" class="relative group">
           <button
@@ -205,6 +206,48 @@
           </div>
         </div>
 
+        <div v-else-if="selectedChartType === 'table'">
+          <label class="block text-xs font-medium text-gray-600 mb-1">Columns</label>
+          <div
+            @drop="$emit('field-drop', $event, 'columns')"
+            @dragover.prevent
+            @dragenter.prevent
+            class="min-h-[2.5rem] p-2 border-2 border-dashed border-gray-300 rounded text-sm text-gray-500 flex flex-wrap items-center gap-2 hover:border-primary-400 transition-colors duration-200"
+            :class="{ 'border-primary-400 bg-primary-50': chartConfig && isTableChartConfig(chartConfig) && Array.isArray(chartConfig.columns) && chartConfig.columns.length > 0 }"
+          >
+            <template v-if="chartConfig && isTableChartConfig(chartConfig) && Array.isArray(chartConfig.columns) && chartConfig.columns.length > 0">
+              <span v-for="(field, idx) in chartConfig.columns" :key="field" class="inline-flex items-center px-2 py-1 bg-primary-100 text-primary-800 rounded mr-1">
+                {{ field }}
+                <button @click.stop="$emit('remove-column', idx)" class="ml-1 text-xs text-primary-700 hover:text-red-500">&times;</button>
+              </span>
+            </template>
+            <span v-else>Drop column fields here</span>
+          </div>
+          
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Row Limit</label>
+            <input
+              v-model="tableRowLimit"
+              type="number"
+              min="1"
+              max="1000"
+              placeholder="10"
+              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+          
+          <div class="mt-3">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Filter Expression</label>
+            <input
+              v-model="tableFilter"
+              type="text"
+              placeholder="e.g. revenue > 1000"
+              class="w-full text-sm rounded border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+            <div class="text-xs text-gray-500 mt-1">Filter rows containing text in any column</div>
+          </div>
+        </div>
+
         <div v-else>
           <div class="space-y-2">
             <div>
@@ -280,7 +323,8 @@ import {
   isPieChartConfig,
   isLineChartConfig,
   isScatterChartConfig,
-  isCardChartConfig
+  isCardChartConfig,
+  isTableChartConfig
 } from '@/types/chart'
 import { computed, watch } from 'vue'
 
@@ -306,6 +350,7 @@ const emit = defineEmits([
   'cancel-edit',
   'chart-type-drag-start',
   'remove-stacked-dimension',
+  'remove-column',
   'real-time-update'
 ])
 
@@ -436,6 +481,20 @@ const cardSubHeader = computed({
   get: () => (props.chartConfig && isCardChartConfig(props.chartConfig)) ? (props.chartConfig.subHeader || '') : '',
   set: (value: string) => {
     if (props.chartConfig && isCardChartConfig(props.chartConfig)) props.chartConfig.subHeader = value
+  }
+})
+
+const tableRowLimit = computed({
+  get: () => (props.chartConfig && isTableChartConfig(props.chartConfig)) ? (props.chartConfig.rowLimit || 10) : 10,
+  set: (value: number) => {
+    if (props.chartConfig && isTableChartConfig(props.chartConfig)) props.chartConfig.rowLimit = value
+  }
+})
+
+const tableFilter = computed({
+  get: () => (props.chartConfig && isTableChartConfig(props.chartConfig)) ? (props.chartConfig.filter || '') : '',
+  set: (value: string) => {
+    if (props.chartConfig && isTableChartConfig(props.chartConfig)) props.chartConfig.filter = value
   }
 })
 </script> 

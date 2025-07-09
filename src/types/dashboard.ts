@@ -181,6 +181,12 @@ export interface ChartTypeProperties {
     filter?: string
     subHeader?: string
   }
+  // Table chart specific
+  table?: {
+    columns: string[]
+    rowLimit: number
+    filter: string
+  }
 }
 
 // Generic DashboardChart interface. Đại diện cho 1 instance của chart trong mỗi dashboard.

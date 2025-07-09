@@ -200,6 +200,11 @@
             chartConfig.stackedDimension.splice(idx, 1)
           }
         }"
+        @remove-column="(idx) => { 
+          if (chartConfig && isTableChartConfig(chartConfig) && Array.isArray(chartConfig.columns)) {
+            chartConfig.columns.splice(idx, 1)
+          }
+        }"
         @add-or-update-chart="addOrUpdateChart"
         @cancel-edit="cancelEdit"
         @chart-type-drag-start="onChartTypeDragStart"
@@ -420,7 +425,9 @@ import {
   PresentationChartLineIcon,
   ChartPieIcon,
   CircleStackIcon,
-  PencilIcon
+  PencilIcon,
+  TableCellsIcon,
+  
 } from '@heroicons/vue/24/outline'
 import { GridStack } from 'gridstack'
 import { useDashboardStore } from '@/stores'
@@ -658,6 +665,7 @@ import {
   isLineChartConfig,
   isScatterChartConfig,
   isCardChartConfig,
+  isTableChartConfig,
   isChartConfigValid
 } from '@/types/chart'
 
@@ -740,6 +748,17 @@ const addOrUpdateChart = () => {
                   colorScheme: chartConfig.value.colorScheme,
                   filter: chartConfig.value.filter,
                   subHeader: chartConfig.value.subHeader
+                }
+              }
+            }
+            break
+          case 'table':
+            if (isTableChartConfig(chartConfig.value)) {
+              updates.properties = {
+                table: {
+                  columns: chartConfig.value.columns,
+                  rowLimit: chartConfig.value.rowLimit,
+                  filter: chartConfig.value.filter
                 }
               }
             }
@@ -845,6 +864,17 @@ const addChart = async () => {
         }
       }
       break
+    case 'table':
+      if (isTableChartConfig(chartConfig.value)) {
+        properties = {
+          table: {
+            columns: chartConfig.value.columns,
+            rowLimit: chartConfig.value.rowLimit,
+            filter: chartConfig.value.filter
+          }
+        }
+      }
+      break
   }
 
   const newChart: DashboardChart = {
@@ -927,6 +957,13 @@ const editChart = (chart: DashboardChart) => {
         chartConfig.value.colorScheme = chart.properties.card.colorScheme || 'default'
         chartConfig.value.filter = chart.properties.card.filter || ''
         chartConfig.value.subHeader = chart.properties.card.subHeader || ''
+      }
+      break
+    case 'table':
+      if (chart.properties.table && isTableChartConfig(chartConfig.value)) {
+        chartConfig.value.columns = [...chart.properties.table.columns]
+        chartConfig.value.rowLimit = chart.properties.table.rowLimit
+        chartConfig.value.filter = chart.properties.table.filter
       }
       break
   }
@@ -1073,8 +1110,13 @@ const handleTabEditKey = (tabId: string, e: KeyboardEvent) => {
   if (e.key === 'Escape') cancelRenameTab()
 }
 
-// Use chart types from strategy registry with actual icon components
-const chartTypes = ChartUtils.getAvailableTypes().map(type => {
+// Directly specify the order of chart types
+const chartTypeOrder: ChartType[] = ['card', 'table', 'bar', 'line', 'pie', 'scatter']
+const allTypes: ChartType[] = ChartUtils.getAvailableTypes()
+const chartTypes = [
+  ...chartTypeOrder,
+  ...allTypes.filter(type => !chartTypeOrder.includes(type))
+].map(type => {
   const strategy = ChartUtils.getChartTypeInfo(type)
   if (!strategy) return null
   
@@ -1095,6 +1137,9 @@ const chartTypes = ChartUtils.getAvailableTypes().map(type => {
       break
     case 'Squares2X2Icon':
       iconComponent = Squares2X2Icon
+      break
+    case 'TableCellsIcon':
+      iconComponent = TableCellsIcon
       break
     default:
       iconComponent = ChartBarIcon // fallback
@@ -1133,7 +1178,7 @@ const onFieldDragStart = (event: DragEvent, column: DataSourceColumn, dataSource
   }
 }
 
-const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric' | 'stackedDimension') => {
+const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 'value' | 'keyMetric' | 'stackedDimension' | 'columns') => {
   event.preventDefault()
   if (!event.dataTransfer || !chartConfig.value) return
   try {
@@ -1176,6 +1221,10 @@ const onFieldDrop = (event: DragEvent, target: 'xAxis' | 'yAxis' | 'category' | 
       chartConfig.value.value = fieldData.name
     } else if (target === 'keyMetric' && isCardChartConfig(chartConfig.value)) {
       chartConfig.value.field = fieldData.name
+    } else if (target === 'columns' && isTableChartConfig(chartConfig.value)) {
+      if (!chartConfig.value.columns.includes(fieldData.name)) {      
+        chartConfig.value.columns.push(fieldData.name)
+      }
     }
     
     chartConfig.value.dataSourceId = fieldData.dataSourceId
@@ -1475,6 +1524,8 @@ const isFieldInUse = (fieldName: string, dataSourceId: string) => {
     return chartConfig.value.xAxis.includes(fieldName) || chartConfig.value.yAxis.includes(fieldName)
   } else if (isCardChartConfig(chartConfig.value)) {
     return chartConfig.value.field === fieldName
+  } else if (isTableChartConfig(chartConfig.value)) {
+    return chartConfig.value.columns.includes(fieldName)
   }
   return false
 }

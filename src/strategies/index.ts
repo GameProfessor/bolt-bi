@@ -5,6 +5,7 @@ import { PieChartStrategy } from './PieChartStrategy'
 import { LineChartStrategy } from './LineChartStrategy'
 import { ScatterChartStrategy } from './ScatterChartStrategy'
 import { CardChartStrategy } from './CardChartStrategy'
+import { TableChartStrategy } from './TableChartStrategy'
 
 // Comprehensive Strategy Registry - Single source of truth for all chart types
 class ChartStrategyRegistry {
@@ -16,6 +17,7 @@ class ChartStrategyRegistry {
     this.register(new LineChartStrategy())
     this.register(new ScatterChartStrategy())
     this.register(new CardChartStrategy())
+    this.register(new TableChartStrategy()) // <-- Register TableChartStrategy
   }
 
   register(strategy: ChartStrategy): void {
